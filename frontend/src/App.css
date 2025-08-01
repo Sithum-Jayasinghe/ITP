@@ -1,0 +1,64 @@
+.App {
+  text-align: center;
+}
+
+/*
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.user-button {
+  font-size: 18px;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 10px;
+  background-color: #ffffff;
+  cursor: pointer;
+  margin: 0 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s ease;
+}
+
+.user-button:hover {
+  background-color: #f0f0f0;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+
+
+*/
+
+
+
+.user-button {
+  padding: 10px 20px;
+  color: rgb(16, 15, 15);
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.3s;
+  background-color: #e0e0e0;
+}
+
+.user-button:hover {
+  color: darkorange; /* 🟧 text turns dark orange on hover */
+}
+
+.user-button:active {
+  color: orange; /* 🟠 text turns orange when clicked */
+}
