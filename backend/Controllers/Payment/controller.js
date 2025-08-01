@@ -7,7 +7,7 @@ const getPayments = (req, res, next) => {
         .catch(error => res.json({ error }));
 };
 
-// Add New Payment
+// Add New Payment to write
 const addPayment = (req, res, next) => {
     const payment = new Payment({
         id: req.body.id,
