@@ -12,12 +12,18 @@ import {
   FormControlLabel,
   Typography,
   Tooltip,
-  Paper
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Fade
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import DownloadIcon from "@mui/icons-material/Download";
 import TableChartIcon from "@mui/icons-material/TableChart";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import PaymentForm from "./PaymentForm";
 import PaymentsTable from "./PaymentsTable";
 import Axios from "axios";
@@ -32,6 +38,10 @@ import plane from "../Images/plane.jpg";
 const PAGE_SIZE = 10;
 const COLORS = ["#4caf50", "#ff9800", "#f44336"];
 
+const TransitionFade = React.forwardRef(function TransitionFade(props, ref) {
+  return <Fade ref={ref} {...props} />;
+});
+
 const Payments = () => {
   const [payments, setPayments] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -44,9 +54,12 @@ const Payments = () => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
 
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState(null);
+
   const paymentsRef = useRef();
 
-  /** Fetch all payments */
+  // Fetch payments on mount
   useEffect(() => {
     getPayments();
   }, []);
@@ -68,11 +81,12 @@ const Payments = () => {
       });
   };
 
+  // Persist dark mode setting
   useEffect(() => {
     localStorage.setItem("darkMode", darkMode);
   }, [darkMode]);
 
-  /** Add Payment */
+  // Add Payment
   const addPayment = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/createpayment", data)
@@ -96,7 +110,7 @@ const Payments = () => {
       });
   };
 
-  /** Update Payment */
+  // Update Payment
   const updatePayment = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/updatepayment", data)
@@ -120,7 +134,7 @@ const Payments = () => {
       });
   };
 
-  /** Delete Payment */
+  // Delete Payment
   const deletePayment = (data) => {
     Axios.post("http://localhost:3001/api/deletepayment", data)
       .then(() => {
@@ -140,7 +154,7 @@ const Payments = () => {
       });
   };
 
-  /** Debounced Search */
+  // Debounced search input handler
   const debouncedSearch = useCallback(
     debounce((value) => {
       setSearchTerm(value);
@@ -149,7 +163,7 @@ const Payments = () => {
     []
   );
 
-  /** Filter Payments */
+  // Filter payments based on search term
   const filteredPayments = useMemo(() => {
     if (!searchTerm.trim()) return payments;
     return payments.filter((p) =>
@@ -159,23 +173,23 @@ const Payments = () => {
     );
   }, [payments, searchTerm]);
 
-  /** Sort Payments */
+  // Sort payments based on sortConfig
   const sortedPayments = useMemo(() => {
     if (!sortConfig.key) return filteredPayments;
     return [...filteredPayments].sort((a, b) =>
       sortConfig.direction === "asc"
-        ? (a[sortConfig.key] > b[sortConfig.key] ? 1 : -1)
-        : (a[sortConfig.key] < b[sortConfig.key] ? 1 : -1)
+        ? a[sortConfig.key] > b[sortConfig.key] ? 1 : -1
+        : a[sortConfig.key] < b[sortConfig.key] ? 1 : -1
     );
   }, [filteredPayments, sortConfig]);
 
-  /** Pagination */
+  // Pagination logic
   const paginatedPayments = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     return sortedPayments.slice(start, start + PAGE_SIZE);
   }, [sortedPayments, page]);
 
-  /** Export PDF */
+  // Export payments table as PDF
   const handleDownloadPdf = async () => {
     if (!paymentsRef.current) return;
     const canvas = await html2canvas(paymentsRef.current, { scale: 2 });
@@ -185,7 +199,7 @@ const Payments = () => {
     pdf.save("My_Tickets.pdf");
   };
 
-  /** Export Excel */
+  // Export payments as Excel
   const handleDownloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(payments);
     const workbook = XLSX.utils.book_new();
@@ -193,7 +207,7 @@ const Payments = () => {
     XLSX.writeFile(workbook, "My_Tickets.xlsx");
   };
 
-  /** Chart Data */
+  // Prepare chart data
   const statusData = [
     { name: "Paid", value: payments.filter((p) => p.status === "Paid").length },
     { name: "Pending", value: payments.filter((p) => p.status === "Pending").length },
@@ -204,7 +218,6 @@ const Payments = () => {
     <>
       <Header />
 
-      {/* Main container with darkMode background */}
       <Box
         sx={{
           width: "95%",
@@ -217,7 +230,7 @@ const Payments = () => {
           p: 2
         }}
       >
-        {/* Title & Dark Mode */}
+        {/* Title & Dark Mode Toggle */}
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
           <Typography variant="h5" fontWeight="bold">
             ✈️ My Bookings & Payments
@@ -254,7 +267,7 @@ const Payments = () => {
           />
         </Box>
 
-        {/* Search + Export */}
+        {/* Search + Export Controls */}
         <Box
           sx={{
             display: "flex",
@@ -277,7 +290,11 @@ const Payments = () => {
             InputProps={{
               startAdornment: <SearchIcon style={{ color: darkMode ? "#ccc" : "#000" }} />,
               endAdornment: searchTerm && (
-                <IconButton onClick={() => setSearchTerm("")} sx={{ color: darkMode ? "#ccc" : "#000" }}>
+                <IconButton
+                  onClick={() => setSearchTerm("")}
+                  sx={{ color: darkMode ? "#ccc" : "#000" }}
+                  aria-label="clear search"
+                >
                   <ClearIcon />
                 </IconButton>
               )
@@ -321,10 +338,10 @@ const Payments = () => {
                   setSelectedPayment(data);
                   setIsEdit(true);
                 }}
-                deletePayment={(data) =>
-                  window.confirm("⚠️ Are you sure you want to cancel this booking?") &&
-                  deletePayment(data)
-                }
+                deletePayment={(data) => {
+                  setPaymentToDelete(data);
+                  setOpenDeleteDialog(true);
+                }}
                 requestSort={(key) =>
                   setSortConfig({
                     key,
@@ -370,14 +387,114 @@ const Payments = () => {
           </ResponsiveContainer>
         </Paper>
 
-        {/* Snackbar Notifications */}
+        {/* Snackbar with modern style and fade transition */}
         <Snackbar
           open={snackbar.open}
-          autoHideDuration={3000}
+          autoHideDuration={4000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+          TransitionComponent={TransitionFade}
+          sx={{ mt: 8 }}
         >
-          <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            variant="filled"
+            elevation={6}
+            sx={{
+              width: "100%",
+              boxShadow: 3,
+              fontWeight: "600",
+              fontSize: "1rem",
+              borderRadius: 2,
+              ".MuiAlert-icon": {
+                fontSize: "1.5rem"
+              },
+              bgcolor:
+                snackbar.severity === "success"
+                  ? "success.main"
+                  : snackbar.severity === "error"
+                  ? "error.main"
+                  : snackbar.severity === "warning"
+                  ? "warning.main"
+                  : undefined,
+              color: "white"
+            }}
+          >
+            {snackbar.message}
+          </Alert>
         </Snackbar>
+
+        {/* Modern Delete Confirmation Dialog */}
+        <Dialog
+          open={openDeleteDialog}
+          onClose={() => setOpenDeleteDialog(false)}
+          TransitionComponent={TransitionFade}
+          keepMounted
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              p: 2,
+              bgcolor: darkMode ? "#1e1e1e" : "#fff",
+              color: darkMode ? "#fff" : "#000",
+              boxShadow: 6,
+            }
+          }}
+        >
+          <DialogTitle
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              fontWeight: "bold",
+              fontSize: "1.25rem",
+            }}
+          >
+            <WarningAmberIcon color="error" sx={{ fontSize: 30 }} />
+            Cancel Booking
+          </DialogTitle>
+          <DialogContent>
+            <Typography
+              sx={{ fontSize: "1rem", mt: 1, mb: 1.5, lineHeight: 1.5 }}
+            >
+              Are you sure you want to cancel this booking? <br />
+              This action is <strong>irreversible</strong> and your booking will be removed permanently.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 2, pb: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={() => setOpenDeleteDialog(false)}
+              sx={{
+                textTransform: "none",
+                fontWeight: "600",
+                minWidth: 120,
+                borderRadius: 2,
+              }}
+            >
+              No, Keep Booking
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() => {
+                deletePayment(paymentToDelete);
+                setOpenDeleteDialog(false);
+              }}
+              sx={{
+                textTransform: "none",
+                fontWeight: "700",
+                minWidth: 140,
+                borderRadius: 2,
+              }}
+              autoFocus
+            >
+              Yes, Cancel Booking
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </>
   );

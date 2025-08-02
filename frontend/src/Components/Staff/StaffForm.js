@@ -61,14 +61,14 @@ const StaffForm = ({ addStaff, updateStaff, submitted, data, isEdit }) => {
     <Grid container spacing={2} sx={{ backgroundColor: '#fff', marginBottom: '30px', display: 'block' }}>
       <Grid item xs={12}>
         <Typography component={'h1'} sx={{ color: '#000' }}>
-          Staff Form
+          Staff Form 
         </Typography>
       </Grid>
 
       {/* Employee ID */}
       <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
         <Typography component={'label'} htmlFor="id" sx={labelStyle}>
-          Employee ID
+          Employee ID 
         </Typography>
         <Input type="number" id="id" sx={inputStyle} value={id} onChange={(e) => setId(e.target.value)} />
       </Grid>

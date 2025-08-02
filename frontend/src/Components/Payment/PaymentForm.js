@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import ReactDOM from "react-dom";
 import {
   Button,
   FormControl,
@@ -20,6 +21,8 @@ import {
   Fade,
   Grow,
   Collapse,
+  Snackbar,
+  IconButton
 } from "@mui/material";
 import {
   ConfirmationNumber,
@@ -30,6 +33,7 @@ import {
   Phone,
   ScheduleSend,
   CreditCardOff,
+  Close
 } from "@mui/icons-material";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -40,7 +44,6 @@ const OtpInput = ({ length = 6, value, onChange, disabled }) => {
   const inputsRef = useRef([]);
   const [otpArr, setOtpArr] = useState(Array(length).fill(""));
 
-  // Keep otpArr in sync with value prop
   useEffect(() => {
     if (value.length === length) {
       setOtpArr(value.split(""));
@@ -131,13 +134,22 @@ const OtpInput = ({ length = 6, value, onChange, disabled }) => {
 const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => {
   const theme = useTheme();
   const [loaded, setLoaded] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const flightData = useMemo(
     () => [
-      { code: "AK123", price: 35000, available: true },
-      { code: "UL456", price: 42000, available: true },
-      { code: "QR789", price: 56000, available: false },
-      { code: "EK202", price: 48000, available: true },
+      { code: "AK123", price: 35000, available: true, airline: "AirAsia" },
+      { code: "UL456", price: 42000, available: true, airline: "SriLankan Airlines" },
+      { code: "QR789", price: 56000, available: false, airline: "Qatar Airways" },
+      { code: "EK202", price: 48000, available: true, airline: "Emirates" },
+      { code: "MH505", price: 39000, available: true, airline: "Malaysia Airlines" },
+      { code: "SQ308", price: 52000, available: true, airline: "Singapore Airlines" },
+      { code: "CX712", price: 45000, available: false, airline: "Cathay Pacific" },
+      { code: "GA432", price: 41000, available: true, airline: "Garuda Indonesia" },
+      { code: "JL601", price: 49000, available: true, airline: "Japan Airlines" },
+      { code: "TG345", price: 44000, available: true, airline: "Thai Airways" },
+      { code: "AI101", price: 38000, available: false, airline: "Air India" },
+      { code: "KE123", price: 47000, available: true, airline: "Korean Air" },
     ],
     []
   );
@@ -236,6 +248,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
   const validateExpiry = (date) => date && dayjs(date).isAfter(dayjs());
   const validateCvv = (cvv) => /^[0-9]{3}$/.test(cvv);
   const validatePhone = (phone) => /^(\+?\d{10,15})$/.test(phone);
+  const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
 
   const generateOtp = () => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -245,7 +258,19 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
 
   const sendOtp = (phoneNumber, otp) => {
     console.log(`Simulated OTP sent: ${otp} to phone: ${phoneNumber}`);
-    alert(`Simulated OTP sent to ${phoneNumber}: ${otp}`);
+    
+    setToast({
+      phoneNumber,
+      otp,
+      open: true
+    });
+  };
+
+  const handleCloseToast = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setToast(null);
   };
 
   const validateForm = () => {
@@ -253,7 +278,11 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     if (!id) errors.id = "Payment ID is required.";
     if (!flight) errors.flight = "Please select a flight.";
     if (flightError) errors.flight = flightError;
-    if (!passenger) errors.passenger = "Passenger name is required.";
+    if (!passenger) {
+      errors.passenger = "Passenger name is required.";
+    } else if (!validateName(passenger)) {
+      errors.passenger = "Name can only contain letters and spaces";
+    }
     if (!seat) errors.seat = "Seat number is required.";
     if (!price) errors.price = "Price is missing.";
     if (!method) errors.method = "Select a payment method.";
@@ -316,6 +345,19 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
       setPaymentResult({ success: false, message: "Invalid OTP. Please try again." });
     }
   };
+
+  const action = (
+    <React.Fragment>
+      <IconButton
+        size="small"
+        aria-label="close"
+        color="inherit"
+        onClick={handleCloseToast}
+      >
+        <Close fontSize="small" />
+      </IconButton>
+    </React.Fragment>
+  );
 
   return (
     <Fade in={loaded} timeout={700}>
@@ -403,14 +445,14 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                       >
                         {flightData.map((f) => (
                           <MenuItem key={f.code} value={f.code} disabled={!f.available}>
-                            {f.code}{" "}
+                            {f.airline} - {f.code} 
                             {!f.available ? (
-                              <Typography variant="caption" color="error">
-                                Unavailable
+                              <Typography variant="caption" color="error" sx={{ ml: 1 }}>
+                                (Unavailable)
                               </Typography>
                             ) : (
-                              <Typography variant="caption" color="primary">
-                                LKR {f.price.toLocaleString()}
+                              <Typography variant="caption" color="primary" sx={{ ml: 1 }}>
+                                (LKR {f.price.toLocaleString()})
                               </Typography>
                             )}
                           </MenuItem>
@@ -435,7 +477,13 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                       label="Passenger Name"
                       placeholder="e.g. John Doe"
                       value={passenger}
-                      onChange={(e) => setPassenger(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Only update if the input matches letters and spaces, or is empty
+                        if (value === "" || /^[A-Za-z\s]*$/.test(value)) {
+                          setPassenger(value);
+                        }
+                      }}
                       fullWidth
                       required
                       disabled={processing}
@@ -696,6 +744,34 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
             </DialogActions>
           </Dialog>
         </Box>
+
+        {/* OTP Notification Snackbar */}
+        <Snackbar
+          open={toast?.open || false}
+          autoHideDuration={6000}
+          onClose={handleCloseToast}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          sx={{ mt: 6 }}
+        >
+          <Alert
+            severity="info"
+            elevation={6}
+            variant="filled"
+            icon={<ScheduleSend fontSize="inherit" />}
+            action={action}
+            sx={{ width: '100%' }}
+          >
+            <Typography variant="subtitle2" fontWeight="bold">
+              OTP Sent Successfully
+            </Typography>
+            <Typography variant="body2">
+              Sent to: {toast?.phoneNumber}
+            </Typography>
+            <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+              Demo OTP: <strong>{toast?.otp}</strong>
+            </Typography>
+          </Alert>
+        </Snackbar>
       </Box>
     </Fade>
   );
