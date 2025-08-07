@@ -123,4 +123,65 @@ app.post('/api/deleteschedule', (req, res) => {
 
 
 
+
+
+
+// Staff
+
+app.get('/api/staffs', (req, res) => {
+  controller.getStaffs((staffs) => {
+    res.send(staffs); // Send actual staff data as response
+  });
+});
+
+app.post('/api/createstaff', (req, res) => {
+  controller.addStaff(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/updatestaff', (req, res) => {
+  controller.updateStaff(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/deletestaff', (req, res) => {
+  controller.deleteStaff(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+
+
+
+
+// Register
+
+app.get('/api/registers', (req, res) => {
+  controller.getRegisters((registers) => {
+    res.send(registers); // Send actual register data as response
+  });
+});
+
+app.post('/api/createregister', (req, res) => {
+  controller.addRegister(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/updateregister', (req, res) => {
+  controller.updateRegister(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/deleteregister', (req, res) => {
+  controller.deleteRegister(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+
+
 module.exports = app;

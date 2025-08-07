@@ -6,8 +6,9 @@ const host = 'localhost';
 const mongoose = require('mongoose');
 const userrouter = require('./Routers/User/router') ;
 const paymentrouter = require('./Routers/Payment/router') ;
-const registerrouter = require('./Routers/Reg/router') ;
 const shedulerouter = require('./Routers/Schedule/router');
+const staffrouter = require('./Routers/Staff/router');
+const registerrouter = require('./Routers/Register/router');
 
 
 //password = 8e81ltTBjQy5U2P6
@@ -39,5 +40,6 @@ const server = app.listen(port, host, () => {
 
 app.use('/api', userrouter);
 app.use('/api', paymentrouter);
-app.use('/api', registerrouter);
 app.use('/api', shedulerouter);
+app.use('/api', staffrouter);
+app.use('/api', registerrouter);

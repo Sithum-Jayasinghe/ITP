@@ -14,12 +14,10 @@ const Header = () => {
         <button className="user-button" onClick={() => navigate('/payments')}>Payments</button>
         <button className="user-button" onClick={() => navigate('/schedules')}>Shedules</button>
          <button className="user-button" onClick={() => navigate('/staffs')}>Staff</button>
+           <button className="user-button" onClick={() => navigate('/registers')}>Register</button>
+   
 
 
-        
-        <button className="user-button" onClick={() => navigate('/register')}>Register</button>
-        <button className="user-button" onClick={() => navigate('/login')}>Login</button>
-        <button className="user-button" onClick={() => navigate('/logout')}>Logout</button>
          
       </div>
 
