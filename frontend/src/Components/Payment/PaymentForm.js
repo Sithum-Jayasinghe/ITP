@@ -389,7 +389,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
             gutterBottom
             sx={{ textAlign: "center", mb: 3 }}
           >
-            ✈️ Airline Payment Gateway
+            ✈️ AirGo Payment Gateway
           </Typography>
 
           {paymentResult && (

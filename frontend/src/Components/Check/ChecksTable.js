@@ -2,7 +2,7 @@ import { Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, 
 
 const ChecksTable = ({ rows, selectedCheck, deleteCheck }) => {
   return (
-    <TableContainer component={Paper}>
+    <TableContainer component={Paper} sx={{ marginTop: '30px' }}>
       <Table>
         <TableHead>
           <TableRow>
@@ -27,7 +27,7 @@ const ChecksTable = ({ rows, selectedCheck, deleteCheck }) => {
         <TableBody>
           {rows.length > 0 ? (
             rows.map((row) => (
-              <TableRow key={row.checkId} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+              <TableRow key={row.checkId} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                 <TableCell>{row.checkId}</TableCell>
                 <TableCell>{row.passengerName}</TableCell>
                 <TableCell>{row.passportNumber}</TableCell>
@@ -44,15 +44,15 @@ const ChecksTable = ({ rows, selectedCheck, deleteCheck }) => {
                 <TableCell>{row.status}</TableCell>
                 <TableCell>
                   <Button
-                    sx={{ margin: "0px 10px" }}
+                    sx={{ margin: '0 8px' }}
                     onClick={() => selectedCheck(row)}
                   >
                     Update
                   </Button>
-
                   <Button
-                    sx={{ margin: "0px 10px" }}
+                    sx={{ margin: '0 8px' }}
                     onClick={() => deleteCheck({ checkId: row.checkId })}
+                    color="error"
                   >
                     Delete
                   </Button>
@@ -60,7 +60,7 @@ const ChecksTable = ({ rows, selectedCheck, deleteCheck }) => {
               </TableRow>
             ))
           ) : (
-            <TableRow sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+            <TableRow>
               <TableCell colSpan={15} align="center">
                 No Data
               </TableCell>

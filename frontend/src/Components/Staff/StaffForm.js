@@ -1,5 +1,15 @@
-import { Button, Grid, Input, Typography } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from "react";
+import { Grid, TextField, Typography, Button, FormControl, InputLabel, Select, MenuItem, Paper, Box } from "@mui/material";
+import PersonIcon from "@mui/icons-material/Person";
+import BadgeIcon from "@mui/icons-material/Badge";
+
+import PhoneIcon from "@mui/icons-material/Phone";
+import EmailIcon from "@mui/icons-material/Email";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
+
+const roles = ["Manager", "Cashier", "Cleaner", "Technician"];
+const schedules = ["Morning", "Evening", "Night"];
+const statuses = ["Active", "Inactive", "On Leave"];
 
 const StaffForm = ({ addStaff, updateStaff, submitted, data, isEdit }) => {
   const [id, setId] = useState('');
@@ -11,16 +21,12 @@ const StaffForm = ({ addStaff, updateStaff, submitted, data, isEdit }) => {
   const [schedule, setSchedule] = useState('');
   const [status, setStatus] = useState('');
 
-  // Reset form after submission
-  useEffect(() => {
-    if (!submitted) {
-      resetForm();
-    }
+  useEffect(() => { 
+    if (!submitted) clearFormFields(); 
   }, [submitted]);
 
-  // Fill form when editing
   useEffect(() => {
-    if (data && data.id && data.id !== 0) {
+    if (data && data.id) {
       setId(data.id || '');
       setName(data.name || '');
       setRole(data.role || '');
@@ -32,136 +38,117 @@ const StaffForm = ({ addStaff, updateStaff, submitted, data, isEdit }) => {
     }
   }, [data]);
 
-  const resetForm = () => {
-    setId('');
-    setName('');
-    setRole('');
-    setNum('');
-    setEmail('');
-    setCertificate('');
-    setSchedule('');
-    setStatus('');
+  const clearFormFields = () => {
+    setId(''); setName(''); setRole(''); setNum('');
+    setEmail(''); setCertificate(''); setSchedule(''); setStatus('');
   };
 
   const handleSubmit = () => {
-    const staffData = {
-      id,
-      name,
-      role,
-      num,
-      email,
-      certificate,
-      schedule,
-      status,
-    };
+    const staffData = { id, name, role, num, email, certificate, schedule, status };
     isEdit ? updateStaff(staffData) : addStaff(staffData);
   };
 
   return (
-    <Grid container spacing={2} sx={{ backgroundColor: '#fff', marginBottom: '30px', display: 'block' }}>
-      <Grid item xs={12}>
-        <Typography component={'h1'} sx={{ color: '#000' }}>
-          Staff Form 
-        </Typography>
-      </Grid>
+    <Paper sx={{ p: 4, mb: 4, borderRadius: 3, backgroundColor: '#f9f9f9' }} elevation={6}>
+      <Typography variant="h5" sx={{ mb: 3, color: '#007acc', fontWeight: 600 }}>
+        {isEdit ? 'Update Staff' : 'Add New Staff'}
+      </Typography>
 
-      {/* Employee ID */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="id" sx={labelStyle}>
-          Employee ID 
-        </Typography>
-        <Input type="number" id="id" sx={inputStyle} value={id} onChange={(e) => setId(e.target.value)} />
-      </Grid>
+      <Grid container spacing={3}>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Employee ID"
+            value={id}
+            onChange={(e) => setId(e.target.value)}
+            InputProps={{ startAdornment: <BadgeIcon sx={{ mr: 1 }} /> }}
+          />
+        </Grid>
 
-      {/* Full Name */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="name" sx={labelStyle}>
-          Full Name
-        </Typography>
-        <Input type="text" id="name" sx={inputStyle} value={name} onChange={(e) => setName(e.target.value)} />
-      </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Full Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            InputProps={{ startAdornment: <PersonIcon sx={{ mr: 1 }} /> }}
+          />
+        </Grid>
 
-      {/* Role */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="role" sx={labelStyle}>
-          Role
-        </Typography>
-        <Input type="text" id="role" sx={inputStyle} value={role} onChange={(e) => setRole(e.target.value)} />
-      </Grid>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Role</InputLabel>
+            <Select value={role} onChange={(e) => setRole(e.target.value)}>
+              {roles.map(r => <MenuItem key={r} value={r}>{r}</MenuItem>)}
+            </Select>
+          </FormControl>
+        </Grid>
 
-      {/* Contact Number */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="num" sx={labelStyle}>
-          Contact Number
-        </Typography>
-        <Input type="number" id="num" sx={inputStyle} value={num} onChange={(e) => setNum(e.target.value)} />
-      </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Contact Number"
+            type="number"
+            value={num}
+            onChange={(e) => setNum(e.target.value)}
+            InputProps={{ startAdornment: <PhoneIcon sx={{ mr: 1 }} /> }}
+          />
+        </Grid>
 
-      {/* Email */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="email" sx={labelStyle}>
-          Email
-        </Typography>
-        <Input type="text" id="email" sx={inputStyle} value={email} onChange={(e) => setEmail(e.target.value)} />
-      </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            InputProps={{ startAdornment: <EmailIcon sx={{ mr: 1 }} /> }}
+          />
+        </Grid>
 
-      {/* Certificate/License */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="certificate" sx={labelStyle}>
-          Certification / License #
-        </Typography>
-        <Input
-          type="text"
-          id="certificate"
-          sx={inputStyle}
-          value={certificate}
-          onChange={(e) => setCertificate(e.target.value)}
-        />
-      </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Certificate / License #"
+            value={certificate}
+            onChange={(e) => setCertificate(e.target.value)}
+            InputProps={{ startAdornment: <AssignmentIndIcon sx={{ mr: 1 }} /> }}
+          />
+        </Grid>
 
-      {/* Schedule */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="schedule" sx={labelStyle}>
-          Schedule
-        </Typography>
-        <Input type="text" id="schedule" sx={inputStyle} value={schedule} onChange={(e) => setSchedule(e.target.value)} />
-      </Grid>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Schedule</InputLabel>
+            <Select value={schedule} onChange={(e) => setSchedule(e.target.value)}>
+              {schedules.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+            </Select>
+          </FormControl>
+        </Grid>
 
-      {/* Employment Status */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="status" sx={labelStyle}>
-          Employment Status
-        </Typography>
-        <Input type="text" id="status" sx={inputStyle} value={status} onChange={(e) => setStatus(e.target.value)} />
-      </Grid>
+        <Grid item xs={12} sm={6}>
+          <FormControl fullWidth>
+            <InputLabel>Status</InputLabel>
+            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+              {statuses.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+            </Select>
+          </FormControl>
+        </Grid>
 
-      {/* Submit Button */}
-      <Button
-        sx={{
-          margin: 'auto',
-          marginBottom: '20px',
-          backgroundColor: '#00c6e6',
-          color: '#000',
-          marginLeft: '15px',
-          marginTop: '20px',
-          '&:hover': { opacity: 0.7 },
-        }}
-        onClick={handleSubmit}
-      >
-        {isEdit ? 'Update' : 'Add'}
-      </Button>
-    </Grid>
+        <Grid item xs={12}>
+          <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            <Button
+              variant="contained"
+              sx={{ backgroundColor: '#00c6e6', '&:hover': { backgroundColor: '#009bbf' } }}
+              onClick={handleSubmit}
+            >
+              {isEdit ? 'Update' : 'Add'}
+            </Button>
+          </Box>
+        </Grid>
+      </Grid>
+    </Paper>
   );
 };
-
-const labelStyle = {
-  color: '#000',
-  marginRight: '20px',
-  fontSize: '16px',
-  width: '200px',
-  display: 'block',
-};
-
-const inputStyle = { width: '400px' };
 
 export default StaffForm;

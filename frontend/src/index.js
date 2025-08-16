@@ -9,6 +9,9 @@ import Users from './Components/User/Users';
 import Payments from './Components/Payment/Payments';
 import Schedules from './Components/Schedule/Schedules';
 import Staffs from './Components/Staff/staffs';
+import Books from './Components/Book/Books';
+import Passengers from './Components/Passenger/Passengers';
+import Checks from './Components/Check/Checks';
 import Registers from './Components/Register/Registers';
 
 
@@ -29,6 +32,9 @@ root.render(
         <Route path="/payments" element={<Payments />} />
         <Route path="/schedules" element={<Schedules />} />
         <Route path="/staffs" element={<Staffs />} />
+         <Route path="/books" element={<Books />} />
+         <Route path="/passengers" element={<Passengers />} />
+           <Route path="/checks" element={<Checks />} />
         <Route path="/registers" element={<Registers />} />
 
 

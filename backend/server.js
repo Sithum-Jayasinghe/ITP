@@ -9,6 +9,9 @@ const paymentrouter = require('./Routers/Payment/router') ;
 const shedulerouter = require('./Routers/Schedule/router');
 const staffrouter = require('./Routers/Staff/router');
 const registerrouter = require('./Routers/Register/router');
+const bookingrouter = require('./Routers/Book/router');
+const passengerrouter = require('./Routers/Passenger/router');
+const checkrouter = require('./Routers/Check/router');
 
 
 //password = 8e81ltTBjQy5U2P6
@@ -43,3 +46,6 @@ app.use('/api', paymentrouter);
 app.use('/api', shedulerouter);
 app.use('/api', staffrouter);
 app.use('/api', registerrouter);
+app.use('/api', bookingrouter );
+app.use('/api', passengerrouter);
+app.use('/api', checkrouter);

@@ -4,6 +4,11 @@ const cors = require('cors');
 const controller = require('./Controllers/User/controller');
 const controller = require('./Controllers/Payment/controller');
 const controller = require('../../Controllers/Schedule/controller');
+const controller = require('../../Controllers/Staff/controller');
+const controller = require('../../Controllers/Register/controller');
+const controller = require('../../Controllers/Booking/controller');
+const controller = require('../../Controllers/Passenger/controller');
+const controller = require('../../Controllers/Check/controller');
 
 
 app.use(cors());
@@ -181,6 +186,92 @@ app.post('/api/deleteregister', (req, res) => {
     res.send(callback);
   });
 });
+
+
+
+
+// Booking 
+
+app.get('/api/bookings', (req, res) => {
+  controller.getBookings((bookings) => {
+    res.send(bookings);
+  });
+});
+
+app.post('/api/createbooking', (req, res) => {
+  controller.addBooking(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/updatebooking', (req, res) => {
+  controller.updateBooking(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/deletebooking', (req, res) => {
+  controller.deleteBooking(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+
+
+// Passenger
+
+app.get('/api/passengers', (req, res) => {
+  controller.getPassengers((passengers) => {
+    res.send(passengers);
+  });
+});
+
+app.post('/api/createpassenger', (req, res) => {
+  controller.addPassenger(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/updatepassenger', (req, res) => {
+  controller.updatePassenger(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/deletepassenger', (req, res) => {
+  controller.deletePassenger(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+
+
+// ✅ Check
+
+app.get('/api/checks', (req, res) => {
+  controller.getChecks((checks) => {
+    res.send(checks);
+  });
+});
+
+app.post('/api/createcheck', (req, res) => {
+  controller.addCheck(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/updatecheck', (req, res) => {
+  controller.updateCheck(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
+app.post('/api/deletecheck', (req, res) => {
+  controller.deleteCheck(req.body, (callback) => {
+    res.send(callback);
+  });
+});
+
 
 
 
