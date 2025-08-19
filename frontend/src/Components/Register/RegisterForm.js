@@ -1,46 +1,58 @@
-import { Button, Grid, Input, Typography, Avatar } from '@mui/material';
-import { useEffect, useState } from 'react';
+// src/components/RegisterForm.js
+import {
+  Button,
+  Input,
+  Typography,
+  Avatar,
+  InputAdornment,
+  Stack,
+  Box,
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import BadgeIcon from "@mui/icons-material/Badge";
+import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import LockIcon from "@mui/icons-material/Lock";
+import PhoneIcon from "@mui/icons-material/Phone";
+import UploadIcon from "@mui/icons-material/Upload";
 
 const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit }) => {
-  const [id, setId] = useState('');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [profilePhoto, setProfilePhoto] = useState(null); // stores file or base64
-  const [preview, setPreview] = useState(null); // for image preview display
+  const [id, setId] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [preview, setPreview] = useState(null);
 
   useEffect(() => {
     if (!submitted) {
-      setId('');
-      setName('');
-      setEmail('');
-      setPassword('');
-      setPhone('');
+      setId("");
+      setName("");
+      setEmail("");
+      setPassword("");
+      setPhone("");
       setProfilePhoto(null);
       setPreview(null);
     }
   }, [submitted]);
 
   useEffect(() => {
-    if (data && data.id && data.id !== 0) {
+    if (data && data.id) {
       setId(data.id);
-      setName(data.name);
-      setEmail(data.email || '');
-      setPassword(data.password || '');
-      setPhone(data.phone || '');
-      setPreview(data.profilePhoto || null); // existing photo URL/base64
+      setName(data.name || "");
+      setEmail(data.email || "");
+      setPassword(data.password || "");
+      setPhone(data.phone || "");
+      setPreview(data.profilePhoto || null);
       setProfilePhoto(data.profilePhoto || null);
     }
   }, [data]);
 
-  // Handle image upload and set preview
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       setProfilePhoto(file);
-
-      // Create preview (base64)
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
@@ -49,7 +61,6 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit }) 
     }
   };
 
-  // When submit, send data including photo as base64 preview string
   const handleSubmit = () => {
     const formData = {
       id,
@@ -57,7 +68,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit }) 
       email,
       password,
       phone,
-      profilePhoto: preview, // You can send file or base64 depending on backend
+      profilePhoto: preview,
     };
 
     if (isEdit) updateRegister(formData);
@@ -65,138 +76,91 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit }) 
   };
 
   return (
-    <Grid container spacing={2} sx={{ backgroundColor: '#fff', marginBottom: '30px', padding: 2 }}>
-      {/* Profile Photo Preview */}
-      <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
+    <Box
+      sx={{
+        backgroundColor: "#fff",
+        padding: 3,
+        borderRadius: 2,
+        boxShadow: 2,
+        maxWidth: 500,
+        margin: "auto",
+      }}
+    >
+      <Stack spacing={2} alignItems="center">
+        {/* Profile Photo */}
         {preview ? (
           <Avatar src={preview} alt="Profile Preview" sx={{ width: 120, height: 120 }} />
         ) : (
-          <Avatar sx={{ width: 120, height: 120, bgcolor: '#ccc' }} />
+          <Avatar sx={{ width: 120, height: 120, bgcolor: "#ccc" }} />
         )}
-      </Grid>
 
-      {/* Profile Photo Upload */}
-      <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', marginBottom: 3 }}>
-        <Input type="file" accept="image/*" onChange={handleImageUpload} />
-      </Grid>
-
-      {/* Form Title */}
-      <Grid item xs={12}>
-        <Typography component={'h1'} sx={{ color: '#000', textAlign: 'center' }}>
-          Register Form dwd
-        </Typography>
-      </Grid>
-
-      {/* ID */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography
-          component={'label'}
-          htmlFor="id"
-          sx={{ color: '#000', marginRight: '20px', fontSize: '16px', width: '100px', display: 'block' }}
+        {/* Upload Button */}
+        <Button
+          component="label"
+          variant="outlined"
+          startIcon={<UploadIcon />}
         >
-          ID
+          Upload Photo
+          <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
+        </Button>
+
+        {/* Title */}
+        <Typography variant="h5" sx={{ fontWeight: "bold", color: "#333" }}>
+          {isEdit ? "Update User" : "Register User"}
         </Typography>
+
+        {/* Inputs stacked vertically */}
         <Input
           type="number"
-          id="id"
-          name="id"
-          sx={{ width: '400px' }}
+          placeholder="User ID"
           value={id}
           onChange={(e) => setId(e.target.value)}
+          startAdornment={<InputAdornment position="start"><BadgeIcon /></InputAdornment>}
+          fullWidth
         />
-      </Grid>
-
-      {/* Name */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography
-          component={'label'}
-          htmlFor="name"
-          sx={{ color: '#000', marginRight: '20px', fontSize: '16px', width: '100px', display: 'block' }}
-        >
-          Name
-        </Typography>
         <Input
           type="text"
-          id="name"
-          name="name"
-          sx={{ width: '400px' }}
+          placeholder="Full Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          startAdornment={<InputAdornment position="start"><PersonIcon /></InputAdornment>}
+          fullWidth
         />
-      </Grid>
-
-      {/* Email */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography
-          component={'label'}
-          htmlFor="email"
-          sx={{ color: '#000', marginRight: '20px', fontSize: '16px', width: '100px', display: 'block' }}
-        >
-          Email
-        </Typography>
         <Input
           type="email"
-          id="email"
-          name="email"
-          sx={{ width: '400px' }}
+          placeholder="Email Address"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          startAdornment={<InputAdornment position="start"><EmailIcon /></InputAdornment>}
+          fullWidth
         />
-      </Grid>
-
-      {/* Password */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography
-          component={'label'}
-          htmlFor="password"
-          sx={{ color: '#000', marginRight: '20px', fontSize: '16px', width: '100px', display: 'block' }}
-        >
-          Password
-        </Typography>
         <Input
           type="password"
-          id="password"
-          name="password"
-          sx={{ width: '400px' }}
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          startAdornment={<InputAdornment position="start"><LockIcon /></InputAdornment>}
+          fullWidth
         />
-      </Grid>
-
-      {/* Phone */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography
-          component={'label'}
-          htmlFor="phone"
-          sx={{ color: '#000', marginRight: '20px', fontSize: '16px', width: '100px', display: 'block' }}
-        >
-          Phone
-        </Typography>
         <Input
           type="tel"
-          id="phone"
-          name="phone"
-          sx={{ width: '400px' }}
+          placeholder="Phone Number"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          startAdornment={<InputAdornment position="start"><PhoneIcon /></InputAdornment>}
+          fullWidth
         />
-      </Grid>
 
-      {/* Submit Button */}
-      <Grid item xs={12} sx={{ textAlign: 'center', marginTop: 2 }}>
+        {/* Submit Button */}
         <Button
-          sx={{
-            backgroundColor: '#00c6e6',
-            color: '#000',
-            '&:hover': { opacity: 0.7 },
-            width: '150px',
-          }}
+          variant="contained"
+          sx={{ backgroundColor: "#00c6e6", color: "#000", width: 150, mt: 2 }}
           onClick={handleSubmit}
         >
-          {isEdit ? 'Update' : 'Add'}
+          {isEdit ? "Update" : "Add"}
         </Button>
-      </Grid>
-    </Grid>
+      </Stack>
+    </Box>
   );
 };
 

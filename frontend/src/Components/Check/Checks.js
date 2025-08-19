@@ -1,6 +1,7 @@
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import CheckForm from "./CheckForm";
 import ChecksTable from "./ChecksTable";
+import RegistersTable from "../Register/RegistersTable";
 import Axios from "axios";
 import { useEffect, useState } from "react";
 
@@ -9,101 +10,49 @@ const Checks = () => {
   const [submitted, setSubmitted] = useState(false);
   const [selectedCheck, setSelectedCheck] = useState({});
   const [isEdit, setIsEdit] = useState(false);
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
-    getChecks();
+    fetchChecks();
+    fetchUsers();
   }, []);
 
-  const getChecks = () => {
+  const fetchChecks = () => {
     Axios.get("http://localhost:3001/api/checks")
-      .then((response) => {
-        setChecks(response.data?.response || []);
-      })
-      .catch((error) => {
-        console.error("Axios error:", error);
-      });
+      .then((res) => setChecks(res.data?.response || []))
+      .catch(console.error);
+  };
+
+  const fetchUsers = () => {
+    Axios.get("http://localhost:3001/api/registers")
+      .then((res) => setUsers(res.data?.response || []))
+      .catch(console.error);
   };
 
   const addCheck = (data) => {
     setSubmitted(true);
-
-    const payload = {
-      checkId: data.checkId,
-      passengerName: data.passengerName,
-      passportNumber: data.passportNumber,
-      nationality: data.nationality,
-      flightNumber: data.flightNumber,
-      departure: data.departure,
-      destination: data.destination,
-      seatNumber: data.seatNumber,
-      gateNumber: data.gateNumber,
-      boardingTime: data.boardingTime,
-      baggageCount: data.baggageCount,
-      baggageWeight: data.baggageWeight,
-      mealPreference: data.mealPreference,
-      status: data.status,
-    };
-
-    Axios.post("http://localhost:3001/api/createcheck", payload)
-      .then(() => {
-        getChecks(); // Refresh list
-        setSubmitted(false);
-        setIsEdit(false);
-      })
-      .catch((error) => {
-        console.error("Axios error:", error);
-      });
+    Axios.post("http://localhost:3001/api/createcheck", data)
+      .then(() => { fetchChecks(); setSubmitted(false); setIsEdit(false); })
+      .catch(console.error);
   };
 
   const updateCheck = (data) => {
     setSubmitted(true);
-
-    const payload = {
-      checkId: data.checkId,
-      passengerName: data.passengerName,
-      passportNumber: data.passportNumber,
-      nationality: data.nationality,
-      flightNumber: data.flightNumber,
-      departure: data.departure,
-      destination: data.destination,
-      seatNumber: data.seatNumber,
-      gateNumber: data.gateNumber,
-      boardingTime: data.boardingTime,
-      baggageCount: data.baggageCount,
-      baggageWeight: data.baggageWeight,
-      mealPreference: data.mealPreference,
-      status: data.status,
-    };
-
-    Axios.post("http://localhost:3001/api/updatecheck", payload)
-      .then(() => {
-        getChecks(); // Refresh list
-        setSubmitted(false);
-        setIsEdit(false);
-      })
-      .catch((error) => {
-        console.error("Axios error:", error);
-      });
+    Axios.post("http://localhost:3001/api/updatecheck", data)
+      .then(() => { fetchChecks(); setSubmitted(false); setIsEdit(false); })
+      .catch(console.error);
   };
 
   const deleteCheck = (data) => {
     Axios.post("http://localhost:3001/api/deletecheck", data)
-      .then(() => {
-        getChecks(); // Refresh list
-      })
-      .catch((error) => {
-        console.error("Axios error:", error);
-      });
+      .then(() => fetchChecks())
+      .catch(console.error);
   };
 
   return (
-    <Box
-      sx={{
-        width: "calc(100% - 100px)",
-        margin: "auto",
-        marginTop: "100px",
-      }}
-    >
+    <Box sx={{ width: "calc(100% - 80px)", mx: "auto", mt: 5 }}>
+      <Typography variant="h4" mb={3} textAlign="center">🛫 Airline Check-In System</Typography>
+      <RegistersTable />
       <CheckForm
         addCheck={addCheck}
         updateCheck={updateCheck}
@@ -111,16 +60,11 @@ const Checks = () => {
         data={selectedCheck}
         isEdit={isEdit}
       />
-
       <ChecksTable
         rows={checks}
-        selectedCheck={(data) => {
-          setSelectedCheck(data);
-          setIsEdit(true);
-        }}
-        deleteCheck={(data) =>
-          window.confirm("Are you sure?") && deleteCheck(data)
-        }
+        users={users}
+        selectedCheck={(data) => { setSelectedCheck(data); setIsEdit(true); }}
+        deleteCheck={(data) => window.confirm("Are you sure to delete?") && deleteCheck(data)}
       />
     </Box>
   );

@@ -1,3 +1,4 @@
+// src/components/Registers.js
 import { useEffect, useState } from "react";
 import {
   Avatar,
@@ -6,9 +7,18 @@ import {
   Grid,
   Paper,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Snackbar,
+  Alert,
 } from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import Axios from "axios";
-
+import RegisterForm from "./RegisterForm";
 
 const Registers = () => {
   const [registers, setRegisters] = useState([]);
@@ -16,34 +26,20 @@ const Registers = () => {
   const [selectedRegister, setSelectedRegister] = useState({});
   const [isEdit, setIsEdit] = useState(false);
 
-  // Form state
-  const [id, setId] = useState("");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [preview, setPreview] = useState(null);
+  // Snackbar states
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
+  // Delete confirmation dialog
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [registerToDelete, setRegisterToDelete] = useState(null);
 
   useEffect(() => {
     getRegisters();
   }, []);
-
-  useEffect(() => {
-    if (!submitted) {
-      clearForm();
-    }
-  }, [submitted]);
-
-  useEffect(() => {
-    if (selectedRegister && selectedRegister.id) {
-      setId(selectedRegister.id);
-      setName(selectedRegister.name || "");
-      setEmail(selectedRegister.email || "");
-      setPassword(selectedRegister.password || "");
-      setPhone(selectedRegister.phone || "");
-      setPreview(selectedRegister.profilePhoto || null);
-    }
-  }, [selectedRegister]);
 
   const getRegisters = () => {
     Axios.get("http://localhost:3001/api/registers")
@@ -55,177 +51,77 @@ const Registers = () => {
       });
   };
 
-  const clearForm = () => {
-    setId("");
-    setName("");
-    setEmail("");
-    setPassword("");
-    setPhone("");
-    setPreview(null);
-    setSelectedRegister({});
-    setIsEdit(false);
-  };
-
-  // Handle image upload
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = () => {
-    setSubmitted(true);
-
-    const payload = {
-      id,
-      name,
-      email,
-      password,
-      phone,
-      profilePhoto: preview, // sending base64 string
-    };
-
-    if (isEdit) {
-      Axios.post("http://localhost:3001/api/updateregister", payload)
-        .then(() => {
-          getRegisters();
-          setSubmitted(false);
-          clearForm();
-        })
-        .catch((error) => {
-          console.error("Axios error:", error);
-          setSubmitted(false);
-        });
-    } else {
-      Axios.post("http://localhost:3001/api/createregister", payload)
-        .then(() => {
-          getRegisters();
-          setSubmitted(false);
-          clearForm();
-        })
-        .catch((error) => {
-          console.error("Axios error:", error);
-          setSubmitted(false);
-        });
-    }
-  };
-
-  const deleteRegister = (data) => {
-    Axios.post("http://localhost:3001/api/deleteregister", data)
+  const addRegister = (data) => {
+    Axios.post("http://localhost:3001/api/createregister", data)
       .then(() => {
         getRegisters();
+        setSubmitted(false);
+        setSnackbar({ open: true, message: "User added successfully!", severity: "success" });
       })
       .catch((error) => {
         console.error("Axios error:", error);
+        setSubmitted(false);
+        setSnackbar({ open: true, message: "Failed to add user!", severity: "error" });
       });
+  };
+
+  const updateRegister = (data) => {
+    Axios.post("http://localhost:3001/api/updateregister", data)
+      .then(() => {
+        getRegisters();
+        setSubmitted(false);
+        setIsEdit(false);
+        setSelectedRegister({});
+        setSnackbar({ open: true, message: "User updated successfully!", severity: "success" });
+      })
+      .catch((error) => {
+        console.error("Axios error:", error);
+        setSubmitted(false);
+        setSnackbar({ open: true, message: "Failed to update user!", severity: "error" });
+      });
+  };
+
+  const confirmDeleteRegister = (row) => {
+    setRegisterToDelete(row);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (registerToDelete) {
+      Axios.post("http://localhost:3001/api/deleteregister", registerToDelete)
+        .then(() => {
+          getRegisters();
+          setSnackbar({ open: true, message: "User deleted successfully!", severity: "success" });
+        })
+        .catch((error) => {
+          console.error("Axios error:", error);
+          setSnackbar({ open: true, message: "Failed to delete user!", severity: "error" });
+        })
+        .finally(() => {
+          setOpenDeleteDialog(false);
+          setRegisterToDelete(null);
+        });
+    }
   };
 
   return (
     <Box sx={{ width: "calc(100% - 100px)", margin: "auto", marginTop: "50px" }}>
-      {/* Registration Form */}
-      <Box
-        sx={{
-          backgroundColor: "#fff",
-          padding: 3,
-          marginBottom: 5,
-          borderRadius: 2,
-          maxWidth: 600,
-          marginX: "auto",
-        }}
-      >
-        <Typography variant="h5" align="center" gutterBottom>
-          {isEdit ? "Update Register" : "Add New Register"}
-        </Typography>
+      {/* User Registration Form */}
+      <RegisterForm
+        addRegister={addRegister}
+        updateRegister={updateRegister}
+        submitted={submitted}
+        data={selectedRegister}
+        isEdit={isEdit}
+      />
 
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-          {preview ? (
-            <Avatar src={preview} alt="Profile" sx={{ width: 120, height: 120, borderRadius: 2 }} variant="rounded" />
-          ) : (
-            <Avatar sx={{ width: 120, height: 120, bgcolor: "#ccc", borderRadius: 2 }} variant="rounded" />
-          )}
-        </Box>
-
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            style={{ display: "block" }}
-          />
-        </Box>
-
-        {/* Form Fields */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <Typography>ID</Typography>
-            <input
-              type="number"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              style={{ width: "100%", padding: "8px", fontSize: 16 }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography>Name</Typography>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{ width: "100%", padding: "8px", fontSize: 16 }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography>Email</Typography>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: "100%", padding: "8px", fontSize: 16 }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography>Password</Typography>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: "100%", padding: "8px", fontSize: 16 }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Typography>Phone</Typography>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              style={{ width: "100%", padding: "8px", fontSize: 16 }}
-            />
-          </Grid>
-          <Grid item xs={12} sx={{ textAlign: "center" }}>
-            <Button
-              variant="contained"
-              sx={{ backgroundColor: "#00c6e6", color: "#000", width: 150 }}
-              onClick={handleSubmit}
-              disabled={submitted}
-            >
-              {isEdit ? "Update" : "Add"}
-            </Button>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* Cards Display */}
+      {/* User Cards */}
       {registers.length === 0 ? (
         <Typography align="center" sx={{ mt: 5, color: "#666" }}>
-          No data available.
+          No users found.
         </Typography>
       ) : (
-        <Grid container spacing={3}>
+        <Grid container spacing={3} sx={{ marginTop: 3 }}>
           {registers.map((row) => (
             <Grid item xs={12} sm={6} md={4} key={row.id}>
               <Paper
@@ -236,38 +132,38 @@ const Registers = () => {
                   alignItems: "center",
                   borderRadius: 2,
                   gap: 2,
-                  minHeight: 140,
+                  minHeight: 150,
                 }}
               >
+                {/* Profile Avatar */}
                 <Avatar
                   src={row.profilePhoto}
                   alt={row.name}
-                  sx={{ width: 100, height: 100, borderRadius: 2 }}
-                  variant="rounded"
+                  sx={{ width: 80, height: 80 }}
                 />
 
+                {/* User Info */}
                 <Box sx={{ flexGrow: 1 }}>
                   <Typography variant="h6" gutterBottom>
                     {row.name}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2">
                     <strong>ID:</strong> {row.id}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2">
                     <strong>Email:</strong> {row.email}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2">
                     <strong>Phone:</strong> {row.phone}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" sx={{ wordBreak: "break-word" }}>
-                    <strong>Password:</strong> {row.password}
                   </Typography>
                 </Box>
 
+                {/* Action Buttons */}
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                   <Button
                     variant="outlined"
                     size="small"
+                    startIcon={<EditIcon />}
                     onClick={() => {
                       setSelectedRegister(row);
                       setIsEdit(true);
@@ -279,9 +175,8 @@ const Registers = () => {
                     variant="outlined"
                     color="error"
                     size="small"
-                    onClick={() => {
-                      if (window.confirm("Are you sure?")) deleteRegister(row);
-                    }}
+                    startIcon={<DeleteIcon />}
+                    onClick={() => confirmDeleteRegister(row)}
                   >
                     Delete
                   </Button>
@@ -291,6 +186,42 @@ const Registers = () => {
           ))}
         </Grid>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+      >
+        <DialogTitle>Delete User</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete{" "}
+            <strong>{registerToDelete?.name}</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+          <Button color="error" variant="contained" onClick={handleDeleteConfirm}>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar Notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

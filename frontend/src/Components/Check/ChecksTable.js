@@ -1,74 +1,41 @@
-import { Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { Box, Paper, Typography, Button, Avatar } from "@mui/material";
+import FlightIcon from "@mui/icons-material/Flight";
+import SeatIcon from "@mui/icons-material/EventSeat";
+import FaceIcon from "@mui/icons-material/Face";
+import BadgeIcon from "@mui/icons-material/Badge";
 
-const ChecksTable = ({ rows, selectedCheck, deleteCheck }) => {
+const ChecksTable = ({ rows, users = [], selectedCheck, deleteCheck }) => {
+  const getUserPhoto = (name) => {
+    const user = users.find(u => u.name === name);
+    return user?.profilePhoto || "";
+  };
+
   return (
-    <TableContainer component={Paper} sx={{ marginTop: '30px' }}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            <TableCell>Check ID</TableCell>
-            <TableCell>Passenger Name</TableCell>
-            <TableCell>Passport Number</TableCell>
-            <TableCell>Nationality</TableCell>
-            <TableCell>Flight Number</TableCell>
-            <TableCell>Departure</TableCell>
-            <TableCell>Destination</TableCell>
-            <TableCell>Seat Number</TableCell>
-            <TableCell>Gate Number</TableCell>
-            <TableCell>Boarding Time</TableCell>
-            <TableCell>Baggage Count</TableCell>
-            <TableCell>Baggage Weight (kg)</TableCell>
-            <TableCell>Meal Preference</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell>Action</TableCell>
-          </TableRow>
-        </TableHead>
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, mt: 4 }}>
+      {rows.length > 0 ? (
+        rows.map((row) => (
+          <Paper key={row.checkId} sx={{ p: 2.5, minWidth: 280, flex: "1 1 280px", borderRadius: 3, boxShadow: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+              <Avatar src={row.profilePhoto || getUserPhoto(row.passengerName)} sx={{ width: 56, height: 56 }} />
+              <Typography variant="h6">{row.passengerName}</Typography>
+            </Box>
+            <Typography><BadgeIcon fontSize="small" sx={{ mr: 1 }} /> Check ID: {row.checkId}</Typography>
+            <Typography><FaceIcon fontSize="small" sx={{ mr: 1 }} /> Passport: {row.passportNumber}</Typography>
+            <Typography>Nationality: {row.nationality}</Typography>
+            <Typography><FlightIcon fontSize="small" sx={{ mr: 1 }} /> Flight: {row.flightNumber}</Typography>
+            <Typography><SeatIcon fontSize="small" sx={{ mr: 1 }} /> Seat: {row.seatNumber}</Typography>
+            <Typography>Status: {row.status}</Typography>
 
-        <TableBody>
-          {rows.length > 0 ? (
-            rows.map((row) => (
-              <TableRow key={row.checkId} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                <TableCell>{row.checkId}</TableCell>
-                <TableCell>{row.passengerName}</TableCell>
-                <TableCell>{row.passportNumber}</TableCell>
-                <TableCell>{row.nationality}</TableCell>
-                <TableCell>{row.flightNumber}</TableCell>
-                <TableCell>{row.departure}</TableCell>
-                <TableCell>{row.destination}</TableCell>
-                <TableCell>{row.seatNumber}</TableCell>
-                <TableCell>{row.gateNumber}</TableCell>
-                <TableCell>{row.boardingTime}</TableCell>
-                <TableCell>{row.baggageCount}</TableCell>
-                <TableCell>{row.baggageWeight}</TableCell>
-                <TableCell>{row.mealPreference}</TableCell>
-                <TableCell>{row.status}</TableCell>
-                <TableCell>
-                  <Button
-                    sx={{ margin: '0 8px' }}
-                    onClick={() => selectedCheck(row)}
-                  >
-                    Update
-                  </Button>
-                  <Button
-                    sx={{ margin: '0 8px' }}
-                    onClick={() => deleteCheck({ checkId: row.checkId })}
-                    color="error"
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={15} align="center">
-                No Data
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+              <Button variant="contained" color="info" onClick={() => selectedCheck(row)}>Update</Button>
+              <Button variant="contained" color="error" onClick={() => deleteCheck({ checkId: row.checkId })}>Delete</Button>
+            </Box>
+          </Paper>
+        ))
+      ) : (
+        <Typography>No check-ins available</Typography>
+      )}
+    </Box>
   );
 };
 

@@ -1,78 +1,63 @@
-import {
-  Avatar,
-  Button,
-  Grid,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from '@mui/material';
+import { Box, Paper, Typography, Avatar } from "@mui/material";
+import { useEffect, useState } from "react";
+import Axios from "axios";
 
-const RegistersTable = ({ rows, selectedRegister, deleteRegister }) => {
+const RegistersTable = () => {
+  const [registers, setRegisters] = useState([]);
+
+  useEffect(() => {
+    getRegisters();
+  }, []);
+
+  const getRegisters = () => {
+    Axios.get("http://localhost:3001/api/registers") // Replace with your actual API endpoint
+      .then((response) => {
+        setRegisters(response.data?.response || []);
+      })
+      .catch((error) => {
+        console.error("Axios error:", error);
+        setRegisters([]);
+      });
+  };
+
   return (
-    <Grid container>
-      <Grid item xs={12}>
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Photo</TableCell>
-                <TableCell>ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Password</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
+    <Box sx={{ marginBottom: "30px" }}>
+      <Typography variant="h5" sx={{ marginBottom: "15px" }}>
+        Registered Users
+      </Typography>
 
-            <TableBody>
-              {rows.map((row, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    {row.profilePhoto ? (
-                      <Avatar src={row.profilePhoto} alt={row.name} sx={{ width: 40, height: 40 }} />
-                    ) : (
-                      <Avatar sx={{ width: 40, height: 40, bgcolor: '#ccc' }} />
-                    )}
-                  </TableCell>
-                  <TableCell>{row.id}</TableCell>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.email}</TableCell>
-                  <TableCell>{row.phone}</TableCell>
-                  <TableCell>{row.password}</TableCell>
-                  <TableCell>
-                    <Button variant="outlined" onClick={() => selectedRegister(row)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      onClick={() => {
-                        if (window.confirm('Are you sure?')) deleteRegister(row);
-                      }}
-                      sx={{ ml: 1 }}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} align="center">
-                    No data available.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Grid>
-    </Grid>
+      {registers.length > 0 ? (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+          {registers.map((user) => (
+            <Paper
+              key={user.id}
+              sx={{
+                padding: 2,
+                minWidth: 200,
+                maxWidth: 250,
+                flex: "1 1 200px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+                alignItems: "center",
+              }}
+            >
+              <Avatar
+                src={user.profilePhoto || ""}
+                alt={user.name}
+                sx={{ width: 60, height: 60, marginBottom: 1 }}
+              />
+              <Typography><strong>ID:</strong> {user.id}</Typography>
+              <Typography><strong>Name:</strong> {user.name}</Typography>
+              <Typography><strong>Email:</strong> {user.email}</Typography>
+              <Typography><strong>Phone:</strong> {user.phone}</Typography>
+            </Paper>
+          ))}
+        </Box>
+      ) : (
+        <Typography>No registered users found</Typography>
+      )}
+    </Box>
   );
 };
 
