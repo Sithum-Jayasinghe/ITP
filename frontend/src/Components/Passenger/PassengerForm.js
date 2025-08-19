@@ -1,173 +1,131 @@
-import { Button, Grid, Input, Typography } from '@mui/material';
+import { Button, Grid, Input, Typography, MenuItem, TextField, Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-const PassengerForm = ({ addPassenger, updatePassenger, submitted, data, isEdit }) => {
+const baggageOptions = ["10kg", "15kg", "20kg", "25kg"];
+const mealOptions = ["Veg", "Non-Veg"];
+const seatNumbers = Array.from({ length: 100 }, (_, i) => i + 1);
 
+const PassengerForm = ({ addPassenger, updatePassenger, submitted, data, isEdit, showAlert }) => {
   const [id, setId] = useState('');
   const [name, setName] = useState('');
   const [details, setDetails] = useState('');
   const [baggage, setBaggage] = useState('');
-  const [baggagePrice, setBaggagePrice] = useState('');
+  const [baggagePrice, setBaggagePrice] = useState(0);
   const [meal, setMeal] = useState('');
-  const [mealPrice, setMealPrice] = useState('');
+  const [mealPrice, setMealPrice] = useState(0);
+  const [seat, setSeat] = useState(null);
+  const [seatClass, setSeatClass] = useState('');
+
+  useEffect(() => { if (!submitted) resetForm(); }, [submitted]);
 
   useEffect(() => {
-    if (!submitted) {
-      setId('');
-      setName('');
-      setDetails('');
-      setBaggage('');
-      setBaggagePrice('');
-      setMeal('');
-      setMealPrice('');
-    }
-  }, [submitted]);
-
-  useEffect(() => {
-    if (data && data.id && data.id !== 0) {
+    if (data && data.id) {
       setId(data.id);
       setName(data.name);
       setDetails(data.details || '');
       setBaggage(data.baggage || '');
-      setBaggagePrice(data.baggagePrice || '');
       setMeal(data.meal || '');
-      setMealPrice(data.mealPrice || '');
+      setSeat(data.seat || null);
+      if (data.seat) setSeatClass(data.seat <= 20 ? "First Class" : "Economy");
     }
   }, [data]);
 
+  useEffect(() => {
+    setBaggagePrice(baggage ? parseInt(baggage.replace("kg","")) * 100 : 0);
+  }, [baggage]);
+
+  useEffect(() => {
+    setMealPrice(meal === "Veg" ? 500 : meal === "Non-Veg" ? 700 : 0);
+  }, [meal]);
+
+  const resetForm = () => {
+    setId(''); setName(''); setDetails(''); setBaggage(''); setBaggagePrice(0);
+    setMeal(''); setMealPrice(0); setSeat(null); setSeatClass('');
+  };
+
+  const handleSeatClick = (num) => {
+    setSeat(num);
+    setSeatClass(num <= 20 ? "First Class" : "Economy");
+  };
+
+  const handleSubmit = () => {
+    const passengerData = { id, name, details, baggage, baggagePrice, meal, mealPrice, seat };
+    if (isEdit) {
+      updatePassenger(passengerData);
+      showAlert("Passenger Updated Successfully", "success");
+    } else {
+      addPassenger(passengerData);
+      showAlert("Passenger Added Successfully", "success");
+    }
+  };
+
   return (
-    <Grid container spacing={2} sx={{ backgroundColor: '#fff', marginBottom: '30px', display: 'block', padding: '20px' }}>
-      
+    <Grid container spacing={2} sx={{ backgroundColor: '#fff', marginBottom: '30px', padding: '20px', borderRadius: 2, boxShadow: 3 }}>
+      <Grid item xs={12}><Typography variant="h5">Passenger Form</Typography></Grid>
+
+      <Grid item xs={12} sm={6}>
+        <Typography>ID</Typography>
+        <Input type="number" fullWidth value={id} onChange={e => setId(e.target.value)} />
+      </Grid>
+
+      <Grid item xs={12} sm={6}>
+        <Typography>Name</Typography>
+        <Input type="text" fullWidth value={name} onChange={e => setName(e.target.value)} />
+      </Grid>
+
+      <Grid item xs={12} sm={6}>
+        <Typography>Details</Typography>
+        <Input placeholder="Age, Passport No..." fullWidth value={details} onChange={e => setDetails(e.target.value)} />
+      </Grid>
+
+      <Grid item xs={12} sm={6}>
+        <TextField select label="Baggage" fullWidth value={baggage} onChange={e => setBaggage(e.target.value)}>
+          {baggageOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+        </TextField>
+        <Typography sx={{ mt: 1 }}>Price: LKR {baggagePrice}</Typography>
+      </Grid>
+
+      <Grid item xs={12} sm={6}>
+        <TextField select label="Meal" fullWidth value={meal} onChange={e => setMeal(e.target.value)}>
+          {mealOptions.map(opt => <MenuItem key={opt} value={opt}>{opt}</MenuItem>)}
+        </TextField>
+        <Typography sx={{ mt: 1 }}>Price: LKR {mealPrice}</Typography>
+      </Grid>
+
       <Grid item xs={12}>
-        <Typography component={'h1'} sx={{ color: '#000' }}>Passenger Form</Typography>
+        <Typography>Select Seat:</Typography>
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+          {seatNumbers.map(num => (
+            <Button
+              key={num}
+              variant="contained"
+              sx={{
+                width: 50,
+                height: 50,
+                backgroundColor: seat === num ? "#00c6e6" : num <= 20 ? "#FFD700" : "#90CAF9",
+                "&:hover": { opacity: 0.8 }
+              }}
+              onClick={() => handleSeatClick(num)}
+            >
+              {num}
+            </Button>
+          ))}
+        </Box>
+        {seat && <Typography mt={1}>Selected Seat: {seat} ({seatClass})</Typography>}
       </Grid>
 
-      {/* Passenger ID */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="id" sx={labelStyle}>
-          ID
-        </Typography>
-        <Input
-          type="number"
-          id="id"
-          name="id"
-          sx={{ width: '400px' }}
-          value={id}
-          onChange={e => setId(e.target.value)}
-        />
+      <Grid item xs={12}>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ boxShadow: 2 }}
+          onClick={handleSubmit}
+        >
+          {isEdit ? "Update Passenger" : "Add Passenger"}
+        </Button>
       </Grid>
-
-      {/* Passenger Name */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="name" sx={labelStyle}>
-          Name
-        </Typography>
-        <Input
-          type="text"
-          id="name"
-          name="name"
-          sx={{ width: '400px' }}
-          value={name}
-          onChange={e => setName(e.target.value)}
-        />
-      </Grid>
-
-      {/* Passenger Details */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="details" sx={labelStyle}>
-          Details
-        </Typography>
-        <Input
-          type="text"
-          id="details"
-          name="details"
-          placeholder="Age, Passport No..."
-          sx={{ width: '400px' }}
-          value={details}
-          onChange={e => setDetails(e.target.value)}
-        />
-      </Grid>
-
-      {/* Baggage */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="baggage" sx={labelStyle}>
-          Baggage
-        </Typography>
-        <Input
-          type="text"
-          id="baggage"
-          name="baggage"
-          placeholder="e.g. 20kg"
-          sx={{ width: '400px' }}
-          value={baggage}
-          onChange={e => setBaggage(e.target.value)}
-        />
-      </Grid>
-
-      {/* Baggage Price */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="baggagePrice" sx={labelStyle}>
-          Baggage Price
-        </Typography>
-        <Input
-          type="number"
-          id="baggagePrice"
-          name="baggagePrice"
-          placeholder="LKR"
-          sx={{ width: '400px' }}
-          value={baggagePrice}
-          onChange={e => setBaggagePrice(e.target.value)}
-        />
-      </Grid>
-
-      {/* Meal */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="meal" sx={labelStyle}>
-          Meal
-        </Typography>
-        <Input
-          type="text"
-          id="meal"
-          name="meal"
-          placeholder="e.g. Veg / Non-Veg"
-          sx={{ width: '400px' }}
-          value={meal}
-          onChange={e => setMeal(e.target.value)}
-        />
-      </Grid>
-
-      {/* Meal Price */}
-      <Grid item xs={12} sm={6} sx={{ display: 'flex' }}>
-        <Typography component={'label'} htmlFor="mealPrice" sx={labelStyle}>
-          Meal Price
-        </Typography>
-        <Input
-          type="number"
-          id="mealPrice"
-          name="mealPrice"
-          placeholder="LKR"
-          sx={{ width: '400px' }}
-          value={mealPrice}
-          onChange={e => setMealPrice(e.target.value)}
-        />
-      </Grid>
-
-      {/* Submit Button */}
-      <Button
-        sx={buttonStyle}
-        onClick={() =>
-          isEdit
-            ? updatePassenger({ id, name, details, baggage, baggagePrice, meal, mealPrice })
-            : addPassenger({ id, name, details, baggage, baggagePrice, meal, mealPrice })
-        }
-      >
-        {isEdit ? 'Update' : 'Add'}
-      </Button>
     </Grid>
   );
 };
-
-const labelStyle = { color: '#000', marginRight: '20px', fontSize: '16px', width: '150px', display: 'block' };
-const buttonStyle = { margin: 'auto', marginBottom: '20px', backgroundColor: '#00c6e6', color: '#000', marginLeft: '15px', marginTop: '20px', '&:hover': { opacity: 0.7 } };
 
 export default PassengerForm;

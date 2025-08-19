@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import ReactDOM from "react-dom";
+
+
 import {
   Button,
   FormControl,
@@ -22,7 +23,8 @@ import {
   Grow,
   Collapse,
   Snackbar,
-  IconButton
+  IconButton,
+  Paper
 } from "@mui/material";
 import {
   ConfirmationNumber,
@@ -33,7 +35,9 @@ import {
   Phone,
   ScheduleSend,
   CreditCardOff,
-  Close
+  Close,
+  Restaurant,
+  Work
 } from "@mui/icons-material";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -101,6 +105,7 @@ const OtpInput = ({ length = 6, value, onChange, disabled }) => {
   };
 
   return (
+    
     <Box
       sx={{
         display: "flex",
@@ -166,6 +171,10 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
   const [card, setCard] = useState("");
   const [expiry, setExpiry] = useState(null);
   const [cvv, setCvv] = useState("");
+
+  // New dummy price states
+  const [totalMealsPrice, setTotalMealsPrice] = useState(1500);
+  const [totalBaggagePrice, setTotalBaggagePrice] = useState(750);
 
   // OTP states
   const [otp, setOtp] = useState("");
@@ -375,7 +384,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
           sx={{
             p: { xs: 2, md: 4 },
             borderRadius: 3,
-            boxShadow: `0 4px 12px rgba(0,0,0,0.1)`,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
             width: "100%",
             maxWidth: 1000,
             border: `1px solid ${theme.palette.divider}`,
@@ -391,6 +400,32 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
           >
             ✈️ AirGo Payment Gateway
           </Typography>
+
+          {/* New Boxes for Total Meals Price and Baggage Price */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={6}>
+              <Paper elevation={3} sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Restaurant color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                <Typography variant="h6" fontWeight="bold" color="text.secondary">
+                  Total Meals Price
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="primary">
+                  LKR {totalMealsPrice.toLocaleString()}
+                </Typography>
+              </Paper>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Paper elevation={3} sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Work color="primary" sx={{ fontSize: 40, mb: 1 }} />
+                <Typography variant="h6" fontWeight="bold" color="text.secondary">
+                  Total Baggage Price
+                </Typography>
+                <Typography variant="h5" fontWeight="bold" color="primary">
+                  LKR {totalBaggagePrice.toLocaleString()}
+                </Typography>
+              </Paper>
+            </Grid>
+          </Grid>
 
           {paymentResult && (
             <Alert severity={paymentResult.success ? "success" : "error"} sx={{ mb: 2 }}>
@@ -691,7 +726,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                         transition: "transform 0.2s ease, box-shadow 0.2s ease",
                         "&:hover": {
                           transform: "scale(1.05)",
-                          boxShadow: `0 4px 20px rgba(0, 123, 255, 0.4)`,
+                          boxShadow: '0 4px 20px rgba(0, 123, 255, 0.4)',
                         },
                       }}
                     >
