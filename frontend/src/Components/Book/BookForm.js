@@ -1,4 +1,4 @@
-import { Box, Grid, Typography, TextField, Select, MenuItem, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, Button, InputLabel, InputAdornment } from "@mui/material";
+import { Box, Grid, Typography, TextField, Select, MenuItem, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, Button, InputLabel, InputAdornment, Snackbar, Alert, Slide } from "@mui/material";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import FlightLandIcon from "@mui/icons-material/FlightLand";
 import EventIcon from "@mui/icons-material/Event";
@@ -7,23 +7,10 @@ import ClassIcon from "@mui/icons-material/Class";
 import { useEffect, useState } from "react";
 
 // International countries list
-const countries = [
-  "United States",
-  "Canada",
-  "United Kingdom",
-  "Germany",
-  "France",
-  "Australia",
-  "Japan",
-  "India",
-  "Brazil",
-  "South Africa",
-  "China",
-  "Italy",
-  "Spain",
-  "Netherlands",
-  "Sweden"
-];
+const countries = ["United States","Canada","United Kingdom","Germany","France","Australia","Japan","India","Brazil","South Africa","China","Italy","Spain","Netherlands","Sweden"];
+
+// Slide transition for Snackbar
+const TransitionUp = (props) => <Slide {...props} direction="down" />;
 
 const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode }) => {
   const [id, setId] = useState(null);
@@ -35,6 +22,18 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
   const [travelClass, setTravelClass] = useState("Economy");
   const [tripType, setTripType] = useState("round");
   const [flexibleDates, setFlexibleDates] = useState(false);
+
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+
+  // Show modern alert
+  const showAlert = (message, severity = "success") => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
 
   useEffect(() => { if (!submitted) resetForm(); }, [submitted]);
 
@@ -200,16 +199,39 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
               py: 1.5,
               "&:hover": { opacity: 0.85 }
             }}
-            onClick={() =>
-              isEdit
-                ? updateBooking({ id, from, to, departure, returnDate, passengers, travelClass, tripType, flexibleDates })
-                : addBooking({ from, to, departure, returnDate, passengers, travelClass, tripType, flexibleDates })
-            }
+            onClick={() => {
+              if (isEdit) {
+                updateBooking({ id, from, to, departure, returnDate, passengers, travelClass, tripType, flexibleDates });
+                showAlert(`Booking #${id} updated successfully!`, "info");
+              } else {
+                const newBooking = { from, to, departure, returnDate, passengers, travelClass, tripType, flexibleDates, id: Date.now() };
+                addBooking(newBooking);
+                showAlert(`Booking added successfully!`, "success");
+                resetForm();
+              }
+            }}
           >
             {isEdit ? "Update Booking" : "Book Flight"}
           </Button>
         </Grid>
       </Grid>
+
+      {/* Modern Snackbar */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={2500}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        TransitionComponent={TransitionUp}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: "100%", borderRadius: 3, fontWeight: 600, fontSize: "1rem", boxShadow: 3 }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

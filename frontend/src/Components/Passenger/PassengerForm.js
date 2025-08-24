@@ -1,7 +1,7 @@
 import { Button, Grid, Input, Typography, MenuItem, TextField, Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-const baggageOptions = ["10kg", "15kg", "20kg", "25kg"];
+const baggageOptions = ["10kg", "15kg", "20kg", "25kg", "30kg"];
 const mealOptions = ["Veg", "Non-Veg"];
 const seatNumbers = Array.from({ length: 100 }, (_, i) => i + 1);
 

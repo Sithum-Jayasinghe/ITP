@@ -13,6 +13,7 @@ import {
   Typography,
   Snackbar,
   Alert,
+  Slide,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -30,34 +31,49 @@ import { useState } from "react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-const BooksTable = ({ rows, selectedBooking, deleteBooking, darkMode }) => {
+const TransitionUp = (props) => <Slide {...props} direction="down" />;
+
+const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, addedBooking }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
+  // Show modern alert
+  const showAlert = (message, severity = "success") => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  // Handle delete
   const handleDeleteClick = (booking) => {
     setBookingToDelete(booking);
     setOpenDialog(true);
   };
 
   const confirmDelete = () => {
-    deleteBooking({ id: bookingToDelete.id });
-    setOpenDialog(false);
-    setBookingToDelete(null);
-    setSnackbarMessage("Booking deleted successfully!");
-    setSnackbarSeverity("error");
-    setSnackbarOpen(true);
+    if (bookingToDelete?.id) {
+      deleteBooking({ id: bookingToDelete.id });
+      setOpenDialog(false);
+      setBookingToDelete(null);
+      showAlert("Booking deleted successfully!", "error");
+    }
   };
 
+  // Handle update
   const handleUpdateClick = (booking) => {
     selectedBooking(booking);
-    setSnackbarMessage("Booking ready to update!");
-    setSnackbarSeverity("info");
-    setSnackbarOpen(true);
+    showAlert(`Booking #${booking.id} ready to update!`, "info");
   };
 
+  // Handle add booking alert
+  if (addedBooking) {
+    showAlert(`Booking #${addedBooking.id} added successfully!`, "success");
+  }
+
+  // Generate PDF
   const generatePDF = (booking) => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -136,8 +152,27 @@ const BooksTable = ({ rows, selectedBooking, deleteBooking, darkMode }) => {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={snackbarOpen} autoHideDuration={2000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
-        <Alert onClose={() => setSnackbarOpen(false)} severity={snackbarSeverity} sx={{ width: "100%", borderRadius: 2, fontWeight: 500 }}>{snackbarMessage}</Alert>
+      {/* Modern Snackbar for Add/Update/Delete */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={2500}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        TransitionComponent={TransitionUp}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{
+            width: "100%",
+            borderRadius: 3,
+            fontWeight: 600,
+            fontSize: "1rem",
+            boxShadow: 3,
+          }}
+        >
+          {snackbarMessage}
+        </Alert>
       </Snackbar>
     </>
   );
