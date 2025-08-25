@@ -3,6 +3,7 @@ import BookForm from "./BookForm";
 import BooksTable from "./BooksTable";
 import Axios from "axios";
 import { useEffect, useState } from "react";
+import Header from "../Main/Header";
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -56,31 +57,48 @@ const Books = () => {
   };
 
   return (
-    <Box sx={{ width: "90%", margin: "50px auto", padding: "20px", borderRadius: 3, backgroundColor: darkMode ? "#121212" : "#f5f5f5", color: darkMode ? "#fff" : "#000" }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600 }}>Flight Bookings</Typography>
-        <FormControlLabel control={<Switch checked={darkMode} onChange={() => setDarkMode(!darkMode)} />} label="Dark Mode" />
-      </Box>
+    <Box sx={{ minHeight: "100vh", bgcolor: darkMode ? "#121212" : "#f5f5f5", color: darkMode ? "#fff" : "#000" }}>
+      {/* Header added */}
+      <Header />
 
-      {/* Search */}
-      <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-        <TextField
-          value={searchTerm}
-          onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search bookings..."
-          fullWidth
-          sx={{
-            input: { color: darkMode ? "#fff" : "#000" },
-            label: { color: darkMode ? "#fff" : "#000" },
-          }}
+      <Box sx={{ width: "90%", margin: "50px auto", padding: "20px", borderRadius: 3, backgroundColor: darkMode ? "#1e1e1e" : "#fff" }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+          <Typography variant="h4" sx={{ fontWeight: 600 }}>Flight Bookings</Typography>
+          <FormControlLabel control={<Switch checked={darkMode} onChange={() => setDarkMode(!darkMode)} />} label="Dark Mode" />
+        </Box>
+
+        {/* Search */}
+        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+          <TextField
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search bookings..."
+            fullWidth
+            sx={{
+              input: { color: darkMode ? "#fff" : "#000" },
+              label: { color: darkMode ? "#fff" : "#000" },
+            }}
+          />
+        </Box>
+
+        {/* Form */}
+        <BookForm
+          addBooking={addBooking}
+          updateBooking={updateBooking}
+          submitted={submitted}
+          data={selectedBooking}
+          isEdit={isEdit}
+          darkMode={darkMode}
+        />
+
+        {/* Table */}
+        <BooksTable
+          rows={filteredBooks}
+          selectedBooking={(data) => { setSelectedBooking(data); setIsEdit(true); }}
+          deleteBooking={deleteBooking}
+          darkMode={darkMode}
         />
       </Box>
-
-      {/* Form */}
-      <BookForm addBooking={addBooking} updateBooking={updateBooking} submitted={submitted} data={selectedBooking} isEdit={isEdit} darkMode={darkMode} />
-
-      {/* Table */}
-      <BooksTable rows={filteredBooks} selectedBooking={(data) => { setSelectedBooking(data); setIsEdit(true); }} deleteBooking={deleteBooking} darkMode={darkMode} />
     </Box>
   );
 };

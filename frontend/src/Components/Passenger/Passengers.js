@@ -4,6 +4,7 @@ import PassengersTable from "./PassengersTable";
 import Axios from "axios";
 import { useEffect, useState } from "react";
 import SearchIcon from "@mui/icons-material/Search";
+import Header from "../Main/Header";
 
 const Passengers = () => {
   const [passengers, setPassengers] = useState([]);
@@ -58,6 +59,9 @@ const Passengers = () => {
 
   return (
     <Box sx={{ width: "90%", margin: "auto", marginTop: "50px" }}>
+      {/* Header Added */}
+      <Header />
+
       <TextField
         placeholder="Search by Name"
         fullWidth

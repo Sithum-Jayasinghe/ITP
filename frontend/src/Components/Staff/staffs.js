@@ -15,6 +15,7 @@ import StaffsTable from "./StaffsTable";
 import Axios from "axios";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import Header from "../Main/Header";
 
 const Staffs = () => {
   const [staffs, setStaffs] = useState([]);
@@ -168,6 +169,7 @@ const Staffs = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <Header /> {/* Added Header at the top */}
       <Box sx={{ width: "90%", margin: "50px auto" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
           <Typography variant="h4" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>

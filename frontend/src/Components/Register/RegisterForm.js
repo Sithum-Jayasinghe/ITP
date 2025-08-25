@@ -16,7 +16,7 @@ import LockIcon from "@mui/icons-material/Lock";
 import PhoneIcon from "@mui/icons-material/Phone";
 import UploadIcon from "@mui/icons-material/Upload";
 
-const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit }) => {
+const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, onLoginClick }) => {
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -109,7 +109,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit }) 
           {isEdit ? "Update User" : "Register User"}
         </Typography>
 
-        {/* Inputs stacked vertically */}
+        {/* Inputs */}
         <Input
           type="number"
           placeholder="User ID"
@@ -159,6 +159,18 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit }) 
         >
           {isEdit ? "Update" : "Add"}
         </Button>
+
+        {/* Login link */}
+        <Typography variant="body2" sx={{ mt: 1 }}>
+          Already have an account?{" "}
+          <Button
+            variant="text"
+            sx={{ color: "#00c6e6", fontWeight: "bold" }}
+            onClick={onLoginClick}
+          >
+            Login
+          </Button>
+        </Typography>
       </Stack>
     </Box>
   );

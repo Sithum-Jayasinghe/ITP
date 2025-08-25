@@ -26,6 +26,7 @@ import autoTable from "jspdf-autotable";
 import debounce from "lodash.debounce";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import 'leaflet/dist/leaflet.css';
+import Header from "../Main/Header";
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -85,16 +86,32 @@ const Schedules = () => {
   const addSchedule = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/createschedule", data)
-      .then(() => { getSchedules(); setSnackbar({ open: true, message: "Schedule added successfully", severity: "success" }); setSubmitted(false); setIsEdit(false); })
-      .catch(() => { setSnackbar({ open: true, message: "Failed to add schedule", severity: "error" }); setSubmitted(false); });
+      .then(() => { 
+        getSchedules(); 
+        setSnackbar({ open: true, message: "Schedule added successfully", severity: "success" }); 
+        setSubmitted(false); 
+        setIsEdit(false); 
+      })
+      .catch(() => { 
+        setSnackbar({ open: true, message: "Failed to add schedule", severity: "error" }); 
+        setSubmitted(false); 
+      });
   };
 
   // Update schedule
   const updateSchedule = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/updateschedule", data)
-      .then(() => { getSchedules(); setSnackbar({ open: true, message: "Schedule updated successfully", severity: "success" }); setSubmitted(false); setIsEdit(false); })
-      .catch(() => { setSnackbar({ open: true, message: "Failed to update schedule", severity: "error" }); setSubmitted(false); });
+      .then(() => { 
+        getSchedules(); 
+        setSnackbar({ open: true, message: "Schedule updated successfully", severity: "success" }); 
+        setSubmitted(false); 
+        setIsEdit(false); 
+      })
+      .catch(() => { 
+        setSnackbar({ open: true, message: "Failed to update schedule", severity: "error" }); 
+        setSubmitted(false); 
+      });
   };
 
   // Delete schedule
@@ -166,6 +183,9 @@ const Schedules = () => {
 
   return (
     <Box sx={{ width: "calc(100% - 100px)", margin: "auto", marginTop: 10, bgcolor: darkMode ? "#121212" : "#f9fafb", color: darkMode ? "#e0e0e0" : "#222", minHeight: "100vh", pb: 5, borderRadius: 3, boxShadow: darkMode ? "0 4px 12px rgba(0,0,0,0.7)" : "0 4px 12px rgba(0,0,0,0.1)", transition: "background-color 0.3s ease, color 0.3s ease" }}>
+
+      {/* Header Added */}
+      <Header />
 
       {/* Dark Mode Toggle */}
       <Box sx={{ mb: 3, textAlign: "right" }}>
