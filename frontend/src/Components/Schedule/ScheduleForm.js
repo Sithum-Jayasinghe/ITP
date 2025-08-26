@@ -6,8 +6,6 @@ import {
   Typography,
   MenuItem,
   InputAdornment,
-  //Tooltip,
-  //IconButton,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
@@ -17,11 +15,8 @@ import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import FlightLandIcon from '@mui/icons-material/FlightLand';
 import EventSeatIcon from '@mui/icons-material/EventSeat';
 import ScheduleIcon from '@mui/icons-material/Schedule';
-import BooksTable from "../Check/ChecksTable";
 
-//import InfoIcon from '@mui/icons-material/Info';
-
-// Example airport list for Autocomplete
+// Example airport list for Departure & Arrival
 const airports = [
   'Colombo Bandaranaike International Airport (CMB)',
   'London Heathrow Airport (LHR)',
@@ -29,6 +24,19 @@ const airports = [
   'John F. Kennedy International Airport (JFK)',
   'Singapore Changi Airport (SIN)',
   'Tokyo Haneda Airport (HND)',
+  'Frankfurt Airport (FRA)',
+  'Paris Charles de Gaulle Airport (CDG)',
+  'Sydney Kingsford Smith Airport (SYD)',
+  'Hong Kong International Airport (HKG)',
+  'Doha Hamad International Airport (DOH)',
+  'Los Angeles International Airport (LAX)',
+  'Toronto Pearson International Airport (YYZ)',
+  'Amsterdam Schiphol Airport (AMS)',
+  'Beijing Capital International Airport (PEK)',
+  'Seoul Incheon International Airport (ICN)',
+  'Bangkok Suvarnabhumi Airport (BKK)',
+  'Kuala Lumpur International Airport (KUL)',
+  'Istanbul Airport (IST)',
 ];
 
 // Example aircraft types
@@ -61,6 +69,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
   const [seats, setSeats] = useState('');
   const [status, setStatus] = useState('');
 
+  // Reset form when submission completes
   useEffect(() => {
     if (!submitted) {
       setId('');
@@ -75,6 +84,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
     }
   }, [submitted]);
 
+  // Load existing schedule data when editing
   useEffect(() => {
     if (data && data.id) {
       setId(data.id);
@@ -89,6 +99,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
     }
   }, [data]);
 
+  // Validate form
   const isFormValid = () => {
     return (
       id &&
@@ -103,6 +114,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
     );
   };
 
+  // Handle form submission
   const handleSubmit = () => {
     if (!isFormValid()) {
       alert('Please fill all fields correctly.');
@@ -143,7 +155,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
         </Typography>
 
         <Grid container spacing={3}>
-          {/* ID */}
+          {/* Flight ID */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Flight ID"
@@ -267,7 +279,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
             />
           </Grid>
 
-          {/* Aircraft */}
+          {/* Aircraft Type */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Aircraft Type"
@@ -324,7 +336,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
             </TextField>
           </Grid>
 
-          {/* Submit */}
+          {/* Submit Button */}
           <Grid item xs={12} sx={{ textAlign: 'center', marginTop: 3 }}>
             <Button
               variant="contained"
