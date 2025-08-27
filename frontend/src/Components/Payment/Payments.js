@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
+// src/components/Payments/Payments.js
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import {
   Box,
   Button,
@@ -95,60 +96,59 @@ const Payments = () => {
   };
 
   // Update Payment
-const updatePayment = (data) => {
-  setSubmitted(true);
-  previousPaymentRef.current = selectedPayment; // Save previous for undo
+  const updatePayment = (data) => {
+    setSubmitted(true);
+    previousPaymentRef.current = selectedPayment; // Save previous for undo
 
-  const totalMealsPrice = data.totalMealsPrice || 0;
-  const totalBaggagePrice = data.totalBaggagePrice || 0;
-  const totalPrice =
-    Number(data.price) + Number(totalMealsPrice) + Number(totalBaggagePrice);
-  const paymentData = { ...data, totalMealsPrice, totalBaggagePrice, totalPrice };
+    const totalMealsPrice = data.totalMealsPrice || 0;
+    const totalBaggagePrice = data.totalBaggagePrice || 0;
+    const totalPrice =
+      Number(data.price) + Number(totalMealsPrice) + Number(totalBaggagePrice);
+    const paymentData = { ...data, totalMealsPrice, totalBaggagePrice, totalPrice };
 
-  Axios.post("http://localhost:3001/api/updatepayment", paymentData)
-    .then(() => {
-      getPayments();
+    Axios.post("http://localhost:3001/api/updatepayment", paymentData)
+      .then(() => {
+        getPayments();
 
-      setSnackbar({
-        open: true,
-        severity: "info",
-        message: `✏️ Booking updated successfully for ${data.passengerName || data.passenger} (ID: ${data.id})`,
-        action: (
-          <Button
-            variant="outlined"
-            color="inherit"
-            size="small"
-            onClick={() => {
-              updatePayment(previousPaymentRef.current);
-              setSnackbar({ ...snackbar, open: false });
-            }}
-            sx={{
-              textTransform: "none",
-              fontWeight: "bold",
-              ml: 1,
-              borderColor: "white",
-              color: "white",
-              "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
-            }}
-          >
-            UNDO
-          </Button>
-        ),
+        setSnackbar({
+          open: true,
+          severity: "info",
+          message: `✏️ Booking updated successfully for ${data.passengerName || data.passenger} (ID: ${data.id})`,
+          action: (
+            <Button
+              variant="outlined"
+              color="inherit"
+              size="small"
+              onClick={() => {
+                updatePayment(previousPaymentRef.current);
+                setSnackbar({ ...snackbar, open: false });
+              }}
+              sx={{
+                textTransform: "none",
+                fontWeight: "bold",
+                ml: 1,
+                borderColor: "white",
+                color: "white",
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.1)" },
+              }}
+            >
+              UNDO
+            </Button>
+          ),
+        });
+
+        setSubmitted(false);
+        setIsEdit(false);
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message: `⚠️ Failed to update booking #${data.id}. Please try again.`,
+        });
+        setSubmitted(false);
       });
-
-      setSubmitted(false);
-      setIsEdit(false);
-    })
-    .catch(() => {
-      setSnackbar({
-        open: true,
-        severity: "error",
-        message: `⚠️ Failed to update booking #${data.id}. Please try again.`,
-      });
-      setSubmitted(false);
-    });
-};
-
+  };
 
   // Delete Payment
   const deletePayment = (data) => {
@@ -220,7 +220,7 @@ const updatePayment = (data) => {
         </Box>
 
         {/* Payment Form */}
-        <PaymentForm addPayment={addPayment} updatePayment={updatePayment} submitted={submitted} data={selectedPayment} isEdit={isEdit} darkMode={darkMode} />
+        <PaymentForm addPayment={addPayment} updatePayment={updatePayment} submitted={submitted} data={selectedPayment} isEdit={isEdit} />
 
         {/* Search + Export */}
         <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4, mb: 2, flexWrap: "wrap" }}>

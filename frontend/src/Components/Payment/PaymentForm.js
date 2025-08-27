@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
-
-
 import {
   Button,
   FormControl,
@@ -21,10 +19,18 @@ import {
   useTheme,
   Fade,
   Grow,
-  Collapse,
   Snackbar,
   IconButton,
-  Paper
+  Paper,
+  Card,
+  CardContent,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
+  Avatar,
+  Chip,
+  Divider
 } from "@mui/material";
 import {
   ConfirmationNumber,
@@ -37,14 +43,20 @@ import {
   CreditCardOff,
   Close,
   Restaurant,
-  Work
+  Work,
+  Flight,
+  Payment,
+  CheckCircle,
+  LocalAtm,
+  AccountBalance,
+  QrCode2
 } from "@mui/icons-material";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
-import Passenger from "../Passenger/PassengerForm"
 
+// Modern OTP Input Component
 const OtpInput = ({ length = 6, value, onChange, disabled }) => {
   const inputsRef = useRef([]);
   const [otpArr, setOtpArr] = useState(Array(length).fill(""));
@@ -106,7 +118,6 @@ const OtpInput = ({ length = 6, value, onChange, disabled }) => {
   };
 
   return (
-    
     <Box
       sx={{
         display: "flex",
@@ -131,8 +142,196 @@ const OtpInput = ({ length = 6, value, onChange, disabled }) => {
           }}
           disabled={disabled}
           type="tel"
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            }
+          }}
         />
       ))}
+    </Box>
+  );
+};
+
+// Flight Info Card Component
+const FlightInfoCard = ({ flight, flightData }) => {
+  const selectedFlight = flightData.find(f => f.code === flight);
+  
+  if (!selectedFlight) return null;
+  
+  return (
+    <Card sx={{ 
+      mb: 3, 
+      background: 'linear-gradient(135deg, #1976d2 0%, #115293 100%)',
+      color: "white",
+      borderRadius: '16px',
+      boxShadow: '0 8px 24px rgba(25, 118, 210, 0.2)'
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <Flight sx={{ fontSize: 28 }} />
+          <Typography variant="h6" fontWeight="600">
+            {selectedFlight.airline} - {selectedFlight.code}
+          </Typography>
+        </Box>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Departure: {selectedFlight.departure}
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Arrival: {selectedFlight.arrival}
+            </Typography>
+          </Box>
+          <Chip 
+            label={`LKR ${selectedFlight.price.toLocaleString()}`} 
+            sx={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.2)', 
+              color: 'white',
+              fontWeight: '600',
+              fontSize: '1rem'
+            }} 
+          />
+        </Box>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Price Summary Component
+const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
+  const totalPrice = flightPrice + mealsPrice + baggagePrice;
+  
+  return (
+    <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid item xs={12} sm={4}>
+        <Paper elevation={0} sx={{ 
+          p: 2, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)'
+        }}>
+          <Flight color="primary" sx={{ fontSize: 32, mb: 1 }} />
+          <Typography variant="body2" fontWeight="500" color="text.secondary">
+            Flight Price
+          </Typography>
+          <Typography variant="h6" fontWeight="700" color="primary">
+            LKR {flightPrice.toLocaleString()}
+          </Typography>
+        </Paper>
+      </Grid>
+      <Grid item xs={12} sm={4}>
+        <Paper elevation={0} sx={{ 
+          p: 2, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)'
+        }}>
+          <Restaurant color="primary" sx={{ fontSize: 32, mb: 1 }} />
+          <Typography variant="body2" fontWeight="500" color="text.secondary">
+            Meals Price
+          </Typography>
+          <Typography variant="h6" fontWeight="700" color="primary">
+            LKR {mealsPrice.toLocaleString()}
+          </Typography>
+        </Paper>
+      </Grid>
+      <Grid item xs={12} sm={4}>
+        <Paper elevation={0} sx={{ 
+          p: 2, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)'
+        }}>
+          <Work color="primary" sx={{ fontSize: 32, mb: 1 }} />
+          <Typography variant="body2" fontWeight="500" color="text.secondary">
+            Baggage Price
+          </Typography>
+          <Typography variant="h6" fontWeight="700" color="primary">
+            LKR {baggagePrice.toLocaleString()}
+          </Typography>
+        </Paper>
+      </Grid>
+      <Grid item xs={12}>
+        <Paper elevation={0} sx={{ 
+          p: 2.5, 
+          textAlign: 'center', 
+          background: 'linear-gradient(135deg, #1976d2 0%, #115293 100%)',
+          color: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
+        }}>
+          <Typography variant="h5" fontWeight="800">
+            Total: LKR {totalPrice.toLocaleString()}
+          </Typography>
+        </Paper>
+      </Grid>
+    </Grid>
+  );
+};
+
+// Payment Method Selector Component
+const PaymentMethodSelector = ({ method, setMethod, processing }) => {
+  const paymentMethods = [
+    { value: "Credit Card", icon: <CreditCard />, label: "Credit Card" },
+    { value: "Debit Card", icon: <CreditCard />, label: "Debit Card" },
+    { value: "PayPal", icon: <AccountBalance />, label: "PayPal" },
+    { value: "Bank Transfer", icon: <AccountBalance />, label: "Bank Transfer" },
+    { value: "QR Payment", icon: <QrCode2 />, label: "QR Code" },
+  ];
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+        Select Payment Method
+      </Typography>
+      <Grid container spacing={2}>
+        {paymentMethods.map((pm) => (
+          <Grid item xs={6} sm={4} key={pm.value}>
+            <Paper
+              elevation={method === pm.value ? 4 : 1}
+              onClick={() => !processing && setMethod(pm.value)}
+              sx={{
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '12px',
+                cursor: processing ? 'default' : 'pointer',
+                border: method === pm.value ? '2px solid #1976d2' : '2px solid transparent',
+                transition: 'all 0.2s ease',
+                backgroundColor: method === pm.value ? 'rgba(25, 118, 210, 0.08)' : 'white',
+                '&:hover': {
+                  transform: processing ? 'none' : 'translateY(-2px)',
+                  boxShadow: 4,
+                },
+                height: '100%'
+              }}
+            >
+              <Avatar sx={{ 
+                bgcolor: method === pm.value ? 'primary.main' : 'grey.200',
+                color: method === pm.value ? 'white' : 'grey.700',
+                mb: 1,
+                width: 48,
+                height: 48
+              }}>
+                {pm.icon}
+              </Avatar>
+              <Typography variant="body2" fontWeight="500">
+                {pm.label}
+              </Typography>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
     </Box>
   );
 };
@@ -141,21 +340,50 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
   const theme = useTheme();
   const [loaded, setLoaded] = useState(false);
   const [toast, setToast] = useState(null);
+  const [activeStep, setActiveStep] = useState(0);
 
   const flightData = useMemo(
     () => [
-      { code: "AK123", price: 35000, available: true, airline: "AirAsia" },
-      { code: "UL456", price: 42000, available: true, airline: "SriLankan Airlines" },
-      { code: "QR789", price: 56000, available: false, airline: "Qatar Airways" },
-      { code: "EK202", price: 48000, available: true, airline: "Emirates" },
-      { code: "MH505", price: 39000, available: true, airline: "Malaysia Airlines" },
-      { code: "SQ308", price: 52000, available: true, airline: "Singapore Airlines" },
-      { code: "CX712", price: 45000, available: false, airline: "Cathay Pacific" },
-      { code: "GA432", price: 41000, available: true, airline: "Garuda Indonesia" },
-      { code: "JL601", price: 49000, available: true, airline: "Japan Airlines" },
-      { code: "TG345", price: 44000, available: true, airline: "Thai Airways" },
-      { code: "AI101", price: 38000, available: false, airline: "Air India" },
-      { code: "KE123", price: 47000, available: true, airline: "Korean Air" },
+      { 
+        code: "AK123", 
+        price: 35000, 
+        available: true, 
+        airline: "AirAsia",
+        departure: "CMB (12:30 PM)",
+        arrival: "KUL (07:30 PM)"
+      },
+      { 
+        code: "UL456", 
+        price: 42000, 
+        available: true, 
+        airline: "SriLankan Airlines",
+        departure: "CMB (02:15 PM)",
+        arrival: "DXB (07:45 PM)"
+      },
+      { 
+        code: "QR789", 
+        price: 56000, 
+        available: false, 
+        airline: "Qatar Airways",
+        departure: "CMB (10:20 AM)",
+        arrival: "DOH (02:40 PM)"
+      },
+      { 
+        code: "EK202", 
+        price: 48000, 
+        available: true, 
+        airline: "Emirates",
+        departure: "CMB (11:45 PM)",
+        arrival: "DXB (04:15 AM)"
+      },
+      { 
+        code: "MH505", 
+        price: 39000, 
+        available: true, 
+        airline: "Malaysia Airlines",
+        departure: "CMB (08:30 AM)",
+        arrival: "KUL (03:45 PM)"
+      },
     ],
     []
   );
@@ -167,15 +395,15 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
   const [status, setStatus] = useState("");
   const [phone, setPhone] = useState("");
   const [seat, setSeat] = useState("");
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState(0);
   const [method, setMethod] = useState("");
   const [card, setCard] = useState("");
   const [expiry, setExpiry] = useState(null);
   const [cvv, setCvv] = useState("");
 
-  // New dummy price states
-  const [totalMealsPrice, setTotalMealsPrice] = useState(1500);
-  const [totalBaggagePrice, setTotalBaggagePrice] = useState(750);
+  // Additional price states
+  const [mealsPrice, setMealsPrice] = useState(1500);
+  const [baggagePrice, setBaggagePrice] = useState(750);
 
   // OTP states
   const [otp, setOtp] = useState("");
@@ -201,7 +429,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
       setStatus(data.status || "");
       setPhone(data.phone || "");
       setSeat(data.seat || "");
-      setPrice(data.price || "");
+      setPrice(data.price || 0);
       setMethod(data.method || "");
       setCard(data.card || "");
       setExpiry(data.expiry ? dayjs(`01/${data.expiry}`) : null);
@@ -222,7 +450,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     setStatus("");
     setPhone("");
     setSeat("");
-    setPrice("");
+    setPrice(0);
     setMethod("");
     setCard("");
     setExpiry(null);
@@ -235,6 +463,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     setShowOtpDialog(false);
     setProcessing(false);
     setPaymentData(null);
+    setActiveStep(0);
   };
 
   const handleFlightChange = (e) => {
@@ -246,9 +475,10 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
       if (selectedFlight.available) {
         setPrice(selectedFlight.price);
         setFlightError("");
+        setActiveStep(1);
       } else {
         setFlightError("This flight is not available for booking");
-        setPrice("");
+        setPrice(0);
       }
     }
   };
@@ -312,6 +542,8 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     setPaymentResult(null);
     if (!validateForm()) return;
 
+    const totalAmount = price + mealsPrice + baggagePrice;
+    
     const payment = {
       id,
       flight,
@@ -319,11 +551,14 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
       status,
       phone,
       seat,
-      price,
+      price: totalAmount,
       method,
       card,
       expiry: expiry ? expiry.format("MM/YY") : "",
       cvv,
+      flightPrice: price,
+      mealsPrice,
+      baggagePrice
     };
 
     if (isEdit) {
@@ -379,57 +614,72 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
           minHeight: "100vh",
           p: 2,
           backgroundColor: "#f7f9fc",
+          backgroundImage: 'linear-gradient(120deg, #e0f7fa 0%, #f5f7fa 100%)',
         }}
       >
         <Box
           sx={{
             p: { xs: 2, md: 4 },
             borderRadius: 3,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
             width: "100%",
             maxWidth: 1000,
             border: `1px solid ${theme.palette.divider}`,
             backgroundColor: "#fff",
           }}
         >
-          <Typography
-            variant="h4"
-            color="primary"
-            fontWeight="700"
-            gutterBottom
-            sx={{ textAlign: "center", mb: 3 }}
-          >
-            ✈️ AirGo Payment Gateway
-          </Typography>
+          <Box sx={{ textAlign: "center", mb: 4 }}>
+            <Typography
+              variant="h3"
+              color="primary"
+              fontWeight="800"
+              gutterBottom
+              sx={{ 
+                textAlign: "center", 
+                mb: 1,
+                background: 'linear-gradient(135deg, #1976d2 0%, #283593 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}
+            >
+              ✈️ AirGo Payments
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Secure and convenient flight booking payment portal
+            </Typography>
+          </Box>
 
-          {/* New Boxes for Total Meals Price and Baggage Price */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6}>
-              <Paper elevation={3} sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Restaurant color="primary" sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h6" fontWeight="bold" color="text.secondary">
-                  Total Meals Price
-                </Typography>
-                <Typography variant="h5" fontWeight="bold" color="primary">
-                  LKR {totalMealsPrice.toLocaleString()}
-                </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Paper elevation={3} sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Work color="primary" sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h6" fontWeight="bold" color="text.secondary">
-                  Total Baggage Price
-                </Typography>
-                <Typography variant="h5" fontWeight="bold" color="primary">
-                  LKR {totalBaggagePrice.toLocaleString()}
-                </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
+          <Stepper activeStep={activeStep} orientation="horizontal" sx={{ mb: 4 }}>
+            <Step>
+              <StepLabel>Flight Selection</StepLabel>
+            </Step>
+            <Step>
+              <StepLabel>Passenger Details</StepLabel>
+            </Step>
+            <Step>
+              <StepLabel>Payment</StepLabel>
+            </Step>
+          </Stepper>
+
+          {/* Flight selection info */}
+          {flight && <FlightInfoCard flight={flight} flightData={flightData} />}
+          
+          {/* Price summary */}
+          <PriceSummary 
+            flightPrice={price} 
+            mealsPrice={mealsPrice} 
+            baggagePrice={baggagePrice} 
+          />
 
           {paymentResult && (
-            <Alert severity={paymentResult.success ? "success" : "error"} sx={{ mb: 2 }}>
+            <Alert 
+              severity={paymentResult.success ? "success" : "error"} 
+              sx={{ 
+                mb: 2,
+                borderRadius: '12px'
+              }}
+              icon={paymentResult.success ? <CheckCircle /> : null}
+            >
               {paymentResult.message}
             </Alert>
           )}
@@ -447,30 +697,8 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
             <Grid container spacing={3}>
               <Grid item xs={12}>
                 <Grid container spacing={2}>
-                  {/* Payment ID */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Payment ID"
-                      placeholder="Enter unique payment ID"
-                      value={id}
-                      onChange={(e) => setId(e.target.value)}
-                      disabled={isEdit}
-                      fullWidth
-                      required
-                      error={!!formErrors.id}
-                      helperText={formErrors.id}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <ConfirmationNumber color="primary" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Flight */}
-                  <Grid item xs={12} sm={6}>
+                  {/* Flight Selection */}
+                  <Grid item xs={12}>
                     <FormControl fullWidth required error={!!formErrors.flight}>
                       <InputLabel id="flight-label">Select Flight</InputLabel>
                       <Select
@@ -478,19 +706,24 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                         value={flight}
                         onChange={handleFlightChange}
                         disabled={processing}
+                        label="Select Flight"
+                        sx={{ borderRadius: '12px' }}
                       >
                         {flightData.map((f) => (
                           <MenuItem key={f.code} value={f.code} disabled={!f.available}>
-                            {f.airline} - {f.code} 
-                            {!f.available ? (
-                              <Typography variant="caption" color="error" sx={{ ml: 1 }}>
-                                (Unavailable)
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                              <Box>
+                                <Typography variant="body1" fontWeight="500">
+                                  {f.airline} - {f.code}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                  {f.departure} → {f.arrival}
+                                </Typography>
+                              </Box>
+                              <Typography variant="body1" fontWeight="600">
+                                LKR {f.price.toLocaleString()}
                               </Typography>
-                            ) : (
-                              <Typography variant="caption" color="primary" sx={{ ml: 1 }}>
-                                (LKR {f.price.toLocaleString()})
-                              </Typography>
-                            )}
+                            </Box>
                           </MenuItem>
                         ))}
                       </Select>
@@ -500,240 +733,290 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                         </Typography>
                       )}
                     </FormControl>
-                    <Collapse in={!!flightError}>
-                      <Alert severity="error" sx={{ mt: 1 }}>
-                        {flightError}
-                      </Alert>
-                    </Collapse>
                   </Grid>
 
-                  {/* Passenger */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Passenger Name"
-                      placeholder="e.g. John Doe"
-                      value={passenger}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        // Only update if the input matches letters and spaces, or is empty
-                        if (value === "" || /^[A-Za-z\s]*$/.test(value)) {
-                          setPassenger(value);
-                        }
-                      }}
-                      fullWidth
-                      required
-                      disabled={processing}
-                      error={!!formErrors.passenger}
-                      helperText={formErrors.passenger}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Person color="primary" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Seat */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Seat Number"
-                      placeholder="e.g. 12A"
-                      value={seat}
-                      onChange={(e) => setSeat(e.target.value)}
-                      fullWidth
-                      required
-                      disabled={!flight || !!flightError || processing}
-                      error={!!formErrors.seat}
-                      helperText={formErrors.seat}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <EventSeat color="primary" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Price */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Price (LKR)"
-                      value={price ? price.toLocaleString() : ""}
-                      placeholder="Auto-calculated"
-                      fullWidth
-                      InputProps={{
-                        readOnly: true,
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <AttachMoney color="primary" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Payment Method */}
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth required error={!!formErrors.method}>
-                      <InputLabel id="method-label">Payment Method</InputLabel>
-                      <Select
-                        labelId="method-label"
-                        value={method}
-                        onChange={(e) => setMethod(e.target.value)}
-                        disabled={processing}
-                      >
-                        <MenuItem value="Credit Card">Credit Card</MenuItem>
-                        <MenuItem value="Debit Card">Debit Card</MenuItem>
-                        <MenuItem value="PayPal">PayPal</MenuItem>
-                      </Select>
-                      {formErrors.method && (
-                        <Typography variant="caption" color="error">
-                          {formErrors.method}
+                  {flight && (
+                    <>
+                      <Grid item xs={12}>
+                        <Divider sx={{ my: 2 }} />
+                        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                          Passenger Information
                         </Typography>
+                      </Grid>
+
+                      {/* Payment ID */}
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Payment ID"
+                          placeholder="Enter unique payment ID"
+                          value={id}
+                          onChange={(e) => setId(e.target.value)}
+                          disabled={isEdit}
+                          fullWidth
+                          required
+                          error={!!formErrors.id}
+                          helperText={formErrors.id}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <ConfirmationNumber color="primary" />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '12px'
+                            }
+                          }}
+                        />
+                      </Grid>
+
+                      {/* Passenger */}
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Passenger Name"
+                          placeholder="e.g. John Doe"
+                          value={passenger}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            // Only update if the input matches letters and spaces, or is empty
+                            if (value === "" || /^[A-Za-z\s]*$/.test(value)) {
+                              setPassenger(value);
+                            }
+                          }}
+                          fullWidth
+                          required
+                          disabled={processing}
+                          error={!!formErrors.passenger}
+                          helperText={formErrors.passenger}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Person color="primary" />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '12px'
+                            }
+                          }}
+                        />
+                      </Grid>
+
+                      {/* Seat */}
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Seat Number"
+                          placeholder="e.g. 12A"
+                          value={seat}
+                          onChange={(e) => setSeat(e.target.value)}
+                          fullWidth
+                          required
+                          disabled={!flight || !!flightError || processing}
+                          error={!!formErrors.seat}
+                          helperText={formErrors.seat}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <EventSeat color="primary" />
+                              </InputAdornment>
+                            ),
+                          }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '12px'
+                            }
+                          }}
+                        />
+                      </Grid>
+
+                      {/* Phone */}
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Phone Number"
+                          placeholder="e.g. +94 71 234 5678"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          fullWidth
+                          required
+                          disabled={processing}
+                          error={!!formErrors.phone}
+                          helperText={formErrors.phone}
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Phone color="primary" />
+                              </InputAdornment>
+                            ),
+                            inputMode: "tel",
+                          }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '12px'
+                            }
+                          }}
+                        />
+                      </Grid>
+
+                      {/* Status */}
+                      <Grid item xs={12} sm={6}>
+                        <FormControl fullWidth required error={!!formErrors.status}>
+                          <InputLabel id="status-label">Status</InputLabel>
+                          <Select
+                            labelId="status-label"
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                            disabled={processing}
+                            label="Status"
+                            sx={{ borderRadius: '12px' }}
+                          >
+                            <MenuItem value="Pending">Pending</MenuItem>
+                            <MenuItem value="Paid">Paid</MenuItem>
+                            <MenuItem value="Cancelled">Cancelled</MenuItem>
+                          </Select>
+                          {formErrors.status && (
+                            <Typography variant="caption" color="error">
+                              {formErrors.status}
+                            </Typography>
+                          )}
+                        </FormControl>
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <Divider sx={{ my: 2 }} />
+                      </Grid>
+
+                      {/* Payment Method */}
+                      <Grid item xs={12}>
+                        <PaymentMethodSelector 
+                          method={method} 
+                          setMethod={setMethod} 
+                          processing={processing} 
+                        />
+                      </Grid>
+
+                      {/* Card Number - only show if card payment selected */}
+                      {(method === "Credit Card" || method === "Debit Card") && (
+                        <>
+                          <Grid item xs={12}>
+                            <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+                              Card Details
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={12}>
+                            <TextField
+                              label="Card Number"
+                              placeholder="16-digit card number"
+                              value={card}
+                              onChange={(e) => setCard(e.target.value)}
+                              fullWidth
+                              required
+                              disabled={processing}
+                              error={!!formErrors.card}
+                              helperText={formErrors.card}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <CreditCard color="primary" />
+                                  </InputAdornment>
+                                ),
+                                inputMode: "numeric",
+                              }}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '12px'
+                                }
+                              }}
+                            />
+                          </Grid>
+
+                          {/* Expiry Date */}
+                          <Grid item xs={12} sm={6}>
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                              <DesktopDatePicker
+                                views={["year", "month"]}
+                                label="Expiry Date"
+                                minDate={dayjs()}
+                                value={expiry}
+                                onChange={(newValue) => setExpiry(newValue)}
+                                disabled={processing}
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    placeholder="MM/YY"
+                                    fullWidth
+                                    error={!!formErrors.expiry}
+                                    helperText={formErrors.expiry}
+                                    sx={{
+                                      '& .MuiOutlinedInput-root': {
+                                        borderRadius: '12px'
+                                      }
+                                    }}
+                                  />
+                                )}
+                              />
+                            </LocalizationProvider>
+                          </Grid>
+
+                          {/* CVV */}
+                          <Grid item xs={12} sm={6}>
+                            <TextField
+                              label="CVV"
+                              placeholder="3-digit CVV"
+                              type="password"
+                              value={cvv}
+                              onChange={(e) => setCvv(e.target.value)}
+                              fullWidth
+                              required
+                              disabled={processing}
+                              error={!!formErrors.cvv}
+                              helperText={formErrors.cvv}
+                              inputProps={{ maxLength: 3 }}
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <CreditCardOff color="primary" />
+                                  </InputAdornment>
+                                ),
+                              }}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  borderRadius: '12px'
+                                }
+                              }}
+                            />
+                          </Grid>
+                        </>
                       )}
-                    </FormControl>
-                  </Grid>
 
-                  {/* Card Number */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Card Number"
-                      placeholder="16-digit card number"
-                      value={card}
-                      onChange={(e) => setCard(e.target.value)}
-                      fullWidth
-                      required={method === "Credit Card" || method === "Debit Card"}
-                      disabled={processing || !(method === "Credit Card" || method === "Debit Card")}
-                      error={!!formErrors.card}
-                      helperText={formErrors.card}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CreditCard color="primary" />
-                          </InputAdornment>
-                        ),
-                        inputMode: "numeric",
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Expiry Date */}
-                  <Grid item xs={12} sm={3}>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DesktopDatePicker
-                        views={["year", "month"]}
-                        label="Expiry Date"
-                        minDate={dayjs()}
-                        value={expiry}
-                        onChange={(newValue) => setExpiry(newValue)}
-                        disabled={processing || !(method === "Credit Card" || method === "Debit Card")}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            placeholder="MM/YY"
-                            fullWidth
-                            error={!!formErrors.expiry}
-                            helperText={formErrors.expiry}
-                          />
-                        )}
-                      />
-                    </LocalizationProvider>
-                  </Grid>
-
-                  {/* CVV */}
-                  <Grid item xs={12} sm={3}>
-                    <TextField
-                      label="CVV"
-                      placeholder="3-digit CVV"
-                      type="password"
-                      value={cvv}
-                      onChange={(e) => setCvv(e.target.value)}
-                      fullWidth
-                      required={method === "Credit Card" || method === "Debit Card"}
-                      disabled={processing || !(method === "Credit Card" || method === "Debit Card")}
-                      error={!!formErrors.cvv}
-                      helperText={formErrors.cvv}
-                      inputProps={{ maxLength: 3 }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CreditCardOff color="primary" />
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Phone */}
-                  <Grid item xs={12} sm={6}>
-                    <TextField
-                      label="Phone Number"
-                      placeholder="e.g. +94 71 234 5678"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      fullWidth
-                      required
-                      disabled={processing}
-                      error={!!formErrors.phone}
-                      helperText={formErrors.phone}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <Phone color="primary" />
-                          </InputAdornment>
-                        ),
-                        inputMode: "tel",
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Status */}
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth required error={!!formErrors.status}>
-                      <InputLabel id="status-label">Status</InputLabel>
-                      <Select
-                        labelId="status-label"
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value)}
-                        disabled={processing}
-                      >
-                        <MenuItem value="Pending">Pending</MenuItem>
-                        <MenuItem value="Paid">Paid</MenuItem>
-                        <MenuItem value="Cancelled">Cancelled</MenuItem>
-                      </Select>
-                      {formErrors.status && (
-                        <Typography variant="caption" color="error">
-                          {formErrors.status}
-                        </Typography>
-                      )}
-                    </FormControl>
-                  </Grid>
-
-                  {/* Submit */}
-                  <Grid item xs={12} sx={{ textAlign: "center", mt: 3 }}>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="large"
-                      onClick={handleSubmit}
-                      disabled={processing}
-                      sx={{
-                        px: 5,
-                        py: 1.5,
-                        fontSize: "1rem",
-                        transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                        "&:hover": {
-                          transform: "scale(1.05)",
-                          boxShadow: '0 4px 20px rgba(0, 123, 255, 0.4)',
-                        },
-                      }}
-                    >
-                      {isEdit ? "Update Payment" : "Confirm & Pay"}
-                    </Button>
-                  </Grid>
+                      {/* Submit */}
+                      <Grid item xs={12} sx={{ textAlign: "center", mt: 3 }}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="large"
+                          onClick={handleSubmit}
+                          disabled={processing}
+                          sx={{
+                            px: 5,
+                            py: 1.5,
+                            fontSize: "1rem",
+                            borderRadius: '12px',
+                            fontWeight: '600',
+                            background: 'linear-gradient(135deg, #1976d2 0%, #115293 100%)',
+                            transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                            "&:hover": {
+                              transform: "scale(1.05)",
+                              boxShadow: '0 8px 20px rgba(25, 118, 210, 0.4)',
+                            },
+                          }}
+                        >
+                          {isEdit ? "Update Payment" : `Pay LKR ${(price + mealsPrice + baggagePrice).toLocaleString()}`}
+                        </Button>
+                      </Grid>
+                    </>
+                  )}
                 </Grid>
               </Grid>
             </Grid>
@@ -745,27 +1028,34 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
             onClose={() => !processing && setShowOtpDialog(false)}
             TransitionComponent={Grow}
             disableEscapeKeyDown={processing}
+            PaperProps={{
+              sx: {
+                borderRadius: '16px',
+                p: 1
+              }
+            }}
           >
-            <DialogTitle>
+            <DialogTitle sx={{ textAlign: 'center' }}>
               <ScheduleSend sx={{ mr: 1, verticalAlign: "middle" }} /> OTP Verification
             </DialogTitle>
             <DialogContent>
-              <Typography variant="body1" sx={{ mb: 2 }}>
+              <Typography variant="body1" sx={{ mb: 2, textAlign: 'center' }}>
                 OTP sent to <b>{phone}</b>. Enter it below:
               </Typography>
               <OtpInput length={6} value={otp} onChange={setOtp} disabled={processing} />
               {paymentResult && !paymentResult.success && (
-                <Alert severity="error" sx={{ mt: 2 }}>
+                <Alert severity="error" sx={{ mt: 2, borderRadius: '12px' }}>
                   {paymentResult.message}
                 </Alert>
               )}
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
               <Button
                 onClick={() => !processing && setShowOtpDialog(false)}
                 color="error"
                 variant="outlined"
                 disabled={processing}
+                sx={{ borderRadius: '8px' }}
               >
                 Cancel
               </Button>
@@ -774,6 +1064,10 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                 variant="contained"
                 color="primary"
                 disabled={processing || otp.length !== 6}
+                sx={{ 
+                  borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #1976d2 0%, #115293 100%)',
+                }}
               >
                 Verify & Submit
               </Button>
@@ -795,7 +1089,11 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
             variant="filled"
             icon={<ScheduleSend fontSize="inherit" />}
             action={action}
-            sx={{ width: '100%' }}
+            sx={{ 
+              width: '100%',
+              borderRadius: '12px',
+              alignItems: 'center'
+            }}
           >
             <Typography variant="subtitle2" fontWeight="bold">
               OTP Sent Successfully

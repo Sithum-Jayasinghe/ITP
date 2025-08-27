@@ -1,3 +1,4 @@
+// src/components/Payments/PaymentsTable.js
 import React from "react";
 import {
   Paper,
@@ -20,13 +21,13 @@ import { QRCodeCanvas } from "qrcode.react";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 
-const PaymentsTable = ({ rows, selectedPayment, deletePayment }) => {
+const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
   const generatePDF = async (row) => {
     const doc = new jsPDF("landscape");
     const qrData = JSON.stringify(row);
     const qrImageUrl = await QRCode.toDataURL(qrData);
 
-    // Dummy costs
+    // Dummy costs (you can adjust / compute from row)
     const baggageCost = 8000; // LKR
     const mealCost = 2500; // LKR
     const taxes = 1500; // LKR
@@ -50,7 +51,7 @@ const PaymentsTable = ({ rows, selectedPayment, deletePayment }) => {
     doc.text(`Seat: ${row.seat}`, 20, 90);
     doc.text(`Class: Economy`, 20, 105);
 
-    // Departure/Arrival
+    // Departure/Arrival (placeholder)
     doc.text(`Departure: Colombo (CMB) - 10:00 AM`, 120, 45);
     doc.text(`Arrival: Dubai (DXB) - 1:30 PM`, 120, 60);
     doc.text(`Date: October 15, 2050`, 120, 75);
