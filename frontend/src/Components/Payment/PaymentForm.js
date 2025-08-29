@@ -157,12 +157,12 @@ const OtpInput = ({ length = 6, value, onChange, disabled }) => {
 // Flight Info Card Component
 const FlightInfoCard = ({ flight, flightData }) => {
   const selectedFlight = flightData.find(f => f.code === flight);
-  
+
   if (!selectedFlight) return null;
-  
+
   return (
-    <Card sx={{ 
-      mb: 3, 
+    <Card sx={{
+      mb: 3,
       background: 'linear-gradient(135deg, #1976d2 0%, #115293 100%)',
       color: "white",
       borderRadius: '16px',
@@ -184,14 +184,14 @@ const FlightInfoCard = ({ flight, flightData }) => {
               Arrival: {selectedFlight.arrival}
             </Typography>
           </Box>
-          <Chip 
-            label={`LKR ${selectedFlight.price.toLocaleString()}`} 
-            sx={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.2)', 
+          <Chip
+            label={`LKR ${selectedFlight.price.toLocaleString()}`}
+            sx={{
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
               color: 'white',
               fontWeight: '600',
               fontSize: '1rem'
-            }} 
+            }}
           />
         </Box>
       </CardContent>
@@ -202,14 +202,14 @@ const FlightInfoCard = ({ flight, flightData }) => {
 // Price Summary Component
 const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
   const totalPrice = flightPrice + mealsPrice + baggagePrice;
-  
+
   return (
     <Grid container spacing={2} sx={{ mb: 4 }}>
       <Grid item xs={12} sm={4}>
-        <Paper elevation={0} sx={{ 
-          p: 2, 
-          display: 'flex', 
-          flexDirection: 'column', 
+        <Paper elevation={0} sx={{
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           borderRadius: '12px',
           background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)'
@@ -224,10 +224,10 @@ const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
         </Paper>
       </Grid>
       <Grid item xs={12} sm={4}>
-        <Paper elevation={0} sx={{ 
-          p: 2, 
-          display: 'flex', 
-          flexDirection: 'column', 
+        <Paper elevation={0} sx={{
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           borderRadius: '12px',
           background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)'
@@ -242,10 +242,10 @@ const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
         </Paper>
       </Grid>
       <Grid item xs={12} sm={4}>
-        <Paper elevation={0} sx={{ 
-          p: 2, 
-          display: 'flex', 
-          flexDirection: 'column', 
+        <Paper elevation={0} sx={{
+          p: 2,
+          display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           borderRadius: '12px',
           background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)'
@@ -260,9 +260,9 @@ const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
         </Paper>
       </Grid>
       <Grid item xs={12}>
-        <Paper elevation={0} sx={{ 
-          p: 2.5, 
-          textAlign: 'center', 
+        <Paper elevation={0} sx={{
+          p: 2.5,
+          textAlign: 'center',
           background: 'linear-gradient(135deg, #1976d2 0%, #115293 100%)',
           color: 'white',
           borderRadius: '12px',
@@ -316,7 +316,7 @@ const PaymentMethodSelector = ({ method, setMethod, processing }) => {
                 height: '100%'
               }}
             >
-              <Avatar sx={{ 
+              <Avatar sx={{
                 bgcolor: method === pm.value ? 'primary.main' : 'grey.200',
                 color: method === pm.value ? 'white' : 'grey.700',
                 mb: 1,
@@ -344,45 +344,101 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
 
   const flightData = useMemo(
     () => [
-      { 
-        code: "AK123", 
-        price: 35000, 
-        available: true, 
+      {
+        code: "AK123",
+        price: 35000,
+        available: true,
         airline: "AirAsia",
         departure: "CMB (12:30 PM)",
         arrival: "KUL (07:30 PM)"
       },
-      { 
-        code: "UL456", 
-        price: 42000, 
-        available: true, 
+      {
+        code: "UL456",
+        price: 42000,
+        available: true,
         airline: "SriLankan Airlines",
         departure: "CMB (02:15 PM)",
         arrival: "DXB (07:45 PM)"
       },
-      { 
-        code: "QR789", 
-        price: 56000, 
-        available: false, 
+      {
+        code: "QR789",
+        price: 56000,
+        available: false,
         airline: "Qatar Airways",
         departure: "CMB (10:20 AM)",
         arrival: "DOH (02:40 PM)"
       },
-      { 
-        code: "EK202", 
-        price: 48000, 
-        available: true, 
+      {
+        code: "EK202",
+        price: 48000,
+        available: true,
         airline: "Emirates",
         departure: "CMB (11:45 PM)",
         arrival: "DXB (04:15 AM)"
       },
-      { 
-        code: "MH505", 
-        price: 39000, 
-        available: true, 
+      {
+        code: "MH505",
+        price: 39000,
+        available: true,
         airline: "Malaysia Airlines",
         departure: "CMB (08:30 AM)",
         arrival: "KUL (03:45 PM)"
+      },
+      {
+        code: "SG303",
+        price: 36000,
+        available: true,
+        airline: "Singapore Airlines",
+        departure: "CMB (09:50 AM)",
+        arrival: "SIN (02:15 PM)"
+      },
+      {
+        code: "LH404",
+        price: 62000,
+        available: true,
+        airline: "Lufthansa",
+        departure: "CMB (01:20 PM)",
+        arrival: "FRA (08:50 PM)"
+      },
+      {
+        code: "BA007",
+        price: 58000,
+        available: false,
+        airline: "British Airways",
+        departure: "CMB (03:10 PM)",
+        arrival: "LHR (09:30 PM)"
+      },
+      {
+        code: "AI101",
+        price: 47000,
+        available: true,
+        airline: "Air India",
+        departure: "CMB (06:00 AM)",
+        arrival: "DEL (11:15 AM)"
+      },
+      {
+        code: "CX888",
+        price: 75000,
+        available: true,
+        airline: "Cathay Pacific",
+        departure: "CMB (11:00 PM)",
+        arrival: "HKG (06:40 AM)"
+      },
+      {
+        code: "TK303",
+        price: 54000,
+        available: true,
+        airline: "Turkish Airlines",
+        departure: "CMB (05:45 AM)",
+        arrival: "IST (12:30 PM)"
+      },
+      {
+        code: "JL202",
+        price: 82000,
+        available: true,
+        airline: "Japan Airlines",
+        departure: "CMB (10:15 AM)",
+        arrival: "NRT (08:00 PM)"
       },
     ],
     []
@@ -498,7 +554,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
 
   const sendOtp = (phoneNumber, otp) => {
     console.log(`Simulated OTP sent: ${otp} to phone: ${phoneNumber}`);
-    
+
     setToast({
       phoneNumber,
       otp,
@@ -543,7 +599,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     if (!validateForm()) return;
 
     const totalAmount = price + mealsPrice + baggagePrice;
-    
+
     const payment = {
       id,
       flight,
@@ -634,8 +690,8 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
               color="primary"
               fontWeight="800"
               gutterBottom
-              sx={{ 
-                textAlign: "center", 
+              sx={{
+                textAlign: "center",
                 mb: 1,
                 background: 'linear-gradient(135deg, #1976d2 0%, #283593 100%)',
                 WebkitBackgroundClip: 'text',
@@ -663,18 +719,18 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
 
           {/* Flight selection info */}
           {flight && <FlightInfoCard flight={flight} flightData={flightData} />}
-          
+
           {/* Price summary */}
-          <PriceSummary 
-            flightPrice={price} 
-            mealsPrice={mealsPrice} 
-            baggagePrice={baggagePrice} 
+          <PriceSummary
+            flightPrice={price}
+            mealsPrice={mealsPrice}
+            baggagePrice={baggagePrice}
           />
 
           {paymentResult && (
-            <Alert 
-              severity={paymentResult.success ? "success" : "error"} 
-              sx={{ 
+            <Alert
+              severity={paymentResult.success ? "success" : "error"}
+              sx={{
                 mb: 2,
                 borderRadius: '12px'
               }}
@@ -889,10 +945,10 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
 
                       {/* Payment Method */}
                       <Grid item xs={12}>
-                        <PaymentMethodSelector 
-                          method={method} 
-                          setMethod={setMethod} 
-                          processing={processing} 
+                        <PaymentMethodSelector
+                          method={method}
+                          setMethod={setMethod}
+                          processing={processing}
                         />
                       </Grid>
 
@@ -1064,7 +1120,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                 variant="contained"
                 color="primary"
                 disabled={processing || otp.length !== 6}
-                sx={{ 
+                sx={{
                   borderRadius: '8px',
                   background: 'linear-gradient(135deg, #1976d2 0%, #115293 100%)',
                 }}
@@ -1089,7 +1145,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
             variant="filled"
             icon={<ScheduleSend fontSize="inherit" />}
             action={action}
-            sx={{ 
+            sx={{
               width: '100%',
               borderRadius: '12px',
               alignItems: 'center'
