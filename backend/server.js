@@ -14,14 +14,14 @@ const passengerrouter = require('./Routers/Passenger/router');
 const checkrouter = require('./Routers/Check/router');
 
 
-//password = 8e81ltTBjQy5U2P6
+//Password = 8e81ltTBjQy5U2P6
 
 app.use(cors());
 app.use(express.json());
 
-//mongodb+srv://sithum:<db_password>@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum
+//mongodb+srv://ayeshsenadheera7:<db_password>@cluster0.f0azxqz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 
-const uri = 'mongodb+srv://sithum:8e81ltTBjQy5U2P6@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum'
+const uri = 'mongodb+srv://ayeshsenadheera7:dbayesh25099@cluster0.f0azxqz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 
 const connect = async () => {
     try{
