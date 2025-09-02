@@ -575,6 +575,9 @@ function App() {
 
         <Divider sx={{ my: 3 }} />
 
+
+        
+
         {/* Horizontal Scroll Container with Navigation Buttons */}
         <Box sx={{ position: 'relative' }}>
           <ScrollButton onClick={scrollLeft} sx={{ left: -20 }}>
