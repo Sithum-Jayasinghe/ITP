@@ -2,6 +2,7 @@ import { Box, Paper, Typography, Avatar } from "@mui/material";
 import { useEffect, useState } from "react";
 import Axios from "axios";
 
+// State to hold the list of registered users
 const RegistersTable = () => {
   const [registers, setRegisters] = useState([]);
 
@@ -9,14 +10,15 @@ const RegistersTable = () => {
     getRegisters();
   }, []);
 
+  
   const getRegisters = () => {
     Axios.get("http://localhost:3001/api/registers") // Replace with your actual API endpoint
       .then((response) => {
-        setRegisters(response.data?.response || []);
+        setRegisters(response.data?.response || []);// Safely access response (avoid undefined)
       })
       .catch((error) => {
         console.error("Axios error:", error);
-        setRegisters([]);
+        setRegisters([]);// fallback to empty if error
       });
   };
 
