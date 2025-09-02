@@ -27,7 +27,7 @@ const Registers = () => {
   const [isEdit, setIsEdit] = useState(false);
 
   const [showLogin, setShowLogin] = useState(false);
-  const [loginProfile, setLoginProfile] = useState(null); // ✅ profile photo for login
+  const [loginProfile, setLoginProfile] = useState(null); // ✅ Profile photo for login
 
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -56,8 +56,8 @@ const Registers = () => {
         getRegisters();
         setSubmitted(false);
         setSnackbar({ open: true, message: "User added successfully!", severity: "success" });
-        setLoginProfile(data.profilePhoto); // ✅ save profile photo for login
-        setShowLogin(true); // go to login
+        setLoginProfile(data.profilePhoto); // ✅ Save profile photo for login
+        setShowLogin(true); // Go to login
       })
       .catch((error) => {
         console.error("Axios error:", error);
@@ -110,7 +110,7 @@ const Registers = () => {
       {showLogin ? (
         <LoginForm
           onRegisterClick={() => setShowLogin(false)}
-          profilePhoto={loginProfile} // ✅ pass profile photo
+          profilePhoto={loginProfile} // ✅ Pass profile photo
         />
       ) : (
         <RegisterForm
