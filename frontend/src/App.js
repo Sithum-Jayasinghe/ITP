@@ -26,7 +26,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import Plane from './Components/Images/plane.png';
 import Logo from './Components/Images/logo.png';
 
-// Keyframe animations to that
+// Keyframe animations  to that
 const float = keyframes`
   0% { transform: translate(-50%, -50%) perspective(800px) rotateX(10deg) rotateY(0deg); }
   50% { transform: translate(-50%, -45%) perspective(800px) rotateX(10deg) rotateY(5deg); }
