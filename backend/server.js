@@ -19,10 +19,9 @@ const checkrouter = require('./Routers/Check/router');
 app.use(cors());
 app.use(express.json());
 
-//mongodb+srv://sithum:<db_password>@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum
+//mongodb+srv://ayeshsenadheera7:<db_password>@cluster0.f0azxqz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 
-const uri = 'mongodb+srv://p04waptC2duu0v3K:p04waptC2duu0v3K@cluster0.yzqehug.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
-
+const uri = 'mongodb+srv://sithum:8e81ltTBjQy5U2P6@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum'
 const connect = async () => {
     try{
         await mongoose.connect(uri);
