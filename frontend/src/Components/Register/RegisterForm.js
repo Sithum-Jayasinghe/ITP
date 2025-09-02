@@ -1,4 +1,4 @@
-// src/components/RegisterForm.js
+// Src/components/RegisterForm.js
 import {
   Button,
   Input,
@@ -25,6 +25,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [preview, setPreview] = useState(null);
 
+  //Reset form when submission is complete
   useEffect(() => {
     if (!submitted) {
       setId("");
@@ -37,6 +38,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
     }
   }, [submitted]);
 
+  //Load existing data into form if editing
   useEffect(() => {
     if (data && data.id) {
       setId(data.id);
@@ -49,6 +51,8 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
     }
   }, [data]);
 
+  // Handle image upload
+  //Converts uploaded file into Base64 string for preview
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {

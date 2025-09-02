@@ -24,7 +24,7 @@ const Passengers = () => {
       .then(res => setPassengers(res.data?.response || []))
       .catch(console.error);
   };
-
+//Update an existing passenger//
   const addPassenger = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/createpassenger", data)
@@ -45,7 +45,7 @@ const Passengers = () => {
     setPassengerToDelete(data);
     setDeleteDialogOpen(true);
   };
-
+ //Handle passenger deletion after confirmation//
   const handleDelete = () => {
     Axios.post("http://localhost:3001/api/deletepassenger", { id: passengerToDelete.id })
       .then(() => { getPassengers(); showAlert("Passenger Deleted Successfully", "error"); })
