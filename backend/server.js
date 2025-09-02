@@ -21,7 +21,7 @@ app.use(express.json());
 
 //mongodb+srv://sithum:<db_password>@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum
 
-const uri = 'mongodb+srv://sithum:8e81ltTBjQy5U2P6@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum'
+const uri = 'mongodb+srv://p04waptC2duu0v3K:p04waptC2duu0v3K@cluster0.yzqehug.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 
 const connect = async () => {
     try{
