@@ -351,11 +351,11 @@ function App() {
       {/* Logo at the top left corner */}
       <LogoImage src={Logo} alt="AirGo Logo" />
       
-      {/* 3D Plane Background with Clouds, Particles and Routes */}
+      {/* 3D Plane Background with Clouds, particles and Routes */}
       <BackgroundWrapper>
         <AnimatedPlane src={Plane} alt="Flying plane" />
         
-        {/* Cloud elements */}
+        {/* Cloud Elements */}
         {clouds.map(cloud => (
           <Cloud
             key={cloud.id}
@@ -371,7 +371,7 @@ function App() {
           />
         ))}
         
-        {/* Route paths */}
+        {/* Route Paths */}
         {routes.map(route => (
           <RoutePath
             key={route.id}

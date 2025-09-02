@@ -20,7 +20,7 @@ import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
 import { jsPDF } from "jspdf";
-//import autoTable from "jspdf-autotable";
+//Import autoTable from "jspdf-autotable";
 
 const ScheduleTable = ({ rows, selectedSchedule, deleteSchedule }) => {
   // Generate PDF for one schedule row
@@ -156,7 +156,7 @@ const ScheduleTable = ({ rows, selectedSchedule, deleteSchedule }) => {
                     </IconButton>
                   </Tooltip>
 
-                  {/* PDF Generate Button */}
+                  {/* PDF Generate button */}
                   <Tooltip title="Generate PDF">
                     <IconButton
                       color="secondary"
