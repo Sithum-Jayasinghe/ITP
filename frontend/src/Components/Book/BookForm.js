@@ -116,7 +116,6 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
             type="date"
             value={departure}
             onChange={(e) => setDeparture(e.target.value)}
-            fullWidth
             InputLabelProps={{ shrink: true }}
             sx={inputStyle}
             InputProps={{ startAdornment: <InputAdornment position="start"><EventIcon /></InputAdornment> }}

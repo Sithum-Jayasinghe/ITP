@@ -1,10 +1,11 @@
-import { Box, Typography, TextField } from "@mui/material";
+import { Box, Typography, TextField, Button } from "@mui/material";
 import CheckForm from "./CheckForm";
 import ChecksTable from "./ChecksTable";
 import RegistersTable from "../Register/RegistersTable";
 import Axios from "axios";
 import { useEffect, useState } from "react";
 import Header from "../Main/Header";
+import DownloadIcon from "@mui/icons-material/Download";
 
 const Checks = () => {
   const [checks, setChecks] = useState([]);
@@ -12,7 +13,7 @@ const Checks = () => {
   const [selectedCheck, setSelectedCheck] = useState({});
   const [isEdit, setIsEdit] = useState(false);
   const [users, setUsers] = useState([]);
-  const [search, setSearch] = useState(""); // ✅ search state
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchChecks();
@@ -59,7 +60,23 @@ const Checks = () => {
       .catch(console.error);
   };
 
-  // ✅ Filter checks based on search
+  // Download all checks as CSV
+  const downloadAllChecks = () => {
+    const headers = "Check ID,Passenger Name,Passport Number,Nationality,Flight Number,Seat Number,Status\n";
+    const csvContent = checks.reduce((acc, check) => {
+      return acc + `${check.checkId},${check.passengerName},${check.passportNumber},${check.nationality},${check.flightNumber},${check.seatNumber},${check.status}\n`;
+    }, headers);
+    
+    const element = document.createElement("a");
+    const file = new Blob([csvContent], { type: 'text/csv' });
+    element.href = URL.createObjectURL(file);
+    element.download = `all_checks_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  // Filter checks based on search
   const filteredChecks = checks.filter(
     (check) =>
       check.flightNumber?.toLowerCase().includes(search.toLowerCase()) ||
@@ -80,8 +97,8 @@ const Checks = () => {
         {/* Register users table */}
         <RegistersTable />
 
-        {/* Search bar */}
-        <Box sx={{ my: 3, textAlign: "center" }}>
+        {/* Search and Download section */}
+        <Box sx={{ my: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <TextField
             label="🔍 Search Check-Ins"
             variant="outlined"
@@ -89,6 +106,14 @@ const Checks = () => {
             onChange={(e) => setSearch(e.target.value)}
             sx={{ width: "60%" }}
           />
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={downloadAllChecks}
+            disabled={checks.length === 0}
+          >
+            Download All Checks
+          </Button>
         </Box>
 
         {/* Check Form */}
@@ -102,7 +127,7 @@ const Checks = () => {
 
         {/* Checks Table */}
         <ChecksTable
-          rows={filteredChecks} // ✅ pass filtered rows
+          rows={filteredChecks}
           users={users}
           selectedCheck={(data) => {
             setSelectedCheck(data);

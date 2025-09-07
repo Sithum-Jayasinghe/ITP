@@ -1,4 +1,3 @@
-// Importing required Material-UI components and icons
 import {
   Grid,
   TextField,
@@ -23,7 +22,7 @@ import { useEffect, useState } from "react";
 // Dropdown options for the form
 const nationalities = ["Sri Lankan", "Indian", "American", "Other"];
 const flights = ["AI101", "UL202", "BA303"];
-const seats = ["1A", "1B", "2A", "2B"];
+const seats = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 const statuses = ["Checked-In", "Pending", "Boarded"];
 
 // Main functional component for the check-in form
@@ -43,6 +42,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
 
   // Snackbar alert control
   const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertSeverity, setAlertSeverity] = useState("success");
 
   // Reset form when submission is complete
   useEffect(() => {
@@ -87,7 +88,28 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
       setFaceScanSuccess(success);
       setScanning(false);
       setAlertOpen(true);
+      setAlertMessage(success ? "Face Verified Successfully!" : "Face Scan Failed!");
+      setAlertSeverity(success ? "success" : "error");
     }, 2000);
+  };
+
+  const handleSubmit = () => {
+    const checkData = {
+      checkId,
+      passengerName,
+      passportNumber,
+      nationality,
+      flightNumber,
+      seatNumber,
+      status,
+      faceScanSuccess
+    };
+
+    if (isEdit) {
+      updateCheck(checkData);
+    } else {
+      addCheck(checkData);
+    }
   };
 
   return (
@@ -226,15 +248,16 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
         </Grid>
 
         {/* Face Scan button and indicator */}
-        <Grid item xs={12} sm={6} sx={{ display: "flex", alignItems: "center" }}>
+        <Grid item xs={12} sx={{ display: "flex", alignItems: "center" }}>
           <IconButton
             onClick={handleFaceScan}
             color={faceScanSuccess ? "success" : "default"}
             disabled={scanning}
+            sx={{ mr: 1 }}
           >
-            {scanning ? <CircularProgress size={36} /> : <FaceIcon fontSize="large" />}
+            {scanning ? <CircularProgress size={24} /> : <FaceIcon fontSize="large" />}
           </IconButton>
-          <Typography sx={{ ml: 1 }}>
+          <Typography>
             {scanning
               ? "Scanning..."
               : faceScanSuccess
@@ -250,29 +273,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             color="primary"
             fullWidth
             sx={{ py: 1.5 }}
-            onClick={() =>
-              isEdit
-                ? updateCheck({
-                    checkId,
-                    passengerName,
-                    passportNumber,
-                    nationality,
-                    flightNumber,
-                    seatNumber,
-                    status,
-                    faceScanSuccess
-                  })
-                : addCheck({
-                    checkId,
-                    passengerName,
-                    passportNumber,
-                    nationality,
-                    flightNumber,
-                    seatNumber,
-                    status,
-                    faceScanSuccess
-                  })
-            }
+            onClick={handleSubmit}
             disabled={!faceScanSuccess} // Only allow submit after successful face scan
           >
             {isEdit ? "Update Check-In" : "Check-In Passenger"}
@@ -286,8 +287,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
         autoHideDuration={3000}
         onClose={() => setAlertOpen(false)}
       >
-        <Alert severity={faceScanSuccess ? "success" : "error"} sx={{ width: "100%" }}>
-          {faceScanSuccess ? "Face Verified Successfully!" : "Face Scan Failed!"}
+        <Alert severity={alertSeverity} sx={{ width: "100%" }}>
+          {alertMessage}
         </Alert>
       </Snackbar>
     </Box>

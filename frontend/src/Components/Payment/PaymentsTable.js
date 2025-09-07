@@ -1,5 +1,5 @@
 // src/components/Payments/PaymentsTable.js
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Paper,
   Table,
@@ -17,33 +17,71 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { QRCodeCanvas } from "qrcode.react";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 
-const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
+// === Pricing Engine ===
+const calculateDynamicPrice = (basePrice, loyalty = "Standard", demandFactor = 1) => {
+  let discount = 0;
+  if (loyalty === "Gold") discount = 0.15;
+  else if (loyalty === "Silver") discount = 0.08;
+  else if (loyalty === "Bronze") discount = 0.05;
+
+  const demandMarkup = demandFactor > 1.2 ? 0.1 : demandFactor > 1.0 ? 0.05 : 0;
+
+  const finalPrice = basePrice * (1 - discount + demandMarkup);
+  return { finalPrice, discount, demandMarkup };
+};
+
+const PaymentsTable = ({ rows = [], selectedPayment, deletePayment, showBreakdown, setPayments }) => {
+  const [demandFactor, setDemandFactor] = useState(1);
+
+  // === Simulate live demand factor every 5s ===
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDemandFactor(1 + Math.random() * 0.5); // random between 1.0 and 1.5
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // === WebSocket for live updates from backend ===
+  useEffect(() => {
+    const socket = new WebSocket("ws://localhost:3001/payments");
+
+    socket.onmessage = (event) => {
+      const updatedPayment = JSON.parse(event.data);
+      if (setPayments) {
+        setPayments((prev) =>
+          prev.map((p) => (p.id === updatedPayment.id ? updatedPayment : p))
+        );
+      }
+    };
+
+    return () => socket.close();
+  }, [setPayments]);
+
   const generatePDF = async (row) => {
     const doc = new jsPDF("landscape");
     const qrData = JSON.stringify(row);
     const qrImageUrl = await QRCode.toDataURL(qrData);
 
-    // Dummy costs (you can adjust / compute from row)
-    const baggageCost = 8000; // LKR
-    const mealCost = 2500; // LKR
-    const taxes = 1500; // LKR
-    const total = Number(row.price) + baggageCost + mealCost + taxes;
+    const baggageCost = Number(row.totalBaggagePrice || 0);
+    const mealCost = Number(row.totalMealsPrice || 0);
+    const taxes = 1500;
+    const basePrice = Number(row.price || 0) + baggageCost + mealCost;
+
+    const { finalPrice } = calculateDynamicPrice(basePrice, row.loyaltyTier, demandFactor);
 
     // Header Bar
-    doc.setFillColor(25, 118, 210); // Blue
+    doc.setFillColor(25, 118, 210);
     doc.rect(0, 0, 297, 25, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.text("✈️ AIRGOTravel Airlines - E-Receipt", 10, 17);
 
-    // Reset text color
     doc.setTextColor(0, 0, 0);
-
-    // Passenger Info
     doc.setFontSize(12);
     doc.text(`Passenger Name: ${row.passenger}`, 20, 45);
     doc.text(`Ticket Number: TK-${row.id}`, 20, 60);
@@ -51,12 +89,11 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
     doc.text(`Seat: ${row.seat}`, 20, 90);
     doc.text(`Class: Economy`, 20, 105);
 
-    // Departure/Arrival (placeholder)
     doc.text(`Departure: Colombo (CMB) - 10:00 AM`, 120, 45);
     doc.text(`Arrival: Dubai (DXB) - 1:30 PM`, 120, 60);
     doc.text(`Date: October 15, 2050`, 120, 75);
 
-    // Payment & Extras Section
+    // Payment & Extras
     doc.setFontSize(13);
     doc.setTextColor(25, 118, 210);
     doc.text("Payment & Extras", 20, 125);
@@ -67,25 +104,20 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
     doc.text(`Payment Method: ${row.method}`, 20, 155);
     doc.text(`Status: ${row.status}`, 20, 170);
 
-    // Extras
-    doc.text(`🛄 Baggage (30kg): LKR ${baggageCost}`, 120, 140);
+    doc.text(`🛄 Baggage: LKR ${baggageCost}`, 120, 140);
     doc.text(`🍱 Meal: LKR ${mealCost}`, 120, 155);
-    doc.text(`🎟️ Taxes & Fees: LKR ${taxes}`, 120, 170);
+    doc.text(`🎟️ Taxes: LKR ${taxes}`, 120, 170);
 
-    // Total Payment
     doc.setFontSize(13);
     doc.setTextColor(200, 0, 0);
-    doc.text(`💰 TOTAL PAYMENT: LKR ${total}`, 20, 190);
+    doc.text(`💰 TOTAL PAYMENT: LKR ${finalPrice.toFixed(2)}`, 20, 190);
 
-    // Right side block
+    // QR
     doc.setFontSize(14);
     doc.setTextColor(25, 118, 210);
     doc.text("E-Ticket Copy", 230, 40);
-
-    // QR Code
     doc.addImage(qrImageUrl, "PNG", 230, 60, 45, 45);
 
-    // Footer note
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(10);
     doc.text(
@@ -94,18 +126,12 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
       210
     );
 
-    // Save
     doc.save(`ticket_${row.id}.pdf`);
   };
 
   return (
-    <TableContainer
-      component={Paper}
-      elevation={4}
-      sx={{ borderRadius: 3, mt: 3, overflow: "hidden" }}
-    >
+    <TableContainer component={Paper} elevation={4} sx={{ borderRadius: 3, mt: 3, overflow: "hidden" }}>
       <Table>
-        {/* Table Head */}
         <TableHead sx={{ backgroundColor: "#1976d2" }}>
           <TableRow>
             {[
@@ -131,80 +157,117 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
           </TableRow>
         </TableHead>
 
-        {/* Table Body */}
         <TableBody>
           {rows.length > 0 ? (
-            rows.map((row) => (
-              <TableRow
-                key={row.id}
-                hover
-                sx={{
-                  "&:nth-of-type(odd)": { backgroundColor: "#f9f9f9" },
-                  "&:hover": { backgroundColor: "#e3f2fd" },
-                }}
-              >
-                <TableCell align="center">{row.id}</TableCell>
-                <TableCell align="center">{row.flight}</TableCell>
-                <TableCell align="center">{row.passenger}</TableCell>
-                <TableCell align="center">{row.seat}</TableCell>
-                <TableCell align="center">LKR {row.price}</TableCell>
-                <TableCell align="center">{row.method}</TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={row.status}
-                    color={
-                      row.status === "Paid"
-                        ? "success"
-                        : row.status === "Pending"
-                        ? "warning"
-                        : "error"
-                    }
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell align="center">{row.phone}</TableCell>
+            rows.map((row) => {
+              const baggage = Number(row.totalBaggagePrice || 0);
+              const meals = Number(row.totalMealsPrice || 0);
+              const basePrice = Number(row.price || 0) + baggage + meals;
 
-                {/* Action Buttons */}
-                <TableCell align="center">
-                  <Tooltip title="Edit Payment">
-                    <IconButton color="primary" onClick={() => selectedPayment(row)}>
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete Payment">
-                    <IconButton color="error" onClick={() => deletePayment(row)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
+              const { finalPrice, discount, demandMarkup } = calculateDynamicPrice(
+                basePrice,
+                row.loyaltyTier,
+                demandFactor
+              );
 
-                {/* QR Code */}
-                <TableCell align="center">
-                  <QRCodeCanvas
-                    value={JSON.stringify(row)}
-                    size={60}
-                    bgColor="#ffffff"
-                    fgColor="#000000"
-                    level="Q"
-                  />
-                </TableCell>
+              return (
+                <TableRow
+                  key={row.id}
+                  hover
+                  sx={{
+                    "&:nth-of-type(odd)": { backgroundColor: "#f9f9f9" },
+                    "&:hover": { backgroundColor: "#e3f2fd" },
+                  }}
+                >
+                  <TableCell align="center">{row.id}</TableCell>
+                  <TableCell align="center">{row.flight}</TableCell>
+                  <TableCell align="center">{row.passenger}</TableCell>
+                  <TableCell align="center">{row.seat}</TableCell>
 
-                {/* Download PDF */}
-                <TableCell align="center">
-                  <Tooltip title="Download Receipt">
-                    <Button
-                      variant="contained"
-                      color="success"
-                      size="small"
-                      startIcon={<PictureAsPdfIcon />}
-                      onClick={() => generatePDF(row)}
-                    >
-                      PDF
-                    </Button>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))
+                  {/* Real-time price */}
+                  <TableCell
+                    align="center"
+                    sx={{
+                      fontWeight: "bold",
+                      color: discount > 0 ? "green" : demandMarkup > 0 ? "red" : "inherit",
+                    }}
+                  >
+                    LKR {finalPrice.toFixed(2)}
+                    {discount > 0 && (
+                      <Typography variant="caption" color="green" display="block">
+                        -{(discount * 100).toFixed(0)}% Loyalty
+                      </Typography>
+                    )}
+                    {demandMarkup > 0 && (
+                      <Typography variant="caption" color="red" display="block">
+                        +{(demandMarkup * 100).toFixed(0)}% Demand
+                      </Typography>
+                    )}
+                  </TableCell>
+
+                  <TableCell align="center">{row.method}</TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={row.status}
+                      color={
+                        row.status === "Paid"
+                          ? "success"
+                          : row.status === "Pending"
+                          ? "warning"
+                          : "error"
+                      }
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell align="center">{row.phone}</TableCell>
+
+                  {/* Action Buttons */}
+                  <TableCell align="center">
+                    <Tooltip title="Edit Payment">
+                      <IconButton color="primary" onClick={() => selectedPayment(row)}>
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Payment">
+                      <IconButton color="error" onClick={() => deletePayment(row)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="View Price Breakdown">
+                      <IconButton color="secondary" onClick={() => showBreakdown(row)}>
+                        <ReceiptLongIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+
+                  {/* QR */}
+                  <TableCell align="center">
+                    <QRCodeCanvas
+                      value={JSON.stringify(row)}
+                      size={60}
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                      level="Q"
+                    />
+                  </TableCell>
+
+                  {/* PDF */}
+                  <TableCell align="center">
+                    <Tooltip title="Download Receipt">
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        startIcon={<PictureAsPdfIcon />}
+                        onClick={() => generatePDF(row)}
+                      >
+                        PDF
+                      </Button>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              );
+            })
           ) : (
             <TableRow>
               <TableCell colSpan={11} align="center">

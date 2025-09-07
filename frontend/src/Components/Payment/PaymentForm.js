@@ -56,6 +56,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
 
+
 // Modern OTP Input Component
 const OtpInput = ({ length = 6, value, onChange, disabled }) => {
   const inputsRef = useRef([]);
@@ -543,7 +544,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
   const validateCardNumber = (number) => /^[0-9]{16}$/.test(number.replace(/\s+/g, ""));
   const validateExpiry = (date) => date && dayjs(date).isAfter(dayjs());
   const validateCvv = (cvv) => /^[0-9]{3}$/.test(cvv);
-  const validatePhone = (phone) => /^(\+?\d{10,15})$/.test(phone);
+  const validatePhone = (phone) => /^(?:0\d{9}|\+94\d{9})$/.test(phone);
   const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
 
   const generateOtp = () => {
@@ -693,7 +694,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
               sx={{
                 textAlign: "center",
                 mb: 1,
-                background: 'linear-gradient(135deg, #1976d2 0%, #283593 100%)',
+                background: 'linear-gradient(135deg, #bfc8d1ff 0%, #283593 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent'
               }}

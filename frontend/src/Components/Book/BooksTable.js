@@ -1,3 +1,4 @@
+// src/components/Books/BooksTable.js
 import {
   Table,
   TableBody,
@@ -14,6 +15,8 @@ import {
   Snackbar,
   Alert,
   Slide,
+  Chip,
+  Tooltip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -26,12 +29,27 @@ import PeopleIcon from "@mui/icons-material/People";
 import ChairIcon from "@mui/icons-material/Chair";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import InsightsIcon from "@mui/icons-material/Insights";
 
 import { useState } from "react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
 const TransitionUp = (props) => <Slide {...props} direction="down" />;
+
+// === Predictive Recommendation Engine (dummy rules for now) ===
+const generateInsight = (booking) => {
+  if (booking.flexibleDates) {
+    return { type: "Best Time", msg: "Better fares if booked 6–8 weeks early", color: "info" };
+  }
+  if (booking.passengers > 3) {
+    return { type: "Group Offer", msg: "Eligible for group discount on baggage", color: "success" };
+  }
+  if (booking.tripType === "Round Trip") {
+    return { type: "Upgrade", msg: "Business class upgrade trending 20% cheaper this week", color: "warning" };
+  }
+  return { type: "Disruption Alert", msg: "Evening flights may face congestion delays", color: "error" };
+};
 
 const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, addedBooking }) => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -40,14 +58,12 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-  // Show modern alert
   const showAlert = (message, severity = "success") => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
     setSnackbarOpen(true);
   };
 
-  // Handle delete
   const handleDeleteClick = (booking) => {
     setBookingToDelete(booking);
     setOpenDialog(true);
@@ -62,18 +78,15 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
     }
   };
 
-  // Handle update
   const handleUpdateClick = (booking) => {
     selectedBooking(booking);
     showAlert(`Booking #${booking.id} ready to update!`, "info");
   };
 
-  // Handle add booking alert
   if (addedBooking) {
     showAlert(`Booking #${addedBooking.id} added successfully!`, "success");
   }
 
-  // Generate PDF
   const generatePDF = (booking) => {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -105,35 +118,119 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
         <Table>
           <TableHead sx={{ backgroundColor: darkMode ? "#333" : "#007acc" }}>
             <TableRow>
-              {["ID", "From", "To", "Departure", "Return", "Passengers", "Class", "Trip Type", "Flexible", "Action"].map((head) => (
-                <TableCell key={head} sx={{ color: "#fff" }}>{head}</TableCell>
+              {[
+                "ID",
+                "From",
+                "To",
+                "Departure",
+                "Return",
+                "Passengers",
+                "Class",
+                "Trip Type",
+                "Flexible",
+                "AI Insight",
+                "Action",
+              ].map((head) => (
+                <TableCell key={head} sx={{ color: "#fff" }}>
+                  {head}
+                </TableCell>
               ))}
             </TableRow>
           </TableHead>
 
           <TableBody>
             {rows.length > 0 ? (
-              rows.map((row) => (
-                <TableRow key={row.id} hover sx={{ backgroundColor: darkMode ? "#2a2a2a" : "#fff" }}>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><TagIcon fontSize="small" /> {row.id}</TableCell>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><FlightTakeoffIcon fontSize="small" /> {row.from}</TableCell>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><FlightLandIcon fontSize="small" /> {row.to}</TableCell>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><EventIcon fontSize="small" /> {row.departure}</TableCell>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><EventIcon fontSize="small" /> {row.returnDate}</TableCell>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><PeopleIcon fontSize="small" /> {row.passengers}</TableCell>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><ChairIcon fontSize="small" /> {row.travelClass}</TableCell>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><RepeatIcon fontSize="small" /> {row.tripType}</TableCell>
-                  <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}><CalendarTodayIcon fontSize="small" /> {row.flexibleDates ? "Yes" : "No"}</TableCell>
-                  <TableCell>
-                    <Button startIcon={<EditIcon />} sx={{ mr: 1, textTransform: "none", borderRadius: 2 }} variant="contained" color="info" size="small" onClick={() => handleUpdateClick(row)}>Update</Button>
-                    <Button startIcon={<DeleteIcon />} sx={{ mr: 1, textTransform: "none", borderRadius: 2, color: "#fff", background: "linear-gradient(90deg, #ff4d4d, #ff0000)" }} size="small" onClick={() => handleDeleteClick(row)}>Delete</Button>
-                    <Button startIcon={<PictureAsPdfIcon />} sx={{ textTransform: "none", borderRadius: 2, background: "linear-gradient(90deg, #4caf50, #2e7d32)", color: "#fff" }} size="small" onClick={() => generatePDF(row)}>PDF</Button>
-                  </TableCell>
-                </TableRow>
-              ))
+              rows.map((row) => {
+                const insight = generateInsight(row);
+                return (
+                  <TableRow key={row.id} hover sx={{ backgroundColor: darkMode ? "#2a2a2a" : "#fff" }}>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <TagIcon fontSize="small" /> {row.id}
+                    </TableCell>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <FlightTakeoffIcon fontSize="small" /> {row.from}
+                    </TableCell>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <FlightLandIcon fontSize="small" /> {row.to}
+                    </TableCell>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <EventIcon fontSize="small" /> {row.departure}
+                    </TableCell>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <EventIcon fontSize="small" /> {row.returnDate}
+                    </TableCell>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <PeopleIcon fontSize="small" /> {row.passengers}
+                    </TableCell>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <ChairIcon fontSize="small" /> {row.travelClass}
+                    </TableCell>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <RepeatIcon fontSize="small" /> {row.tripType}
+                    </TableCell>
+                    <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
+                      <CalendarTodayIcon fontSize="small" /> {row.flexibleDates ? "Yes" : "No"}
+                    </TableCell>
+
+                    {/* AI Insight column */}
+                    <TableCell>
+                      <Tooltip title={insight.msg}>
+                        <Chip
+                          icon={<InsightsIcon />}
+                          label={insight.type}
+                          color={insight.color}
+                          variant="outlined"
+                        />
+                      </Tooltip>
+                    </TableCell>
+
+                    <TableCell>
+                      <Button
+                        startIcon={<EditIcon />}
+                        sx={{ mr: 1, textTransform: "none", borderRadius: 2 }}
+                        variant="contained"
+                        color="info"
+                        size="small"
+                        onClick={() => handleUpdateClick(row)}
+                      >
+                        Update
+                      </Button>
+                      <Button
+                        startIcon={<DeleteIcon />}
+                        sx={{
+                          mr: 1,
+                          textTransform: "none",
+                          borderRadius: 2,
+                          color: "#fff",
+                          background: "linear-gradient(90deg, #ff4d4d, #ff0000)",
+                        }}
+                        size="small"
+                        onClick={() => handleDeleteClick(row)}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        startIcon={<PictureAsPdfIcon />}
+                        sx={{
+                          textTransform: "none",
+                          borderRadius: 2,
+                          background: "linear-gradient(90deg, #4caf50, #2e7d32)",
+                          color: "#fff",
+                        }}
+                        size="small"
+                        onClick={() => generatePDF(row)}
+                      >
+                        PDF
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
-                <TableCell colSpan={10} align="center" sx={{ color: darkMode ? "#fff" : "#000" }}>No Bookings Available</TableCell>
+                <TableCell colSpan={11} align="center" sx={{ color: darkMode ? "#fff" : "#000" }}>
+                  No Bookings Available
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -143,16 +240,24 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
       {/* Delete Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} PaperProps={{ sx: { borderRadius: 3, p: 2, background: darkMode ? "#2a2a2a" : "#fff" } }}>
         <DialogContent>
-          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>⚠️ Are you sure you want to delete this booking?</Typography>
-          <Typography sx={{ mb: 1 }}>Booking: {bookingToDelete?.from} → {bookingToDelete?.to} | ID: {bookingToDelete?.id}</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
+            ⚠️ Are you sure you want to delete this booking?
+          </Typography>
+          <Typography sx={{ mb: 1 }}>
+            Booking: {bookingToDelete?.from} → {bookingToDelete?.to} | ID: {bookingToDelete?.id}
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="outlined" onClick={() => setOpenDialog(false)} sx={{ borderRadius: 2, color: darkMode ? "#fff" : "#000" }}>Cancel</Button>
-          <Button variant="contained" onClick={confirmDelete} sx={{ borderRadius: 2, background: "linear-gradient(90deg, #ff4d4d, #ff0000)" }}>Delete</Button>
+          <Button variant="outlined" onClick={() => setOpenDialog(false)} sx={{ borderRadius: 2, color: darkMode ? "#fff" : "#000" }}>
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={confirmDelete} sx={{ borderRadius: 2, background: "linear-gradient(90deg, #ff4d4d, #ff0000)" }}>
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modern Snackbar for Add/Update/Delete */}
+      {/* Modern Snackbar */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={2500}

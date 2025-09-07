@@ -23,7 +23,7 @@ import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import FlightLandIcon from '@mui/icons-material/FlightLand';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import Plane from './Components/Images/plane.png';
+import Plane from './Components/Images/p3.png';
 import Logo from './Components/Images/logo.png';
 
 // Keyframe animations  
@@ -346,6 +346,14 @@ function App() {
     return destinationImages[city] || `https://via.placeholder.com/600x400/1a2a6c/ffffff?text=${encodeURIComponent(city)}`;
   };
 
+  // Add this function to handle booking submissions
+  const handleAddBooking = (bookingData) => {
+    console.log('Booking data:', bookingData);
+    // Here you would typically send the data to your backend
+    // For now, we'll just log it to the console
+    alert(`Booking created for ${bookingData.destination} on ${bookingData.departureDate}`);
+  };
+
   return (
     <div className="App">
       {/* Logo at the top left corner */}
@@ -442,7 +450,8 @@ function App() {
             </Slide>
             <Grow in={true} timeout={1200}>
               <Box>
-                <BookForm />
+                {/* Pass the handleAddBooking function to BookForm */}
+                <BookForm addBooking={handleAddBooking} />
               </Box>
             </Grow>
           </Box>
@@ -574,9 +583,6 @@ function App() {
         </FilterSection>
 
         <Divider sx={{ my: 3 }} />
-
-
-        
 
         {/* Horizontal Scroll Container with Navigation Buttons */}
         <Box sx={{ position: 'relative' }}>
