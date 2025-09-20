@@ -30,7 +30,15 @@ import {
   StepContent,
   Avatar,
   Chip,
-  Divider
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Checkbox,
+  FormControlLabel,
+  ToggleButtonGroup,
+  ToggleButton
 } from "@mui/material";
 import {
   ConfirmationNumber,
@@ -49,13 +57,14 @@ import {
   CheckCircle,
   LocalAtm,
   AccountBalance,
-  QrCode2
+  QrCode2,
+  Add,
+  Remove
 } from "@mui/icons-material";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
-
 
 // Modern OTP Input Component
 const OtpInput = ({ length = 6, value, onChange, disabled }) => {
@@ -200,13 +209,70 @@ const FlightInfoCard = ({ flight, flightData }) => {
   );
 };
 
+// Meal Selection Component
+const MealSelection = ({ selectedMeals, setSelectedMeals, mealsOptions }) => {
+  const handleMealToggle = (mealId) => {
+    if (selectedMeals.includes(mealId)) {
+      setSelectedMeals(selectedMeals.filter(id => id !== mealId));
+    } else {
+      setSelectedMeals([...selectedMeals, mealId]);
+    }
+  };
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+        Select Meals
+      </Typography>
+      <Paper elevation={1} sx={{ p: 2, borderRadius: '12px' }}>
+        <List>
+          {mealsOptions.map((meal) => (
+            <ListItem key={meal.id} divider>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={selectedMeals.includes(meal.id)}
+                    onChange={() => handleMealToggle(meal.id)}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <Box>
+                      <Typography variant="body1" fontWeight="500">
+                        {meal.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {meal.description}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body1" fontWeight="600">
+                      LKR {meal.price.toLocaleString()}
+                    </Typography>
+                  </Box>
+                }
+                sx={{ width: '100%', ml: 0 }}
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    </Box>
+  );
+};
+
 // Price Summary Component
-const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
+const PriceSummary = ({ flightPrice, selectedMeals, mealsOptions, baggagePrice }) => {
+  const mealsPrice = selectedMeals.reduce((total, mealId) => {
+    const meal = mealsOptions.find(m => m.id === mealId);
+    return total + (meal ? meal.price : 0);
+  }, 0);
+  
   const totalPrice = flightPrice + mealsPrice + baggagePrice;
 
   return (
     <Grid container spacing={2} sx={{ mb: 4 }}>
-      <Grid item xs={12} sm={4}>
+      <Grid item xs={12} sm={3}>
         <Paper elevation={0} sx={{
           p: 2,
           display: 'flex',
@@ -224,7 +290,7 @@ const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
           </Typography>
         </Paper>
       </Grid>
-      <Grid item xs={12} sm={4}>
+      <Grid item xs={12} sm={3}>
         <Paper elevation={0} sx={{
           p: 2,
           display: 'flex',
@@ -242,7 +308,7 @@ const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
           </Typography>
         </Paper>
       </Grid>
-      <Grid item xs={12} sm={4}>
+      <Grid item xs={12} sm={3}>
         <Paper elevation={0} sx={{
           p: 2,
           display: 'flex',
@@ -260,17 +326,24 @@ const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
           </Typography>
         </Paper>
       </Grid>
-      <Grid item xs={12}>
+      <Grid item xs={12} sm={3}>
         <Paper elevation={0} sx={{
           p: 2.5,
-          textAlign: 'center',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
           background: 'linear-gradient(135deg, #1976d2 0%, #115293 100%)',
           color: 'white',
           borderRadius: '12px',
           boxShadow: '0 4px 12px rgba(25, 118, 210, 0.3)'
         }}>
-          <Typography variant="h5" fontWeight="800">
-            Total: LKR {totalPrice.toLocaleString()}
+          <AttachMoney sx={{ fontSize: 32, mb: 1 }} />
+          <Typography variant="body2" fontWeight="500">
+            Total Price
+          </Typography>
+          <Typography variant="h6" fontWeight="800">
+            LKR {totalPrice.toLocaleString()}
           </Typography>
         </Paper>
       </Grid>
@@ -278,7 +351,7 @@ const PriceSummary = ({ flightPrice, mealsPrice, baggagePrice }) => {
   );
 };
 
-// Payment Method Selector Component
+// Modern Payment Method Selector Component
 const PaymentMethodSelector = ({ method, setMethod, processing }) => {
   const paymentMethods = [
     { value: "Credit Card", icon: <CreditCard />, label: "Credit Card" },
@@ -288,51 +361,74 @@ const PaymentMethodSelector = ({ method, setMethod, processing }) => {
     { value: "QR Payment", icon: <QrCode2 />, label: "QR Code" },
   ];
 
+  const handleMethodChange = (event, newMethod) => {
+    if (newMethod !== null && !processing) {
+      setMethod(newMethod);
+    }
+  };
+
   return (
     <Box sx={{ mb: 3 }}>
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Select Payment Method
       </Typography>
-      <Grid container spacing={2}>
+      
+      <ToggleButtonGroup
+        value={method}
+        exclusive
+        onChange={handleMethodChange}
+        aria-label="payment method"
+        sx={{
+          width: '100%',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1,
+          justifyContent: 'center'
+        }}
+      >
         {paymentMethods.map((pm) => (
-          <Grid item xs={6} sm={4} key={pm.value}>
-            <Paper
-              elevation={method === pm.value ? 4 : 1}
-              onClick={() => !processing && setMethod(pm.value)}
-              sx={{
-                p: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: '12px',
-                cursor: processing ? 'default' : 'pointer',
-                border: method === pm.value ? '2px solid #1976d2' : '2px solid transparent',
-                transition: 'all 0.2s ease',
-                backgroundColor: method === pm.value ? 'rgba(25, 118, 210, 0.08)' : 'white',
+          <ToggleButton
+            key={pm.value}
+            value={pm.value}
+            disabled={processing}
+            sx={{
+              flex: '1 1 150px',
+              minWidth: '150px',
+              height: '100px',
+              borderRadius: '12px !important',
+              border: '2px solid',
+              borderColor: method === pm.value ? 'primary.main' : 'grey.300',
+              backgroundColor: method === pm.value ? 'primary.light' : 'white',
+              color: method === pm.value ? 'primary.contrastText' : 'text.primary',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              padding: 2,
+              textTransform: 'none',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                backgroundColor: method === pm.value ? 'primary.main' : 'grey.100',
+                transform: 'translateY(-2px)',
+                boxShadow: 3,
+              },
+              '&.Mui-selected': {
+                backgroundColor: 'primary.main',
+                color: 'white',
                 '&:hover': {
-                  transform: processing ? 'none' : 'translateY(-2px)',
-                  boxShadow: 4,
-                },
-                height: '100%'
-              }}
-            >
-              <Avatar sx={{
-                bgcolor: method === pm.value ? 'primary.main' : 'grey.200',
-                color: method === pm.value ? 'white' : 'grey.700',
-                mb: 1,
-                width: 48,
-                height: 48
-              }}>
-                {pm.icon}
-              </Avatar>
-              <Typography variant="body2" fontWeight="500">
-                {pm.label}
-              </Typography>
-            </Paper>
-          </Grid>
+                  backgroundColor: 'primary.dark',
+                }
+              }
+            }}
+          >
+            {React.cloneElement(pm.icon, {
+              sx: { fontSize: 32 }
+            })}
+            <Typography variant="body2" fontWeight="500">
+              {pm.label}
+            </Typography>
+          </ToggleButton>
         ))}
-      </Grid>
+      </ToggleButtonGroup>
     </Box>
   );
 };
@@ -445,6 +541,19 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     []
   );
 
+  // Meal options
+  const mealsOptions = useMemo(
+    () => [
+      { id: 1, name: "Vegetarian Meal", description: "Fresh vegetables and pasta", price: 1500 },
+      { id: 2, name: "Non-Vegetarian Meal", description: "Chicken or fish options", price: 2000 },
+      { id: 3, name: "Special Diet Meal", description: "Gluten-free or vegan options", price: 1800 },
+      { id: 4, name: "Child Meal", description: "Kid-friendly options", price: 1200 },
+      { id: 5, name: "Premium Meal", description: "Gourmet dining experience", price: 3500 },
+      { id: 6, name: "Snack Pack", description: "Light snacks and beverages", price: 800 },
+    ],
+    []
+  );
+
   // Form fields
   const [id, setId] = useState("");
   const [flight, setFlight] = useState("");
@@ -459,7 +568,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
   const [cvv, setCvv] = useState("");
 
   // Additional price states
-  const [mealsPrice, setMealsPrice] = useState(1500);
+  const [selectedMeals, setSelectedMeals] = useState([]);
   const [baggagePrice, setBaggagePrice] = useState(750);
 
   // OTP states
@@ -491,6 +600,8 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
       setCard(data.card || "");
       setExpiry(data.expiry ? dayjs(`01/${data.expiry}`) : null);
       setCvv(data.cvv || "");
+      setSelectedMeals(data.selectedMeals || []);
+      setBaggagePrice(data.baggagePrice || 750);
     }
   }, [data]);
 
@@ -512,6 +623,8 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     setCard("");
     setExpiry(null);
     setCvv("");
+    setSelectedMeals([]);
+    setBaggagePrice(750);
     setFlightError("");
     setFormErrors({});
     setPaymentResult(null);
@@ -540,11 +653,19 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     }
   };
 
+  // Calculate meals price
+  const calculateMealsPrice = () => {
+    return selectedMeals.reduce((total, mealId) => {
+      const meal = mealsOptions.find(m => m.id === mealId);
+      return total + (meal ? meal.price : 0);
+    }, 0);
+  };
+
   // Validators
   const validateCardNumber = (number) => /^[0-9]{16}$/.test(number.replace(/\s+/g, ""));
   const validateExpiry = (date) => date && dayjs(date).isAfter(dayjs());
   const validateCvv = (cvv) => /^[0-9]{3}$/.test(cvv);
-  const validatePhone = (phone) => /^(?:0\d{9}|\+94\d{9})$/.test(phone);
+  const validatePhone = (phone) => /^(\+?\d{10,15})$/.test(phone);
   const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
 
   const generateOtp = () => {
@@ -599,6 +720,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     setPaymentResult(null);
     if (!validateForm()) return;
 
+    const mealsPrice = calculateMealsPrice();
     const totalAmount = price + mealsPrice + baggagePrice;
 
     const payment = {
@@ -615,7 +737,8 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
       cvv,
       flightPrice: price,
       mealsPrice,
-      baggagePrice
+      baggagePrice,
+      selectedMeals
     };
 
     if (isEdit) {
@@ -714,7 +837,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
               <StepLabel>Passenger Details</StepLabel>
             </Step>
             <Step>
-              <StepLabel>Payment</StepLabel>
+              <StepLabel>Extras & Payment</StepLabel>
             </Step>
           </Stepper>
 
@@ -724,7 +847,8 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
           {/* Price summary */}
           <PriceSummary
             flightPrice={price}
-            mealsPrice={mealsPrice}
+            selectedMeals={selectedMeals}
+            mealsOptions={mealsOptions}
             baggagePrice={baggagePrice}
           />
 
@@ -944,6 +1068,19 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                         <Divider sx={{ my: 2 }} />
                       </Grid>
 
+                      {/* Meal Selection */}
+                      <Grid item xs={12}>
+                        <MealSelection
+                          selectedMeals={selectedMeals}
+                          setSelectedMeals={setSelectedMeals}
+                          mealsOptions={mealsOptions}
+                        />
+                      </Grid>
+
+                      <Grid item xs={12}>
+                        <Divider sx={{ my: 2 }} />
+                      </Grid>
+
                       {/* Payment Method */}
                       <Grid item xs={12}>
                         <PaymentMethodSelector
@@ -1069,7 +1206,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                             },
                           }}
                         >
-                          {isEdit ? "Update Payment" : `Pay LKR ${(price + mealsPrice + baggagePrice).toLocaleString()}`}
+                          {isEdit ? "Update Payment" : `Pay LKR ${(price + calculateMealsPrice() + baggagePrice).toLocaleString()}`}
                         </Button>
                       </Grid>
                     </>

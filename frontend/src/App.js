@@ -16,7 +16,7 @@ import {
   Slide,
   Grow
 } from '@mui/material';
-import { styled, keyframes } from '@mui/material/styles';
+import { styled, keyframes, CssVarsProvider } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
@@ -25,6 +25,9 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import Plane from './Components/Images/p3.png';
 import Logo from './Components/Images/logo.png';
+import Video2 from './Components/Images/family.mp4';
+
+
 
 // Keyframe animations  
 const float = keyframes`
@@ -359,6 +362,7 @@ function App() {
       {/* Logo at the top left corner */}
       <LogoImage src={Logo} alt="AirGo Logo" />
       
+      
       {/* 3D Plane Background with Clouds, particles and Routes */}
       <BackgroundWrapper>
         <AnimatedPlane src={Plane} alt="Flying plane" />
@@ -411,6 +415,21 @@ function App() {
       </BackgroundWrapper>
 
       <Header />
+
+  {/* video */}
+   <div style={{ maxWidth: "1300px", margin: "20px auto" }}>
+  <video 
+    autoPlay 
+    loop 
+    muted 
+    playsInline 
+    style={{ width: "100%", borderRadius: "8px" }}
+  >
+    <source src={Video2} type="video/mp4" />
+  </video>
+</div>
+
+
       
       {/* Welcome Section with Booking Form */}
       <Box sx={{ 

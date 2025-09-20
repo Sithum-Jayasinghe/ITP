@@ -1,4 +1,8 @@
-import { Box, Grid, Typography, TextField, Select, MenuItem, FormControl, RadioGroup, FormControlLabel, Radio, Checkbox, Button, InputLabel, InputAdornment, Snackbar, Alert, Slide } from "@mui/material";
+import { 
+  Box, Grid, Typography, TextField, Select, MenuItem, FormControl, 
+  RadioGroup, FormControlLabel, Radio, Checkbox, Button, InputLabel, 
+  InputAdornment, Snackbar, Alert, Slide, Avatar 
+} from "@mui/material";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import FlightLandIcon from "@mui/icons-material/FlightLand";
 import EventIcon from "@mui/icons-material/Event";
@@ -6,11 +10,22 @@ import PeopleIcon from "@mui/icons-material/People";
 import ClassIcon from "@mui/icons-material/Class";
 import { useEffect, useState } from "react";
 
-// International countries list
-const countries = ["United States","Canada","United Kingdom","Germany","France","Australia","Japan","India","Brazil","South Africa","China","Italy","Spain","Netherlands","Sweden"];
+// Countries
+const countries = [
+  "United States","Canada","United Kingdom","Germany","France","Australia",
+  "Japan","India","Brazil","South Africa","China","Italy","Spain",
+  "Netherlands","Sweden"
+];
 
 // Slide transition for Snackbar
 const TransitionUp = (props) => <Slide {...props} direction="down" />;
+
+// Travel class options with images
+const classOptions = [
+  { value: "Economy", label: "Economy", img: "https://cdn-icons-png.flaticon.com/512/1042/1042339.png" },
+  { value: "Business", label: "Business", img: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png" },
+  { value: "First", label: "First Class", img: "https://cdn-icons-png.flaticon.com/512/854/854894.png" }
+];
 
 const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode }) => {
   const [id, setId] = useState(null);
@@ -22,6 +37,10 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
   const [travelClass, setTravelClass] = useState("Economy");
   const [tripType, setTripType] = useState("round");
   const [flexibleDates, setFlexibleDates] = useState(false);
+
+  // Country info
+  const [fromInfo, setFromInfo] = useState(null);
+  const [toInfo, setToInfo] = useState(null);
 
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -51,6 +70,59 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
     }
   }, [data]);
 
+  // Fetch country info when from/to changes
+  useEffect(() => {
+    const fetchCountryInfo = async (country, setInfo) => {
+      if (!country) {
+        setInfo(null);
+        return;
+      }
+      try {
+        const res = await fetch(`https://restcountries.com/v3.1/name/${country}?fullText=true`);
+        const json = await res.json();
+        if (json && json[0]) {
+          setInfo({
+            flag: json[0].flags.svg,
+            capital: json[0].capital?.[0] || "N/A",
+            population: json[0].population?.toLocaleString() || "N/A",
+            region: json[0].region
+          });
+        }
+      } catch (err) {
+        console.error("Country fetch error:", err);
+        setInfo(null);
+      }
+    };
+
+    fetchCountryInfo(from, setFromInfo);
+  }, [from]);
+
+  useEffect(() => {
+    const fetchCountryInfo = async (country, setInfo) => {
+      if (!country) {
+        setInfo(null);
+        return;
+      }
+      try {
+        const res = await fetch(`https://restcountries.com/v3.1/name/${country}?fullText=true`);
+        const json = await res.json();
+        if (json && json[0]) {
+          setInfo({
+            flag: json[0].flags.svg,
+            capital: json[0].capital?.[0] || "N/A",
+            population: json[0].population?.toLocaleString() || "N/A",
+            region: json[0].region
+          });
+        }
+      } catch (err) {
+        console.error("Country fetch error:", err);
+        setInfo(null);
+      }
+    };
+
+    fetchCountryInfo(to, setToInfo);
+  }, [to]);
+
   const resetForm = () => {
     setId(null);
     setFrom("");
@@ -61,6 +133,8 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
     setTravelClass("Economy");
     setTripType("round");
     setFlexibleDates(false);
+    setFromInfo(null);
+    setToInfo(null);
   };
 
   const inputStyle = {
@@ -93,6 +167,17 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
               {countries.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
             </Select>
           </FormControl>
+
+          {/* Country Info */}
+          {fromInfo && (
+            <Box sx={{ mt: 2, p: 2, border: "1px solid #ccc", borderRadius: 2 }}>
+              <Typography variant="h6">From: {from}</Typography>
+              <img src={fromInfo.flag} alt={from} width="80" style={{ borderRadius: "6px", marginTop: "8px" }} />
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Capital: {fromInfo.capital} | Population: {fromInfo.population} | Region: {fromInfo.region}
+              </Typography>
+            </Box>
+          )}
         </Grid>
 
         {/* To */}
@@ -107,6 +192,17 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
               {countries.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
             </Select>
           </FormControl>
+
+          {/* Country Info */}
+          {toInfo && (
+            <Box sx={{ mt: 2, p: 2, border: "1px solid #ccc", borderRadius: 2 }}>
+              <Typography variant="h6">To: {to}</Typography>
+              <img src={toInfo.flag} alt={to} width="80" style={{ borderRadius: "6px", marginTop: "8px" }} />
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                Capital: {toInfo.capital} | Population: {toInfo.population} | Region: {toInfo.region}
+              </Typography>
+            </Box>
+          )}
         </Grid>
 
         {/* Departure */}
@@ -150,18 +246,32 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
           />
         </Grid>
 
-        {/* Class */}
+        {/* Class with images */}
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth sx={inputStyle}>
             <InputLabel>Class</InputLabel>
             <Select
               value={travelClass}
               onChange={(e) => setTravelClass(e.target.value)}
+              renderValue={(selected) => {
+                const cls = classOptions.find(c => c.value === selected);
+                return (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Avatar src={cls.img} alt={cls.label} sx={{ width: 24, height: 24 }} />
+                    <span>{cls.label}</span>
+                  </Box>
+                );
+              }}
               startAdornment={<InputAdornment position="start"><ClassIcon /></InputAdornment>}
             >
-              <MenuItem value="Economy">Economy</MenuItem>
-              <MenuItem value="Business">Business</MenuItem>
-              <MenuItem value="First">First</MenuItem>
+              {classOptions.map((c) => (
+                <MenuItem key={c.value} value={c.value}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Avatar src={c.img} alt={c.label} sx={{ width: 24, height: 24 }} />
+                    <span>{c.label}</span>
+                  </Box>
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Grid>

@@ -1,16 +1,26 @@
 // src/components/Payments/Payments.js
 import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import {
-  Box, Button, TextField, CircularProgress, Snackbar, Alert, Pagination,
-  IconButton, Switch, FormControlLabel, Typography, Tooltip, Paper, Dialog,
-  DialogTitle, DialogContent, DialogActions, Fade
+  Box,
+  Button,
+  TextField,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Pagination,
+  IconButton,
+  Switch,
+  FormControlLabel,
+  Typography,
+  Tooltip,
+  Paper,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Fade
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import ClearIcon from "@mui/icons-material/Clear";
-import DownloadIcon from "@mui/icons-material/Download";
-import TableChartIcon from "@mui/icons-material/TableChart";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import LoyaltyIcon from "@mui/icons-material/Loyalty";
 import PaymentForm from "./PaymentForm";
 import PaymentsTable from "./PaymentsTable";
 import Axios from "axios";
@@ -26,6 +36,7 @@ import Banner3 from "../Images/ban2.png";
 
 const PAGE_SIZE = 10;
 const COLORS = ["#4caf50", "#ff9800", "#f44336"];
+
 const TransitionFade = React.forwardRef(function TransitionFade(props, ref) {
   return <Fade ref={ref} {...props} />;
 });
@@ -44,16 +55,13 @@ const Payments = () => {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState(null);
 
-  // NEW STATE for price breakdown modal
-  const [openBreakdown, setOpenBreakdown] = useState(false);
-  const [breakdownData, setBreakdownData] = useState(null);
-
   const paymentsRef = useRef();
   const previousPaymentRef = useRef();
 
   // === Banner slideshow ===
   const banners = [PayBanner, Banner2, Banner3];
   const [currentBanner, setCurrentBanner] = useState(0);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentBanner((prev) => (prev + 1) % banners.length);
@@ -62,51 +70,35 @@ const Payments = () => {
   }, [banners.length]);
 
   useEffect(() => { getPayments(); }, []);
+
   const getPayments = () => {
     setLoading(true);
     Axios.get("http://localhost:3001/api/payments")
-      .then((res) => { setPayments(res.data?.response || []); setLoading(false); })
+      .then((response) => { setPayments(response.data?.response || []); setLoading(false); })
       .catch(() => {
-        setSnackbar({ open: true, message: "⚠️ Unable to load bookings. Please refresh.", severity: "error" });
+        setSnackbar({ open: true, message: "⚠️ Unable to load bookings. Please refresh the page.", severity: "error" });
         setLoading(false);
       });
   };
 
   useEffect(() => { localStorage.setItem("darkMode", darkMode); }, [darkMode]);
 
-  // === Hyper-Personalized Pricing Engine ===
-  const calculateDynamicPrice = (basePrice, loyalty = "Standard", demandFactor = 1) => {
-    let discount = 0;
-    if (loyalty === "Gold") discount = 0.15;
-    else if (loyalty === "Silver") discount = 0.08;
-    else if (loyalty === "Bronze") discount = 0.05;
-
-    // simulate demand markup
-    const demandMarkup = demandFactor > 1.2 ? 0.10 : demandFactor > 1.0 ? 0.05 : 0;
-
-    const finalPrice = basePrice * (1 - discount + demandMarkup);
-    return { finalPrice: finalPrice.toFixed(2), discount, demandMarkup };
-  };
-
   // === Add Payment ===
   const addPayment = (data) => {
     setSubmitted(true);
     const totalMealsPrice = data.totalMealsPrice || 0;
     const totalBaggagePrice = data.totalBaggagePrice || 0;
-    const basePrice = Number(data.price) + Number(totalMealsPrice) + Number(totalBaggagePrice);
-
-    const { finalPrice, discount, demandMarkup } = calculateDynamicPrice(basePrice, data.loyaltyTier, Math.random() * 1.5);
-
-    const paymentData = { ...data, totalMealsPrice, totalBaggagePrice, totalPrice: finalPrice, appliedDiscount: discount, appliedMarkup: demandMarkup };
+    const totalPrice = Number(data.price) + Number(totalMealsPrice) + Number(totalBaggagePrice);
+    const paymentData = { ...data, totalMealsPrice, totalBaggagePrice, totalPrice };
 
     Axios.post("http://localhost:3001/api/createpayment", paymentData)
       .then(() => {
         getPayments();
-        setSnackbar({ open: true, message: `🎉 Ticket booked at personalized price: $${finalPrice}`, severity: "success" });
+        setSnackbar({ open: true, message: "🎉 Ticket booked & payment successful!", severity: "success" });
         setSubmitted(false); setIsEdit(false);
       })
       .catch(() => {
-        setSnackbar({ open: true, message: "⚠️ Payment failed! Try again.", severity: "error" });
+        setSnackbar({ open: true, message: "⚠️ Payment failed! Please check your details.", severity: "error" });
         setSubmitted(false);
       });
   };
@@ -117,23 +109,26 @@ const Payments = () => {
     previousPaymentRef.current = selectedPayment;
     const totalMealsPrice = data.totalMealsPrice || 0;
     const totalBaggagePrice = data.totalBaggagePrice || 0;
-    const basePrice = Number(data.price) + Number(totalMealsPrice) + Number(totalBaggagePrice);
-
-    const { finalPrice, discount, demandMarkup } = calculateDynamicPrice(basePrice, data.loyaltyTier, Math.random() * 1.5);
-
-    const paymentData = { ...data, totalMealsPrice, totalBaggagePrice, totalPrice: finalPrice, appliedDiscount: discount, appliedMarkup: demandMarkup };
+    const totalPrice = Number(data.price) + Number(totalMealsPrice) + Number(totalBaggagePrice);
+    const paymentData = { ...data, totalMealsPrice, totalBaggagePrice, totalPrice };
 
     Axios.post("http://localhost:3001/api/updatepayment", paymentData)
       .then(() => {
         getPayments();
         setSnackbar({
-          open: true, severity: "info",
-          message: `✏️ Booking updated. Personalized price applied: $${finalPrice}`,
+          open: true,
+          severity: "info",
+          message: `✏️ Booking updated successfully for ${data.passengerName || data.passenger} (ID: ${data.id})`,
         });
-        setSubmitted(false); setIsEdit(false);
+        setSubmitted(false);
+        setIsEdit(false);
       })
       .catch(() => {
-        setSnackbar({ open: true, severity: "error", message: `⚠️ Failed to update booking #${data.id}.` });
+        setSnackbar({
+          open: true,
+          severity: "error",
+          message: `⚠️ Failed to update booking #${data.id}. Please try again.`,
+        });
         setSubmitted(false);
       });
   };
@@ -143,13 +138,16 @@ const Payments = () => {
     Axios.post("http://localhost:3001/api/deletepayment", data)
       .then(() => {
         getPayments();
-        setSnackbar({ open: true, message: "🗑️ Booking cancelled.", severity: "success" });
+        setSnackbar({ open: true, message: "🗑️ Booking cancelled successfully.", severity: "success" });
       })
-      .catch(() => { setSnackbar({ open: true, message: "⚠️ Could not cancel booking.", severity: "error" }); });
+      .catch(() => { setSnackbar({ open: true, message: "⚠️ Could not cancel booking. Try again.", severity: "error" }); });
   };
 
-  // === Search/Filter/Sort ===
-  const debouncedSearch = useCallback(debounce((v) => { setSearchTerm(v); setPage(1); }, 300), []);
+  // === Search & Filter ===
+  const debouncedSearch = useCallback(
+    debounce((value) => { setSearchTerm(value); setPage(1); }, 300), []
+  );
+
   const filteredPayments = useMemo(() => {
     if (!searchTerm.trim()) return payments;
     return payments.filter((p) =>
@@ -171,7 +169,7 @@ const Payments = () => {
     return sortedPayments.slice(start, start + PAGE_SIZE);
   }, [sortedPayments, page]);
 
-  // === Export ===
+  // === Export PDF ===
   const handleDownloadPdf = async () => {
     if (!paymentsRef.current) return;
     const canvas = await html2canvas(paymentsRef.current, { scale: 2 });
@@ -181,6 +179,7 @@ const Payments = () => {
     pdf.save("My_Tickets.pdf");
   };
 
+  // === Export Excel ===
   const handleDownloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(payments);
     const workbook = XLSX.utils.book_new();
@@ -188,91 +187,116 @@ const Payments = () => {
     XLSX.writeFile(workbook, "My_Tickets.xlsx");
   };
 
-  // === Pie Chart Data ===
   const statusData = [
     { name: "Paid", value: payments.filter((p) => p.status === "Paid").length },
     { name: "Pending", value: payments.filter((p) => p.status === "Pending").length },
     { name: "Cancelled", value: payments.filter((p) => p.status === "Cancelled").length }
   ];
 
-  // === Price Breakdown ===
-  const showPriceBreakdown = (payment) => {
-    setBreakdownData(payment);
-    setOpenBreakdown(true);
-  };
-
   return (
     <>
       <Header />
 
-      {/* Banner Carousel */}
-      <Box sx={{ width: "100%", height: "200px", overflow: "hidden", borderRadius: "10px", mb: 3, position: "relative" }}>
-        {banners.map((banner, i) => (
-          <Box key={i} component="img" src={banner} alt={`Banner ${i}`}
-            sx={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "10px",
-              position: "absolute", top: 0, left: 0, opacity: currentBanner === i ? 1 : 0,
-              transform: currentBanner === i ? "scale(1)" : "scale(1.05)", transition: "opacity 2s, transform 2s" }} />
+      {/* === Modern Slideshow Banner === */}
+      <Box
+        sx={{
+          width: "100%",
+          height: "250px",
+          position: "relative",
+          borderRadius: "16px",
+          overflow: "hidden",
+          mb: 3,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+        }}
+      >
+        {banners.map((banner, index) => (
+          <Box
+            key={index}
+            component="img"
+            src={banner}
+            alt={`Banner ${index}`}
+            sx={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              borderRadius: "16px",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              opacity: currentBanner === index ? 1 : 0,
+              transform: currentBanner === index ? "scale(1)" : "scale(1.1)",
+              transition: "opacity 2s ease-in-out, transform 8s ease-in-out",
+              filter: "brightness(0.75) saturate(1.2)", // more vivid colors
+            }}
+          />
         ))}
+        {/* Overlay */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+            color: "white",
+            textAlign: "center",
+            px: 2,
+          }}
+        >
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: "bold",
+              textShadow: "2px 2px 8px rgba(0,0,0,0.9)",
+            }}
+          >
+            ✈️ My Bookings & Payments
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            sx={{ mt: 1, textShadow: "1px 1px 6px rgba(0,0,0,0.8)" }}
+          >
+            Secure • Fast • Real-time Airline Payments
+          </Typography>
+        </Box>
       </Box>
 
-      <Box sx={{ width: "95%", mx: "auto", mt: 2, bgcolor: darkMode ? "#121212" : "#fafafa",
-        color: darkMode ? "#fff" : "#000", minHeight: "100vh", borderRadius: "10px", p: 2 }}>
-        
+      {/* === Main Content === */}
+      <Box sx={{ width: "95%", mx: "auto", mt: 2, bgcolor: darkMode ? "#121212" : "#fafafa", color: darkMode ? "#fff" : "#000", minHeight: "100vh", borderRadius: "10px", p: 2 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-          <Typography variant="h5" fontWeight="bold">✈️ My Bookings & Payments</Typography>
-          <FormControlLabel control={<Switch checked={darkMode} onChange={() => setDarkMode(!darkMode)} />}
-            label="🌙 Dark Mode" sx={{ color: darkMode ? "#fff" : "#000" }} />
+          <Typography variant="h5" fontWeight="bold">Manage Your Bookings</Typography>
+          <FormControlLabel control={<Switch checked={darkMode} onChange={() => setDarkMode(!darkMode)} />} label="🌙 Dark Mode" sx={{ color: darkMode ? "#fff" : "#000" }} />
         </Box>
-
-        {/* Personalized Offer Banner */}
-        <Paper sx={{ p: 2, mb: 3, display: "flex", alignItems: "center", gap: 2, bgcolor: "#e3f2fd" }}>
-          <LoyaltyIcon color="primary" sx={{ fontSize: 30 }} />
-          <Typography variant="body1">
-            🎁 Special Offer: Loyal travelers enjoy <strong>dynamic personalized fares</strong> adjusted for you in real-time!
-          </Typography>
-        </Paper>
 
         {/* Payment Form */}
         <PaymentForm addPayment={addPayment} updatePayment={updatePayment} submitted={submitted} data={selectedPayment} isEdit={isEdit} />
-
-        {/* Search + Export */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4, mb: 2, flexWrap: "wrap" }}>
-          <TextField placeholder="🔎 Search by Booking ID or Passenger Name"
-            onChange={(e) => debouncedSearch(e.target.value)} value={searchTerm}
-            sx={{ width: 350, mb: { xs: 2, md: 0 }, bgcolor: darkMode ? "#1e1e1e" : "#fff" }}
-            InputProps={{
-              startAdornment: <SearchIcon style={{ color: darkMode ? "#ccc" : "#000" }} />,
-              endAdornment: searchTerm && <IconButton onClick={() => setSearchTerm("")}><ClearIcon /></IconButton>
-            }} />
-          <Box>
-            <Tooltip title="Download PDF"><Button onClick={handleDownloadPdf} startIcon={<DownloadIcon />} sx={{ mr: 1 }} variant="outlined">PDF</Button></Tooltip>
-            <Tooltip title="Export Excel"><Button onClick={handleDownloadExcel} startIcon={<TableChartIcon />} variant="outlined">Excel</Button></Tooltip>
-          </Box>
-        </Box>
 
         {/* Payments Table */}
         {loading ? <CircularProgress sx={{ display: "block", mx: "auto", mt: 5 }} /> : (
           <>
             <Box ref={paymentsRef}>
-              <PaymentsTable rows={paginatedPayments}
-                selectedPayment={(d) => { setSelectedPayment(d); setIsEdit(true); }}
-                deletePayment={(d) => { setPaymentToDelete(d); setOpenDeleteDialog(true); }}
-                showBreakdown={showPriceBreakdown}  // 👈 NEW
+              <PaymentsTable
+                rows={paginatedPayments}
+                selectedPayment={(data) => { setSelectedPayment(data); setIsEdit(true); }}
+                deletePayment={(data) => { setPaymentToDelete(data); setOpenDeleteDialog(true); }}
                 requestSort={(key) => setSortConfig({ key, direction: sortConfig.direction === "asc" ? "desc" : "asc" })}
-                sortConfig={sortConfig} darkMode={darkMode} />
+                sortConfig={sortConfig}
+                darkMode={darkMode}
+              />
             </Box>
-            <Pagination count={Math.ceil(sortedPayments.length / PAGE_SIZE)} page={page} onChange={(e, val) => setPage(val)}
-              sx={{ display: "flex", justifyContent: "center", mt: 3 }} />
+            <Pagination count={Math.ceil(sortedPayments.length / PAGE_SIZE)} page={page} onChange={(e, val) => setPage(val)} sx={{ display: "flex", justifyContent: "center", mt: 3 }} color={darkMode ? "standard" : "primary"} />
           </>
         )}
 
         {/* Pie Chart */}
-        <Paper sx={{ mt: 4, p: 2 }}>
+        <Paper sx={{ mt: 4, p: 2, bgcolor: darkMode ? "#1e1e1e" : "#fff", color: darkMode ? "#fff" : "#000" }}>
           <Typography align="center" variant="h6" gutterBottom>Booking Status Overview</Typography>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie data={statusData} dataKey="value" nameKey="name" outerRadius={90}>
-                {statusData.map((entry, i) => <Cell key={i} fill={COLORS[i]} />)}
+                {statusData.map((entry, index) => <Cell key={index} fill={COLORS[index]} />)}
               </Pie>
               <Legend />
             </PieChart>
@@ -280,55 +304,26 @@ const Payments = () => {
         </Paper>
 
         {/* Snackbar */}
-        <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }} TransitionComponent={TransitionFade}>
-          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled">
+        <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar({ ...snackbar, open: false })} anchorOrigin={{ vertical: "top", horizontal: "center" }} TransitionComponent={TransitionFade} sx={{ mt: 8 }}>
+          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled" elevation={6} action={snackbar.action}
+            sx={{ width: "100%", boxShadow: 3, fontWeight: "600", fontSize: "1rem", borderRadius: 2, ".MuiAlert-icon": { fontSize: "1.5rem" }, bgcolor: snackbar.severity === "success" ? "success.main" : snackbar.severity === "error" ? "error.main" : snackbar.severity === "warning" ? "warning.main" : undefined, color: "white" }}>
             {snackbar.message}
           </Alert>
         </Snackbar>
 
         {/* Delete Dialog */}
-        <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)} TransitionComponent={TransitionFade} maxWidth="xs" fullWidth>
-          <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <WarningAmberIcon color="error" /> Cancel Booking
+        <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)} TransitionComponent={TransitionFade} keepMounted maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 2, bgcolor: darkMode ? "#1e1e1e" : "#fff", color: darkMode ? "#fff" : "#000", boxShadow: 6 } }}>
+          <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, fontWeight: "bold", fontSize: "1.25rem" }}>
+            <WarningAmberIcon color="error" sx={{ fontSize: 30 }} /> Cancel Booking
           </DialogTitle>
-          <DialogContent><Typography>Are you sure you want to cancel this booking?</Typography></DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDeleteDialog(false)}>No</Button>
-            <Button color="error" onClick={() => { deletePayment(paymentToDelete); setOpenDeleteDialog(false); }}>Yes, Cancel</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Price Breakdown Dialog */}
-        <Dialog open={openBreakdown} onClose={() => setOpenBreakdown(false)} maxWidth="sm" fullWidth>
-          <DialogTitle sx={{ fontWeight: "bold" }}>💰 Price Breakdown</DialogTitle>
-          <DialogContent dividers>
-            {breakdownData ? (
-              <Box>
-                <Typography><strong>Passenger:</strong> {breakdownData.passengerName || breakdownData.passenger}</Typography>
-                <Typography><strong>Booking ID:</strong> {breakdownData.id}</Typography>
-
-                <Paper sx={{ mt: 2, p: 2 }}>
-                  <Typography>Base Fare: ${Number(breakdownData.price).toFixed(2)}</Typography>
-                  <Typography>Meals: ${Number(breakdownData.totalMealsPrice || 0).toFixed(2)}</Typography>
-                  <Typography>Baggage: ${Number(breakdownData.totalBaggagePrice || 0).toFixed(2)}</Typography>
-                  <Typography sx={{ color: "green" }}>
-                    Loyalty Discount: -{(breakdownData.appliedDiscount * 100 || 0).toFixed(1)}%
-                  </Typography>
-                  <Typography sx={{ color: "red" }}>
-                    Demand Markup: +{(breakdownData.appliedMarkup * 100 || 0).toFixed(1)}%
-                  </Typography>
-                  <Typography variant="h6" sx={{ mt: 2, fontWeight: "bold" }}>
-                    Final Price: ${Number(breakdownData.totalPrice).toFixed(2)}
-                  </Typography>
-                </Paper>
-              </Box>
-            ) : (
-              <Typography>No data available.</Typography>
-            )}
+          <DialogContent>
+            <Typography sx={{ fontSize: "1rem", mt: 1, mb: 1.5, lineHeight: 1.5 }}>
+              Are you sure you want to cancel this booking? <br /> This action is <strong>irreversible</strong> and your booking will be removed permanently.
+            </Typography>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenBreakdown(false)} variant="contained">Close</Button>
+          <DialogActions sx={{ px: 2, pb: 2 }}>
+            <Button variant="outlined" onClick={() => setOpenDeleteDialog(false)} sx={{ textTransform: "none", fontWeight: "600", minWidth: 120, borderRadius: 2 }}>No, Keep Booking</Button>
+            <Button variant="contained" color="error" onClick={() => { deletePayment(paymentToDelete); setOpenDeleteDialog(false); }} sx={{ textTransform: "none", fontWeight: "700", minWidth: 140, borderRadius: 2 }} autoFocus>Yes, Cancel Booking</Button>
           </DialogActions>
         </Dialog>
       </Box>

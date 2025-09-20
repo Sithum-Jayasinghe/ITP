@@ -1,5 +1,5 @@
 // src/components/Payments/PaymentsTable.js
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Paper,
   Table,
@@ -13,68 +13,88 @@ import {
   Tooltip,
   Typography,
   Chip,
+  Box,
+  TextField,
+  Collapse,
+  TablePagination,
+  TableSortLabel,
+  Card,
+  CardContent,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
-import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { QRCodeCanvas } from "qrcode.react";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
+import * as XLSX from "xlsx";
+import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
+import Plane5 from "../Images/sky.jpg";
 
-// === Pricing Engine ===
-const calculateDynamicPrice = (basePrice, loyalty = "Standard", demandFactor = 1) => {
-  let discount = 0;
-  if (loyalty === "Gold") discount = 0.15;
-  else if (loyalty === "Silver") discount = 0.08;
-  else if (loyalty === "Bronze") discount = 0.05;
+const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [orderBy, setOrderBy] = useState("id");
+  const [order, setOrder] = useState("asc");
+  const [openRow, setOpenRow] = useState(null);
 
-  const demandMarkup = demandFactor > 1.2 ? 0.1 : demandFactor > 1.0 ? 0.05 : 0;
+  // === Sorting ===
+  const handleSort = (property) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
 
-  const finalPrice = basePrice * (1 - discount + demandMarkup);
-  return { finalPrice, discount, demandMarkup };
-};
+  const sortedRows = [...rows].sort((a, b) => {
+    if (a[orderBy] < b[orderBy]) return order === "asc" ? -1 : 1;
+    if (a[orderBy] > b[orderBy]) return order === "asc" ? 1 : -1;
+    return 0;
+  });
 
-const PaymentsTable = ({ rows = [], selectedPayment, deletePayment, showBreakdown, setPayments }) => {
-  const [demandFactor, setDemandFactor] = useState(1);
+  // === Search / Filter ===
+  const filteredRows = sortedRows.filter(
+    (row) =>
+      row.passenger.toLowerCase().includes(search.toLowerCase()) ||
+      row.flight.toLowerCase().includes(search.toLowerCase())
+  );
 
-  // === Simulate live demand factor every 5s ===
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDemandFactor(1 + Math.random() * 0.5); // random between 1.0 and 1.5
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  // === Pagination ===
+  const handleChangePage = (e, newPage) => setPage(newPage);
+  const handleChangeRowsPerPage = (e) => {
+    setRowsPerPage(parseInt(e.target.value, 10));
+    setPage(0);
+  };
 
-  // === WebSocket for live updates from backend ===
-  useEffect(() => {
-    const socket = new WebSocket("ws://localhost:3001/payments");
+  // === Export to Excel ===
+  const exportExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
+    XLSX.writeFile(workbook, "payments.xlsx");
+  };
 
-    socket.onmessage = (event) => {
-      const updatedPayment = JSON.parse(event.data);
-      if (setPayments) {
-        setPayments((prev) =>
-          prev.map((p) => (p.id === updatedPayment.id ? updatedPayment : p))
-        );
-      }
-    };
+  // === Export All to PDF ===
+  const exportAllPDF = async () => {
+    const doc = new jsPDF();
+    doc.text("All Payments Report", 20, 20);
+    rows.forEach((row, i) => {
+      doc.text(`${i + 1}. ${row.passenger} - LKR ${row.price}`, 20, 40 + i * 10);
+    });
+    doc.save("all_payments.pdf");
+  };
 
-    return () => socket.close();
-  }, [setPayments]);
-
+  // === Single PDF ===
   const generatePDF = async (row) => {
     const doc = new jsPDF("landscape");
     const qrData = JSON.stringify(row);
     const qrImageUrl = await QRCode.toDataURL(qrData);
 
-    const baggageCost = Number(row.totalBaggagePrice || 0);
-    const mealCost = Number(row.totalMealsPrice || 0);
+    const baggageCost = 8000;
+    const mealCost = 2500;
     const taxes = 1500;
-    const basePrice = Number(row.price || 0) + baggageCost + mealCost;
+    const total = Number(row.price) + baggageCost + mealCost + taxes;
 
-    const { finalPrice } = calculateDynamicPrice(basePrice, row.loyaltyTier, demandFactor);
-
-    // Header Bar
     doc.setFillColor(25, 118, 210);
     doc.rect(0, 0, 297, 25, "F");
     doc.setTextColor(255, 255, 255);
@@ -93,7 +113,6 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment, showBreakdow
     doc.text(`Arrival: Dubai (DXB) - 1:30 PM`, 120, 60);
     doc.text(`Date: October 15, 2050`, 120, 75);
 
-    // Payment & Extras
     doc.setFontSize(13);
     doc.setTextColor(25, 118, 210);
     doc.text("Payment & Extras", 20, 125);
@@ -104,18 +123,18 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment, showBreakdow
     doc.text(`Payment Method: ${row.method}`, 20, 155);
     doc.text(`Status: ${row.status}`, 20, 170);
 
-    doc.text(`🛄 Baggage: LKR ${baggageCost}`, 120, 140);
+    doc.text(`🛄 Baggage (30kg): LKR ${baggageCost}`, 120, 140);
     doc.text(`🍱 Meal: LKR ${mealCost}`, 120, 155);
-    doc.text(`🎟️ Taxes: LKR ${taxes}`, 120, 170);
+    doc.text(`🎟️ Taxes & Fees: LKR ${taxes}`, 120, 170);
 
     doc.setFontSize(13);
     doc.setTextColor(200, 0, 0);
-    doc.text(`💰 TOTAL PAYMENT: LKR ${finalPrice.toFixed(2)}`, 20, 190);
+    doc.text(`💰 TOTAL PAYMENT: LKR ${total}`, 20, 190);
 
-    // QR
     doc.setFontSize(14);
     doc.setTextColor(25, 118, 210);
     doc.text("E-Ticket Copy", 230, 40);
+
     doc.addImage(qrImageUrl, "PNG", 230, 60, 45, 45);
 
     doc.setTextColor(100, 100, 100);
@@ -130,156 +149,297 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment, showBreakdow
   };
 
   return (
-    <TableContainer component={Paper} elevation={4} sx={{ borderRadius: 3, mt: 3, overflow: "hidden" }}>
-      <Table>
-        <TableHead sx={{ backgroundColor: "#1976d2" }}>
-          <TableRow>
-            {[
-              "ID",
-              "Flight",
-              "Passenger",
-              "Seat",
-              "Price",
-              "Method",
-              "Status",
-              "Phone",
-              "Actions",
-              "QR Code",
-              "Receipt",
-            ].map((header) => (
-              <TableCell
-                key={header}
-                sx={{ color: "#fff", fontWeight: "bold", textAlign: "center" }}
-              >
-                {header}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
+    <>
+      {/* === Airline Themed Header Banner === */}
+      <Box
+        sx={{
+          width: "100%",
+          height: 220,
+          position: "relative",
+          mb: 3,
+          borderRadius: 3,
+          overflow: "hidden",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+        }}
+      >
+        <Box
+          component="img"
+          src={Plane5}
+          alt="Airline Banner"
+          sx={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "brightness(0.5)",
+          }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            color: "white",
+            textAlign: "center",
+          }}
+        >
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: "bold",
+              textShadow: "2px 2px 10px rgba(0,0,0,0.8)",
+              letterSpacing: 2,
+            }}
+          >
+            ✈️ AIRGO Travel
+          </Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              mt: 1,
+              textShadow: "1px 1px 6px rgba(0,0,0,0.7)",
+              fontStyle: "italic",
+            }}
+          >
+            Modern Payments & Booking Dashboard
+          </Typography>
+        </Box>
+      </Box>
 
-        <TableBody>
-          {rows.length > 0 ? (
-            rows.map((row) => {
-              const baggage = Number(row.totalBaggagePrice || 0);
-              const meals = Number(row.totalMealsPrice || 0);
-              const basePrice = Number(row.price || 0) + baggage + meals;
+      {/* Toolbar */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          mb: 2,
+          alignItems: "center",
+        }}
+      >
+        <TextField
+          label="🔍 Search Passenger / Flight"
+          variant="outlined"
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ width: "40%", borderRadius: 2 }}
+        />
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button variant="outlined" onClick={exportExcel}>
+            📊 Excel
+          </Button>
+          <Button variant="outlined" onClick={exportAllPDF}>
+            📑 PDF
+          </Button>
+        </Box>
+      </Box>
 
-              const { finalPrice, discount, demandMarkup } = calculateDynamicPrice(
-                basePrice,
-                row.loyaltyTier,
-                demandFactor
-              );
-
-              return (
-                <TableRow
-                  key={row.id}
-                  hover
+      {/* Table */}
+      <TableContainer
+        component={Paper}
+        elevation={6}
+        sx={{ borderRadius: 4, overflow: "hidden" }}
+      >
+        <Table>
+          <TableHead
+            sx={{
+              background: "linear-gradient(90deg,#1976d2,#42a5f5)",
+            }}
+          >
+            <TableRow>
+              {[
+                "id",
+                "flight",
+                "passenger",
+                "seat",
+                "price",
+                "method",
+                "status",
+                "phone",
+                "actions",
+                "ticket",
+                "receipt",
+              ].map((header) => (
+                <TableCell
+                  key={header}
                   sx={{
-                    "&:nth-of-type(odd)": { backgroundColor: "#f9f9f9" },
-                    "&:hover": { backgroundColor: "#e3f2fd" },
+                    color: "#fff",
+                    fontWeight: "bold",
+                    textAlign: "center",
                   }}
                 >
-                  <TableCell align="center">{row.id}</TableCell>
-                  <TableCell align="center">{row.flight}</TableCell>
-                  <TableCell align="center">{row.passenger}</TableCell>
-                  <TableCell align="center">{row.seat}</TableCell>
-
-                  {/* Real-time price */}
-                  <TableCell
-                    align="center"
-                    sx={{
-                      fontWeight: "bold",
-                      color: discount > 0 ? "green" : demandMarkup > 0 ? "red" : "inherit",
-                    }}
+                  <TableSortLabel
+                    active={orderBy === header}
+                    direction={orderBy === header ? order : "asc"}
+                    onClick={() => handleSort(header)}
+                    sx={{ color: "white !important" }}
                   >
-                    LKR {finalPrice.toFixed(2)}
-                    {discount > 0 && (
-                      <Typography variant="caption" color="green" display="block">
-                        -{(discount * 100).toFixed(0)}% Loyalty
-                      </Typography>
-                    )}
-                    {demandMarkup > 0 && (
-                      <Typography variant="caption" color="red" display="block">
-                        +{(demandMarkup * 100).toFixed(0)}% Demand
-                      </Typography>
-                    )}
-                  </TableCell>
-
-                  <TableCell align="center">{row.method}</TableCell>
-                  <TableCell align="center">
-                    <Chip
-                      label={row.status}
-                      color={
-                        row.status === "Paid"
-                          ? "success"
-                          : row.status === "Pending"
-                          ? "warning"
-                          : "error"
-                      }
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell align="center">{row.phone}</TableCell>
-
-                  {/* Action Buttons */}
-                  <TableCell align="center">
-                    <Tooltip title="Edit Payment">
-                      <IconButton color="primary" onClick={() => selectedPayment(row)}>
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Payment">
-                      <IconButton color="error" onClick={() => deletePayment(row)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="View Price Breakdown">
-                      <IconButton color="secondary" onClick={() => showBreakdown(row)}>
-                        <ReceiptLongIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-
-                  {/* QR */}
-                  <TableCell align="center">
-                    <QRCodeCanvas
-                      value={JSON.stringify(row)}
-                      size={60}
-                      bgColor="#ffffff"
-                      fgColor="#000000"
-                      level="Q"
-                    />
-                  </TableCell>
-
-                  {/* PDF */}
-                  <TableCell align="center">
-                    <Tooltip title="Download Receipt">
-                      <Button
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        startIcon={<PictureAsPdfIcon />}
-                        onClick={() => generatePDF(row)}
-                      >
-                        PDF
-                      </Button>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              );
-            })
-          ) : (
-            <TableRow>
-              <TableCell colSpan={11} align="center">
-                <Typography variant="body1" color="text.secondary">
-                  No Payments Found.
-                </Typography>
-              </TableCell>
+                    {header.toUpperCase()}
+                  </TableSortLabel>
+                </TableCell>
+              ))}
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+
+          <TableBody>
+            {filteredRows.length > 0 ? (
+              filteredRows
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((row) => (
+                  <React.Fragment key={row.id}>
+                    <TableRow
+                      hover
+                      sx={{
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": {
+                          backgroundColor: "rgba(25,118,210,0.08)",
+                          transform: "scale(1.01)",
+                        },
+                      }}
+                      onClick={() =>
+                        setOpenRow(openRow === row.id ? null : row.id)
+                      }
+                    >
+                      <TableCell align="center">{row.id}</TableCell>
+                      <TableCell align="center">{row.flight}</TableCell>
+                      <TableCell align="center">{row.passenger}</TableCell>
+                      <TableCell align="center">{row.seat}</TableCell>
+                      <TableCell align="center">
+                        💸 LKR {row.price}
+                      </TableCell>
+                      <TableCell align="center">{row.method}</TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={row.status}
+                          color={
+                            row.status === "Paid"
+                              ? "success"
+                              : row.status === "Pending"
+                              ? "warning"
+                              : "error"
+                          }
+                          variant="filled"
+                          sx={{ fontWeight: "bold" }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">{row.phone}</TableCell>
+                      <TableCell align="center">
+                        <Tooltip title="Edit Payment">
+                          <IconButton
+                            color="primary"
+                            onClick={() => selectedPayment(row)}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Payment">
+                          <IconButton
+                            color="error"
+                            onClick={() => deletePayment(row)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+
+                      {/* Boarding Pass QR Card */}
+                      <TableCell align="center">
+                        <Card
+                          sx={{
+                            borderRadius: 3,
+                            boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+                            p: 1,
+                            background:
+                              "linear-gradient(135deg,#ffffffcc,#e3f2fdcc)",
+                            backdropFilter: "blur(10px)",
+                            transition: "0.3s",
+                            "&:hover": { transform: "scale(1.05)" },
+                          }}
+                        >
+                          <CardContent sx={{ textAlign: "center", p: 1.5 }}>
+                            <AirplanemodeActiveIcon
+                              sx={{ color: "#1976d2", mb: 1 }}
+                            />
+                            <QRCodeCanvas value={JSON.stringify(row)} size={70} />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                mt: 1,
+                                display: "block",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {row.passenger}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {row.flight}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </TableCell>
+
+                      <TableCell align="center">
+                        <Tooltip title="Download Receipt">
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            startIcon={<PictureAsPdfIcon />}
+                            onClick={() => generatePDF(row)}
+                          >
+                            PDF
+                          </Button>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Expandable Details */}
+                    <TableRow>
+                      <TableCell colSpan={11} sx={{ p: 0 }}>
+                        <Collapse in={openRow === row.id} timeout="auto">
+                          <Box sx={{ p: 2, bgcolor: "#f9f9f9" }}>
+                            <Typography variant="body2">
+                              📌 Booking Reference: #{row.id}
+                            </Typography>
+                            <Typography variant="body2">
+                              📞 Contact: {row.phone}
+                            </Typography>
+                            <Typography variant="body2">
+                              ✅ Payment Verified and recorded
+                            </Typography>
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  </React.Fragment>
+                ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={11} align="center">
+                  <Typography variant="body1" color="text.secondary">
+                    No Payments Found.
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+
+        {/* Pagination */}
+        <TablePagination
+          component="div"
+          count={filteredRows.length}
+          page={page}
+          onPageChange={handleChangePage}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+      </TableContainer>
+    </>
   );
 };
 

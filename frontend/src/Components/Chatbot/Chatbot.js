@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import { 
-  Box, TextField, IconButton, Paper, Typography, Fab, CircularProgress, Avatar, Button 
+import {
+  Box,
+  TextField,
+  IconButton,
+  Paper,
+  Typography,
+  Fab,
+  Avatar,
+  Button,
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import ChatIcon from "@mui/icons-material/Chat";
@@ -12,17 +19,17 @@ import MicIcon from "@mui/icons-material/Mic";
 import MicOffIcon from "@mui/icons-material/MicOff";
 import { styled } from "@mui/material/styles";
 
-// Styled components
+// ---------------- Styled Components ----------------
 const ChatContainer = styled(Paper)(() => ({
   position: "fixed",
   bottom: 90,
   right: 30,
-  width: 360,
-  height: 500,
-  borderRadius: 12,
+  width: 380,
+  height: 520,
+  borderRadius: 16,
   display: "flex",
   flexDirection: "column",
-  boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
   zIndex: 999,
   overflow: "hidden",
   transition: "all 0.3s ease",
@@ -47,8 +54,8 @@ const ChatArea = styled(Box)(({ theme }) => ({
   backgroundColor: "#f8f9fa",
 }));
 
-const MessageBubble = styled(Paper)(({ theme, sender }) => ({
-  padding: theme.spacing(1.5),
+const MessageBubble = styled(Paper)(({ sender }) => ({
+  padding: "12px 16px",
   maxWidth: "75%",
   borderRadius: 18,
   wordBreak: "break-word",
@@ -57,6 +64,9 @@ const MessageBubble = styled(Paper)(({ theme, sender }) => ({
   borderBottomRightRadius: sender === "user" ? 4 : 18,
   borderBottomLeftRadius: sender === "user" ? 18 : 4,
   alignSelf: sender === "user" ? "flex-end" : "flex-start",
+  fontSize: "0.9rem",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+  animation: "fadeIn 0.4s ease",
 }));
 
 const InputArea = styled(Box)(({ theme }) => ({
@@ -79,7 +89,7 @@ const QuickReply = styled(Paper)(() => ({
   backgroundColor: "#e9ecef",
   padding: "4px 12px",
   borderRadius: 18,
-  fontSize: "0.875rem",
+  fontSize: "0.8rem",
   cursor: "pointer",
   "&:hover": { backgroundColor: "#dee2e6" },
 }));
@@ -117,17 +127,26 @@ const UserIcon = styled(Box)(({ open }) => ({
   bottom: 100,
   right: 100,
   zIndex: 998,
-  opacity: open ? 0 : 0.6,
+  opacity: open ? 0 : 0.7,
   transition: "opacity 0.3s ease",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
 }));
 
-// -------------------- MAIN CHATBOT --------------------
+// ---------------- Chatbot ----------------
 function Chatbot() {
   const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hello! I'm your AirGo Airlines assistant. You can type or speak your request, like 'Book a round-trip from Colombo to New York next month'.", quickReplies: ["Flight status", "Booking", "Baggage policy"] }
+    {
+      sender: "bot",
+      text: "👋 Welcome to **AirGo Airlines**! I can help you with bookings, flight status, baggage, and check-in.",
+      quickReplies: [
+        "✈️ Book flight",
+        "📍 Flight status",
+        "🎒 Baggage policy",
+        "🕒 Check-in",
+      ],
+    },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -135,13 +154,14 @@ function Chatbot() {
   const [listening, setListening] = useState(false);
   const bottomRef = useRef();
 
-  // Scroll down when messages change
+  // Auto scroll
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
 
-  // --- Voice Recognition Setup ---
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  // Voice recognition
+  const SpeechRecognition =
+    window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition;
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
@@ -151,34 +171,59 @@ function Chatbot() {
   }
 
   const startListening = () => {
-    if (!recognition) return alert("Speech recognition not supported in this browser.");
+    if (!recognition) return alert("Speech recognition not supported.");
     setListening(true);
     recognition.start();
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setInput(transcript);
       setListening(false);
-      sendMessage(transcript); // auto-send recognized speech
+      sendMessage(transcript);
     };
     recognition.onerror = () => setListening(false);
     recognition.onend = () => setListening(false);
   };
 
-  // --- Bot Logic ---
-  const processMessage = (message) => {
-    const lowerMsg = message.toLowerCase();
-    // Simple "book flight" parsing
-    if (lowerMsg.includes("book") && (lowerMsg.includes("to") || lowerMsg.includes("from"))) {
-      const match = message.match(/from\s+(\w+)\s+to\s+(\w+)/i);
-      if (match) {
-        return `Got it ✅. You want to book a flight from **${match[1]}** to **${match[2]}**. Please confirm dates and passenger count to continue.`;
+  // ---------------- AI Bot Logic ----------------
+  const processMessage = (msg) => {
+    const m = msg.toLowerCase();
+
+    // Booking detection
+    if (m.includes("book")) {
+      const routeMatch = msg.match(/from\s+(\w+)\s+to\s+(\w+)/i);
+      const dateMatch = msg.match(/on\s+(\d{1,2}\s+\w+)/i);
+      let reply = "✈️ Sure, let's book your flight.";
+      if (routeMatch) {
+        reply += ` I see you're flying from **${routeMatch[1]}** to **${routeMatch[2]}**.`;
       }
-      return "Sure! I can help you book a flight. Please provide departure city, destination, and date.";
+      if (dateMatch) {
+        reply += ` Departure on **${dateMatch[1]}**.`;
+      }
+      reply += "\n\n➡️ Please confirm passengers and class (Economy/Business).";
+      return reply;
     }
-    if (lowerMsg.includes("status")) return "Please provide your flight number (e.g., AG123).";
-    if (lowerMsg.includes("baggage")) return "You can carry 1 cabin bag (10kg) + checked baggage depending on your ticket class.";
-    if (lowerMsg.includes("check-in")) return "Online check-in opens 24h before departure via our app or website.";
-    return "I'm here to help with bookings, flight status, baggage, or check-in.";
+
+    // Flight status
+    if (m.includes("status")) {
+      return "📍 Please provide your flight number (e.g., AG123).";
+    }
+
+    // Baggage
+    if (m.includes("baggage")) {
+      return "🎒 *Baggage Policy*: \n- **Economy**: 1 cabin (10kg) + 20kg checked\n- **Business**: 2 cabin + 40kg checked\n- **First Class**: 2 cabin + 50kg checked";
+    }
+
+    // Check-in
+    if (m.includes("check-in") || m.includes("checkin")) {
+      return "🕒 Online check-in opens **24h before departure**. Visit our app or website.";
+    }
+
+    // Greetings
+    if (m.includes("hello") || m.includes("hi") || m.includes("hey")) {
+      return "👋 Hello! How can I help you today?";
+    }
+
+    return "🤖 I can assist with bookings, flight status, baggage, or check-in. Try asking me!";
   };
 
   const sendMessage = (forcedMessage = null) => {
@@ -190,27 +235,44 @@ function Chatbot() {
     setLoading(true);
 
     setTimeout(() => {
-      const botReply = processMessage(userMsg);
-      setMessages((prev) => [...prev, { sender: "bot", text: botReply }]);
+      const reply = processMessage(userMsg);
+      setMessages((prev) => [...prev, { sender: "bot", text: reply }]);
       setLoading(false);
-    }, 1000);
+    }, 900);
   };
 
   const sendQuickReply = (msg) => sendMessage(msg);
 
+  // ---------------- UI ----------------
   return (
     <>
       {/* Floating Icon */}
       <UserIcon open={open}>
-        <Avatar sx={{ bgcolor: "rgba(25, 118, 210, 0.7)", width: 56, height: 56, mb: 1 }}>
+        <Avatar
+          sx={{
+            bgcolor: "rgba(25, 118, 210, 0.7)",
+            width: 56,
+            height: 56,
+            mb: 1,
+          }}
+        >
           <PersonIcon />
         </Avatar>
-        <Typography variant="caption" sx={{ color: "rgba(0,0,0,0.6)" }}>Ask me anything</Typography>
+        <Typography variant="caption" sx={{ color: "rgba(0,0,0,0.6)" }}>
+          Ask me anything
+        </Typography>
       </UserIcon>
 
+      {/* FAB Toggle */}
       <Fab
         color="primary"
-        sx={{ position: "fixed", bottom: 30, right: 30, zIndex: 999, background: "linear-gradient(90deg,#1a2a6c,#2b59c3)" }}
+        sx={{
+          position: "fixed",
+          bottom: 30,
+          right: 30,
+          zIndex: 999,
+          background: "linear-gradient(90deg,#1a2a6c,#2b59c3)",
+        }}
         onClick={() => setOpen(!open)}
       >
         {open ? <CloseIcon /> : <ChatIcon />}
@@ -225,12 +287,26 @@ function Chatbot() {
             </Avatar>
             <Box>
               <Typography variant="h6">AirGo Assistant</Typography>
-              <Typography variant="caption">Voice & Chat Booking</Typography>
+              <Typography variant="caption">
+                Real-time flight & booking support
+              </Typography>
             </Box>
-            <ResetButton onClick={() => setMessages([{ sender: "bot", text: "New session started. How can I help you?" }])}>
+            <ResetButton
+              onClick={() =>
+                setMessages([
+                  {
+                    sender: "bot",
+                    text: "🔄 New session started. How can I help you?",
+                  },
+                ])
+              }
+            >
               <RefreshIcon />
             </ResetButton>
-            <IconButton onClick={() => setOpen(false)} sx={{ color: "white", marginLeft: "auto" }}>
+            <IconButton
+              onClick={() => setOpen(false)}
+              sx={{ color: "white", marginLeft: "auto" }}
+            >
               <CloseIcon />
             </IconButton>
           </Header>
@@ -238,18 +314,20 @@ function Chatbot() {
           {/* Messages */}
           <ChatArea>
             {messages.map((msg, i) => (
-              <Box key={i} sx={{ display: "flex", justifyContent: msg.sender === "user" ? "flex-end" : "flex-start" }}>
-                <MessageBubble sender={msg.sender}>
-                  <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>{msg.text}</Typography>
-                  {msg.quickReplies && (
-                    <QuickReplies>
-                      {msg.quickReplies.map((r, idx) => (
-                        <QuickReply key={idx} onClick={() => sendQuickReply(r)}>{r}</QuickReply>
-                      ))}
-                    </QuickReplies>
-                  )}
-                </MessageBubble>
-              </Box>
+              <MessageBubble key={i} sender={msg.sender}>
+                <Typography variant="body2" sx={{ whiteSpace: "pre-line" }}>
+                  {msg.text}
+                </Typography>
+                {msg.quickReplies && (
+                  <QuickReplies>
+                    {msg.quickReplies.map((r, idx) => (
+                      <QuickReply key={idx} onClick={() => sendQuickReply(r)}>
+                        {r}
+                      </QuickReply>
+                    ))}
+                  </QuickReplies>
+                )}
+              </MessageBubble>
             ))}
             {loading && (
               <TypingIndicator>
@@ -271,12 +349,18 @@ function Chatbot() {
               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
               size="small"
             />
-            <IconButton onClick={startListening} color={listening ? "error" : "primary"}>
+            <IconButton
+              onClick={startListening}
+              color={listening ? "error" : "primary"}
+            >
               {listening ? <MicOffIcon /> : <MicIcon />}
             </IconButton>
-            <IconButton 
+            <IconButton
               onClick={() => sendMessage()}
-              sx={{ background: "linear-gradient(90deg,#2b59c3,#1a2a6c)", color: "white" }}
+              sx={{
+                background: "linear-gradient(90deg,#2b59c3,#1a2a6c)",
+                color: "white",
+              }}
             >
               <SendIcon />
             </IconButton>
@@ -284,11 +368,16 @@ function Chatbot() {
         </ChatContainer>
       )}
 
+      {/* Animations */}
       <style>
         {`
           @keyframes typingAnimation {
             0%, 60%, 100% { transform: translateY(0); }
             30% { transform: translateY(-5px); }
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
           }
         `}
       </style>
