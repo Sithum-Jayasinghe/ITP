@@ -261,13 +261,51 @@ const MealSelection = ({ selectedMeals, setSelectedMeals, mealsOptions }) => {
   );
 };
 
+// Baggage Selection Component
+const BaggageSelection = ({ baggagePrice, setBaggagePrice, baggageOptions }) => {
+  const handleBaggageChange = (event) => {
+    setBaggagePrice(parseInt(event.target.value));
+  };
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+        Select Baggage Option
+      </Typography>
+      <Paper elevation={1} sx={{ p: 2, borderRadius: '12px' }}>
+        <FormControl fullWidth>
+          <InputLabel id="baggage-label">Baggage</InputLabel>
+          <Select
+            labelId="baggage-label"
+            value={baggagePrice}
+            onChange={handleBaggageChange}
+            label="Baggage"
+            sx={{ borderRadius: '12px' }}
+          >
+            {baggageOptions.map((option) => (
+              <MenuItem key={option.id} value={option.price}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                  <Typography variant="body1">{option.name}</Typography>
+                  <Typography variant="body1" fontWeight="600">
+                    LKR {option.price.toLocaleString()}
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Paper>
+    </Box>
+  );
+};
+
 // Price Summary Component
 const PriceSummary = ({ flightPrice, selectedMeals, mealsOptions, baggagePrice }) => {
   const mealsPrice = selectedMeals.reduce((total, mealId) => {
     const meal = mealsOptions.find(m => m.id === mealId);
     return total + (meal ? meal.price : 0);
   }, 0);
-  
+
   const totalPrice = flightPrice + mealsPrice + baggagePrice;
 
   return (
@@ -372,7 +410,7 @@ const PaymentMethodSelector = ({ method, setMethod, processing }) => {
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
         Select Payment Method
       </Typography>
-      
+
       <ToggleButtonGroup
         value={method}
         exclusive
@@ -550,6 +588,18 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
       { id: 4, name: "Child Meal", description: "Kid-friendly options", price: 1200 },
       { id: 5, name: "Premium Meal", description: "Gourmet dining experience", price: 3500 },
       { id: 6, name: "Snack Pack", description: "Light snacks and beverages", price: 800 },
+    ],
+    []
+  );
+
+  // Baggage options
+  const baggageOptions = useMemo(
+    () => [
+      { id: 1, name: "No Baggage", price: 0 },
+      { id: 2, name: "Standard (15kg)", price: 750 },
+      { id: 3, name: "Extra (20kg)", price: 1200 },
+      { id: 4, name: "Heavy (25kg)", price: 1800 },
+      { id: 5, name: "Premium (30kg)", price: 2500 },
     ],
     []
   );
@@ -928,10 +978,32 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                       {/* Payment ID */}
                       <Grid item xs={12} sm={6}>
                         <TextField
-                          label="Payment ID"
+                          label="Payment ID (NIC)"
                           placeholder="Enter unique payment ID"
                           value={id}
-                          onChange={(e) => setId(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+
+                            // ✅ Allow only letters and numbers
+                            if (/^[a-zA-Z0-9]*$/.test(val)) {
+                              setId(val);
+
+                              // ✅ Validation: must not start with 0 if numeric
+                              if (/^\d+$/.test(val) && Number(val) < 1) {
+                                setFormErrors((prev) => ({
+                                  ...prev,
+                                  id: "❌ Payment ID must be a positive number",
+                                }));
+                              } else {
+                                setFormErrors((prev) => ({ ...prev, id: "" }));
+                              }
+                            } else {
+                              setFormErrors((prev) => ({
+                                ...prev,
+                                id: "❌ Only letters and positive numbers are allowed",
+                              }));
+                            }
+                          }}
                           disabled={isEdit}
                           fullWidth
                           required
@@ -945,12 +1017,13 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                             ),
                           }}
                           sx={{
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: '12px'
-                            }
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "12px",
+                            },
                           }}
                         />
                       </Grid>
+
 
                       {/* Passenger */}
                       <Grid item xs={12} sm={6}>
@@ -1074,6 +1147,15 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           selectedMeals={selectedMeals}
                           setSelectedMeals={setSelectedMeals}
                           mealsOptions={mealsOptions}
+                        />
+                      </Grid>
+
+                      {/* Baggage Selection */}
+                      <Grid item xs={12}>
+                        <BaggageSelection
+                          baggagePrice={baggagePrice}
+                          setBaggagePrice={setBaggagePrice}
+                          baggageOptions={baggageOptions}
                         />
                       </Grid>
 

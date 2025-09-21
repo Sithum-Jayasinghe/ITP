@@ -1,14 +1,14 @@
 import { 
   Box, Grid, Typography, TextField, Select, MenuItem, FormControl, 
   RadioGroup, FormControlLabel, Radio, Checkbox, Button, InputLabel, 
-  InputAdornment, Snackbar, Alert, Slide, Avatar 
+  InputAdornment, Snackbar, Alert, Slide, Avatar, FormHelperText
 } from "@mui/material";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import FlightLandIcon from "@mui/icons-material/FlightLand";
 import EventIcon from "@mui/icons-material/Event";
 import PeopleIcon from "@mui/icons-material/People";
 import ClassIcon from "@mui/icons-material/Class";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 
 // Countries
 const countries = [
@@ -27,7 +27,10 @@ const classOptions = [
   { value: "First", label: "First Class", img: "https://cdn-icons-png.flaticon.com/512/854/854894.png" }
 ];
 
-const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode }) => {
+// ✅ Max flight capacity
+const MAX_PASSENGERS = 300;
+
+const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode, bookings = [] }) => {
   const [id, setId] = useState(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -38,16 +41,14 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
   const [tripType, setTripType] = useState("round");
   const [flexibleDates, setFlexibleDates] = useState(false);
 
-  // Country info
-  const [fromInfo, setFromInfo] = useState(null);
-  const [toInfo, setToInfo] = useState(null);
+  // Errors state
+  const [errors, setErrors] = useState({});
 
   // Snackbar state
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
-  // Show modern alert
   const showAlert = (message, severity = "success") => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
@@ -70,59 +71,6 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
     }
   }, [data]);
 
-  // Fetch country info when from/to changes
-  useEffect(() => {
-    const fetchCountryInfo = async (country, setInfo) => {
-      if (!country) {
-        setInfo(null);
-        return;
-      }
-      try {
-        const res = await fetch(`https://restcountries.com/v3.1/name/${country}?fullText=true`);
-        const json = await res.json();
-        if (json && json[0]) {
-          setInfo({
-            flag: json[0].flags.svg,
-            capital: json[0].capital?.[0] || "N/A",
-            population: json[0].population?.toLocaleString() || "N/A",
-            region: json[0].region
-          });
-        }
-      } catch (err) {
-        console.error("Country fetch error:", err);
-        setInfo(null);
-      }
-    };
-
-    fetchCountryInfo(from, setFromInfo);
-  }, [from]);
-
-  useEffect(() => {
-    const fetchCountryInfo = async (country, setInfo) => {
-      if (!country) {
-        setInfo(null);
-        return;
-      }
-      try {
-        const res = await fetch(`https://restcountries.com/v3.1/name/${country}?fullText=true`);
-        const json = await res.json();
-        if (json && json[0]) {
-          setInfo({
-            flag: json[0].flags.svg,
-            capital: json[0].capital?.[0] || "N/A",
-            population: json[0].population?.toLocaleString() || "N/A",
-            region: json[0].region
-          });
-        }
-      } catch (err) {
-        console.error("Country fetch error:", err);
-        setInfo(null);
-      }
-    };
-
-    fetchCountryInfo(to, setToInfo);
-  }, [to]);
-
   const resetForm = () => {
     setId(null);
     setFrom("");
@@ -133,9 +81,37 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
     setTravelClass("Economy");
     setTripType("round");
     setFlexibleDates(false);
-    setFromInfo(null);
-    setToInfo(null);
+    setErrors({});
   };
+
+  // ✅ Validation before submit
+  const validateForm = () => {
+    const newErrors = {};
+    if (!from) newErrors.from = "Please select a departure country.";
+    if (!to) newErrors.to = "Please select a destination country.";
+    if (!departure) newErrors.departure = "Please select a departure date.";
+    if (tripType === "round" && !returnDate) newErrors.returnDate = "Please select a return date.";
+    if (passengers < 1) newErrors.passengers = "Passengers must be a positive number.";
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      showAlert("❌ Please fix the errors in the form.", "error");
+      return false;
+    }
+    return true;
+  };
+
+  // ✅ Remaining seats in real-time
+  const remainingSeats = useMemo(() => {
+    const existingPassengers = bookings
+      .filter(b => b.from === from && b.to === to && b.departure === departure)
+      .reduce((sum, b) => sum + Number(b.passengers), 0);
+
+    return MAX_PASSENGERS - existingPassengers;
+  }, [bookings, from, to, departure]);
+
+  const isFlightFull = () => remainingSeats - passengers < 0;
 
   const inputStyle = {
     backgroundColor: darkMode ? "#2a2a2a" : "#fff",
@@ -155,54 +131,71 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
     <Box sx={{ p: 4, mb: 5, borderRadius: 3, backgroundColor: darkMode ? "#1e1e1e" : "#fefefe", boxShadow: darkMode ? 5 : 3 }}>
       <Typography variant="h5" sx={{ mb: 4, color: darkMode ? "#00e5ff" : "#007acc", fontWeight: 600 }}>✈️ AirGo Booking</Typography>
       <Grid container spacing={3}>
+        
         {/* From */}
         <Grid item xs={12} sm={6}>
-          <FormControl fullWidth sx={inputStyle}>
-            <InputLabel sx={{ color: darkMode ? "#fff" : "#000" }}>From</InputLabel>
+          <FormControl fullWidth sx={inputStyle} error={!!errors.from}>
+            <InputLabel>From</InputLabel>
             <Select
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              startAdornment={<InputAdornment position="start"><FlightTakeoffIcon /></InputAdornment>}
+              renderValue={(selected) => (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {selected ? (
+                    <Avatar 
+                      src={`https://flagcdn.com/w40/${getCountryCode(selected)}.png`} 
+                      alt={selected} 
+                      sx={{ width: 28, height: 28 }}
+                    />
+                  ) : <FlightTakeoffIcon />}
+                  <Typography variant="body1">{selected || "Select Country"}</Typography>
+                </Box>
+              )}
             >
-              {countries.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+              {countries.map((c) => (
+                <MenuItem key={c} value={c}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Avatar src={`https://flagcdn.com/w40/${getCountryCode(c)}.png`} alt={c} sx={{ width: 32, height: 32 }} />
+                    <Typography>{c}</Typography>
+                  </Box>
+                </MenuItem>
+              ))}
             </Select>
+            {errors.from && <FormHelperText>{errors.from}</FormHelperText>}
           </FormControl>
-
-          {/* Country Info */}
-          {fromInfo && (
-            <Box sx={{ mt: 2, p: 2, border: "1px solid #ccc", borderRadius: 2 }}>
-              <Typography variant="h6">From: {from}</Typography>
-              <img src={fromInfo.flag} alt={from} width="80" style={{ borderRadius: "6px", marginTop: "8px" }} />
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Capital: {fromInfo.capital} | Population: {fromInfo.population} | Region: {fromInfo.region}
-              </Typography>
-            </Box>
-          )}
         </Grid>
 
         {/* To */}
         <Grid item xs={12} sm={6}>
-          <FormControl fullWidth sx={inputStyle}>
-            <InputLabel sx={{ color: darkMode ? "#fff" : "#000" }}>To</InputLabel>
+          <FormControl fullWidth sx={inputStyle} error={!!errors.to}>
+            <InputLabel>To</InputLabel>
             <Select
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              startAdornment={<InputAdornment position="start"><FlightLandIcon /></InputAdornment>}
+              renderValue={(selected) => (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {selected ? (
+                    <Avatar 
+                      src={`https://flagcdn.com/w40/${getCountryCode(selected)}.png`} 
+                      alt={selected} 
+                      sx={{ width: 28, height: 28 }}
+                    />
+                  ) : <FlightLandIcon />}
+                  <Typography variant="body1">{selected || "Select Country"}</Typography>
+                </Box>
+              )}
             >
-              {countries.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+              {countries.map((c) => (
+                <MenuItem key={c} value={c}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Avatar src={`https://flagcdn.com/w40/${getCountryCode(c)}.png`} alt={c} sx={{ width: 32, height: 32 }} />
+                    <Typography>{c}</Typography>
+                  </Box>
+                </MenuItem>
+              ))}
             </Select>
+            {errors.to && <FormHelperText>{errors.to}</FormHelperText>}
           </FormControl>
-
-          {/* Country Info */}
-          {toInfo && (
-            <Box sx={{ mt: 2, p: 2, border: "1px solid #ccc", borderRadius: 2 }}>
-              <Typography variant="h6">To: {to}</Typography>
-              <img src={toInfo.flag} alt={to} width="80" style={{ borderRadius: "6px", marginTop: "8px" }} />
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                Capital: {toInfo.capital} | Population: {toInfo.population} | Region: {toInfo.region}
-              </Typography>
-            </Box>
-          )}
         </Grid>
 
         {/* Departure */}
@@ -214,6 +207,8 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
             onChange={(e) => setDeparture(e.target.value)}
             InputLabelProps={{ shrink: true }}
             sx={inputStyle}
+            error={!!errors.departure}
+            helperText={errors.departure}
             InputProps={{ startAdornment: <InputAdornment position="start"><EventIcon /></InputAdornment> }}
           />
         </Grid>
@@ -229,6 +224,8 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
             InputLabelProps={{ shrink: true }}
             sx={inputStyle}
             disabled={tripType === "oneway"}
+            error={!!errors.returnDate}
+            helperText={errors.returnDate}
             InputProps={{ startAdornment: <InputAdornment position="start"><EventIcon /></InputAdornment> }}
           />
         </Grid>
@@ -242,11 +239,22 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
             onChange={(e) => setPassengers(Number(e.target.value))}
             fullWidth
             sx={inputStyle}
-            InputProps={{ startAdornment: <InputAdornment position="start"><PeopleIcon /></InputAdornment> }}
+            error={!!errors.passengers || remainingSeats <= 0}
+            helperText={
+              errors.passengers
+                ? errors.passengers
+                : remainingSeats > 0
+                  ? `Seats left: ${remainingSeats}`
+                  : "❌ Flight fully booked"
+            }
+            InputProps={{
+              startAdornment: <InputAdornment position="start"><PeopleIcon /></InputAdornment>,
+              inputProps: { min: 1 }
+            }}
           />
         </Grid>
 
-        {/* Class with images */}
+        {/* Class */}
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth sx={inputStyle}>
             <InputLabel>Class</InputLabel>
@@ -296,7 +304,7 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
           />
         </Grid>
 
-        {/* Submit Button */}
+        {/* Submit */}
         <Grid item xs={12}>
           <Button
             variant="contained"
@@ -308,7 +316,15 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
               py: 1.5,
               "&:hover": { opacity: 0.85 }
             }}
+            disabled={remainingSeats <= 0}
             onClick={() => {
+              if (!validateForm()) return;
+
+              if (!isEdit && isFlightFull()) {
+                showAlert("❌ This flight is fully booked. Please choose another flight.", "error");
+                return;
+              }
+
               if (isEdit) {
                 updateBooking({ id, from, to, departure, returnDate, passengers, travelClass, tripType, flexibleDates });
                 showAlert(`Booking #${id} updated successfully!`, "info");
@@ -325,10 +341,10 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
         </Grid>
       </Grid>
 
-      {/* Modern Snackbar */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={2500}
+        autoHideDuration={3000}
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         TransitionComponent={TransitionUp}
@@ -343,6 +359,18 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
       </Snackbar>
     </Box>
   );
+};
+
+// ✅ Country name → code for flag
+const getCountryCode = (countryName) => {
+  const codes = {
+    "United States": "us", "Canada": "ca", "United Kingdom": "gb",
+    "Germany": "de", "France": "fr", "Australia": "au",
+    "Japan": "jp", "India": "in", "Brazil": "br",
+    "South Africa": "za", "China": "cn", "Italy": "it",
+    "Spain": "es", "Netherlands": "nl", "Sweden": "se"
+  };
+  return codes[countryName] || "us";
 };
 
 export default BookForm;

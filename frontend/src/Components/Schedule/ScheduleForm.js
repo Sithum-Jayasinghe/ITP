@@ -6,81 +6,80 @@ import {
   Typography,
   MenuItem,
   InputAdornment,
-} from '@mui/material';
-import { useEffect, useState } from 'react';
-import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs from 'dayjs';
-import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
-import FlightLandIcon from '@mui/icons-material/FlightLand';
-import EventSeatIcon from '@mui/icons-material/EventSeat';
-import ScheduleIcon from '@mui/icons-material/Schedule';
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import { LocalizationProvider, DateTimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs from "dayjs";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import FlightLandIcon from "@mui/icons-material/FlightLand";
+import EventSeatIcon from "@mui/icons-material/EventSeat";
+import ScheduleIcon from "@mui/icons-material/Schedule";
 
 // Example airport list for Departure & Arrival
 const airports = [
-  'Colombo Bandaranaike International Airport (CMB)',
-  'London Heathrow Airport (LHR)',
-  'Dubai International Airport (DXB)',
-  'John F. Kennedy International Airport (JFK)',
-  'Singapore Changi Airport (SIN)',
-  'Tokyo Haneda Airport (HND)',
-  'Frankfurt Airport (FRA)',
-  'Paris Charles de Gaulle Airport (CDG)',
-  'Sydney Kingsford Smith Airport (SYD)',
-  'Hong Kong International Airport (HKG)',
-  'Doha Hamad International Airport (DOH)',
-  'Los Angeles International Airport (LAX)',
-  'Toronto Pearson International Airport (YYZ)',
-  'Amsterdam Schiphol Airport (AMS)',
-  'Beijing Capital International Airport (PEK)',
-  'Seoul Incheon International Airport (ICN)',
-  'Bangkok Suvarnabhumi Airport (BKK)',
-  'Kuala Lumpur International Airport (KUL)',
-  'Istanbul Airport (IST)',
+  "Colombo Bandaranaike International Airport (CMB)",
+  "London Heathrow Airport (LHR)",
+  "Dubai International Airport (DXB)",
+  "John F. Kennedy International Airport (JFK)",
+  "Singapore Changi Airport (SIN)",
+  "Tokyo Haneda Airport (HND)",
+  "Frankfurt Airport (FRA)",
+  "Paris Charles de Gaulle Airport (CDG)",
+  "Sydney Kingsford Smith Airport (SYD)",
+  "Hong Kong International Airport (HKG)",
+  "Doha Hamad International Airport (DOH)",
+  "Los Angeles International Airport (LAX)",
+  "Toronto Pearson International Airport (YYZ)",
+  "Amsterdam Schiphol Airport (AMS)",
+  "Beijing Capital International Airport (PEK)",
+  "Seoul Incheon International Airport (ICN)",
+  "Bangkok Suvarnabhumi Airport (BKK)",
+  "Kuala Lumpur International Airport (KUL)",
+  "Istanbul Airport (IST)",
 ];
 
 // Example aircraft types
 const aircraftTypes = [
-  'Airbus A320',
-  'Boeing 737',
-  'Boeing 777',
-  'Airbus A380',
-  'Boeing 787 Dreamliner',
+  "Airbus A320",
+  "Boeing 737",
+  "Boeing 777",
+  "Airbus A380",
+  "Boeing 787 Dreamliner",
 ];
 
 // Flight status options
 const flightStatuses = [
-  { value: 'Scheduled', label: 'Scheduled' },
-  { value: 'On Time', label: 'On Time' },
-  { value: 'Delayed', label: 'Delayed' },
-  { value: 'Cancelled', label: 'Cancelled' },
-  { value: 'Departed', label: 'Departed' },
-  { value: 'Arrived', label: 'Arrived' },
+  { value: "Scheduled", label: "Scheduled" },
+  { value: "On Time", label: "On Time" },
+  { value: "Delayed", label: "Delayed" },
+  { value: "Cancelled", label: "Cancelled" },
+  { value: "Departed", label: "Departed" },
+  { value: "Arrived", label: "Arrived" },
 ];
 
-const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) => {
-  const [id, setId] = useState('');
-  const [flightName, setFlightName] = useState('');
-  const [departure, setDeparture] = useState('');
-  const [arrival, setArrival] = useState('');
+const ScheduleForm = ({
+  addSchedule,
+  updateSchedule,
+  submitted,
+  data,
+  isEdit,
+}) => {
+  const [id, setId] = useState("");
+  const [flightName, setFlightName] = useState("");
+  const [departure, setDeparture] = useState("");
+  const [arrival, setArrival] = useState("");
   const [dtime, setDtime] = useState(null);
   const [atime, setAtime] = useState(null);
-  const [aircraft, setAircraft] = useState('');
-  const [seats, setSeats] = useState('');
-  const [status, setStatus] = useState('');
+  const [aircraft, setAircraft] = useState("");
+  const [seats, setSeats] = useState("");
+  const [status, setStatus] = useState("");
+  const [errors, setErrors] = useState({});
 
   // Reset form when submission completes
   useEffect(() => {
     if (!submitted) {
-      setId('');
-      setFlightName('');
-      setDeparture('');
-      setArrival('');
-      setDtime(null);
-      setAtime(null);
-      setAircraft('');
-      setSeats('');
-      setStatus('');
+      resetForm();
     }
   }, [submitted]);
 
@@ -88,38 +87,80 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
   useEffect(() => {
     if (data && data.id) {
       setId(data.id);
-      setFlightName(data.flightName || '');
-      setDeparture(data.departure || '');
-      setArrival(data.arrival || '');
+      setFlightName(data.flightName || "");
+      setDeparture(data.departure || "");
+      setArrival(data.arrival || "");
       setDtime(data.dtime ? dayjs(data.dtime) : null);
       setAtime(data.atime ? dayjs(data.atime) : null);
-      setAircraft(data.aircraft || '');
-      setSeats(data.seats || '');
-      setStatus(data.status || '');
+      setAircraft(data.aircraft || "");
+      setSeats(data.seats || "");
+      setStatus(data.status || "");
     }
   }, [data]);
 
+  const resetForm = () => {
+    setId("");
+    setFlightName("");
+    setDeparture("");
+    setArrival("");
+    setDtime(null);
+    setAtime(null);
+    setAircraft("");
+    setSeats("");
+    setStatus("");
+    setErrors({});
+  };
+
   // Validate form
-  const isFormValid = () => {
-    return (
-      id &&
-      flightName.trim() &&
-      departure.trim() &&
-      arrival.trim() &&
-      dtime &&
-      atime &&
-      aircraft.trim() &&
-      seats > 0 &&
-      status.trim()
-    );
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Flight ID validation
+    if (!id) newErrors.id = "Flight ID is required.";
+    else if (!/^\d+$/.test(id))
+      newErrors.id = "Flight ID must be a valid number.";
+    else if (Number(id) <= 0)
+      newErrors.id = "Flight ID must be greater than 0.";
+
+    // Flight Name validation
+    if (!flightName.trim())
+      newErrors.flightName = "Flight Name is required.";
+    else if (!/^[A-Za-z0-9\s-]+$/.test(flightName))
+      newErrors.flightName =
+        "Flight Name can only contain letters, numbers, spaces, or dashes.";
+
+    // Departure & Arrival
+    if (!departure.trim()) newErrors.departure = "Select a departure airport.";
+    if (!arrival.trim()) newErrors.arrival = "Select an arrival airport.";
+    if (departure && arrival && departure === arrival)
+      newErrors.arrival = "Arrival cannot be the same as departure.";
+
+    // Date & Time
+    if (!dtime) newErrors.dtime = "Select departure date & time.";
+    if (!atime) newErrors.atime = "Select arrival date & time.";
+    if (dtime && atime && dayjs(atime).isBefore(dtime))
+      newErrors.atime = "Arrival time must be after departure.";
+
+    // Aircraft
+    if (!aircraft.trim()) newErrors.aircraft = "Select an aircraft type.";
+
+    // Seats validation
+    if (!seats) newErrors.seats = "Seats are required.";
+    else if (!/^\d+$/.test(seats))
+      newErrors.seats = "Seats must be a valid whole number.";
+    else if (Number(seats) <= 0)
+      newErrors.seats = "Seats must be greater than 0.";
+
+    // Status
+    if (!status.trim()) newErrors.status = "Select flight status.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Handle form submission
   const handleSubmit = () => {
-    if (!isFormValid()) {
-      alert('Please fill all fields correctly.');
-      return;
-    }
+    if (!validateForm()) return;
 
     const scheduleData = {
       id,
@@ -135,6 +176,8 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
 
     if (isEdit) updateSchedule(scheduleData);
     else addSchedule(scheduleData);
+
+    resetForm();
   };
 
   return (
@@ -142,9 +185,9 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
       <Box
         sx={{
           maxWidth: 700,
-          margin: '40px auto',
+          margin: "40px auto",
           padding: 4,
-          bgcolor: '#f5f9ff',
+          bgcolor: "#f5f9ff",
           borderRadius: 3,
           boxShadow: 4,
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
@@ -159,13 +202,14 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
           <Grid item xs={12} sm={6}>
             <TextField
               label="Flight ID"
-              type="number"
+              type="text"
               value={id}
               onChange={(e) => setId(e.target.value)}
               fullWidth
               required
               disabled={isEdit}
-              helperText="Unique flight identifier"
+              error={!!errors.id}
+              helperText={errors.id || "Unique flight identifier"}
             />
           </Grid>
 
@@ -177,6 +221,8 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
               onChange={(e) => setFlightName(e.target.value)}
               fullWidth
               required
+              error={!!errors.flightName}
+              helperText={errors.flightName}
               placeholder="e.g. UL123"
             />
           </Grid>
@@ -190,6 +236,8 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
               fullWidth
               select
               required
+              error={!!errors.departure}
+              helperText={errors.departure}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -215,6 +263,8 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
               fullWidth
               select
               required
+              error={!!errors.arrival}
+              helperText={errors.arrival}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -242,6 +292,8 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
                   {...params}
                   fullWidth
                   required
+                  error={!!errors.dtime}
+                  helperText={errors.dtime}
                   InputProps={{
                     ...params.InputProps,
                     startAdornment: (
@@ -266,6 +318,8 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
                   {...params}
                   fullWidth
                   required
+                  error={!!errors.atime}
+                  helperText={errors.atime}
                   InputProps={{
                     ...params.InputProps,
                     startAdornment: (
@@ -288,6 +342,8 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
               fullWidth
               select
               required
+              error={!!errors.aircraft}
+              helperText={errors.aircraft}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -308,13 +364,14 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
           <Grid item xs={12} sm={6}>
             <TextField
               label="Total Seats"
-              type="number"
+              type="text"
               value={seats}
               onChange={(e) => setSeats(e.target.value)}
               fullWidth
               required
+              error={!!errors.seats}
+              helperText={errors.seats || "Number of passenger seats available"}
               inputProps={{ min: 1 }}
-              helperText="Number of passenger seats available"
             />
           </Grid>
 
@@ -327,6 +384,8 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
               fullWidth
               select
               required
+              error={!!errors.status}
+              helperText={errors.status}
             >
               {flightStatuses.map(({ value, label }) => (
                 <MenuItem key={value} value={value}>
@@ -337,15 +396,15 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
           </Grid>
 
           {/* Submit Button */}
-          <Grid item xs={12} sx={{ textAlign: 'center', marginTop: 3 }}>
+          <Grid item xs={12} sx={{ textAlign: "center", marginTop: 3 }}>
             <Button
               variant="contained"
               color="primary"
               onClick={handleSubmit}
               disabled={submitted}
-              sx={{ width: 220, fontWeight: 'bold', fontSize: '1.1rem' }}
+              sx={{ width: 220, fontWeight: "bold", fontSize: "1.1rem" }}
             >
-              {isEdit ? 'Update Schedule' : 'Add Schedule'}
+              {isEdit ? "Update Schedule" : "Add Schedule"}
             </Button>
           </Grid>
         </Grid>

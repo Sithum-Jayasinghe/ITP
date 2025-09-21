@@ -8,6 +8,26 @@ import {
   Paper,
   Grid,
   Divider,
+  Chip,
+  Card,
+  CardContent,
+  LinearProgress,
+  IconButton,
+  Tooltip,
+  Badge,
+  Tabs,
+  Tab,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Avatar,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  ListItemAvatar,
 } from "@mui/material";
 import BookForm from "./BookForm";
 import BooksTable from "./BooksTable";
@@ -19,6 +39,17 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import UpgradeIcon from "@mui/icons-material/Upgrade";
 import WorkIcon from "@mui/icons-material/Work";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import FlightIcon from "@mui/icons-material/Flight";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import PriceCheckIcon from "@mui/icons-material/PriceCheck";
+import ScheduleIcon from "@mui/icons-material/Schedule";
+import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import ChatIcon from "@mui/icons-material/Chat";
+import LiveTvIcon from "@mui/icons-material/LiveTv";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import FlightLandIcon from "@mui/icons-material/FlightLand";
 
 const Books = () => {
   const [books, setBooks] = useState([]);
@@ -28,13 +59,56 @@ const Books = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [darkMode, setDarkMode] = useState(false);
   const [filteredBooks, setFilteredBooks] = useState([]);
-
   const [recommendations, setRecommendations] = useState([]);
+  const [activeTab, setActiveTab] = useState(0);
+  const [realTimeUpdates, setRealTimeUpdates] = useState([]);
+  const [priceAlerts, setPriceAlerts] = useState([]);
+  const [flightStatus, setFlightStatus] = useState({});
+  const [openChat, setOpenChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [countryFlags, setCountryFlags] = useState({});
 
+  // Simulated real-time data updates
   useEffect(() => {
     getBookings();
     generateRecommendations();
+    setupRealTimeData();
+    fetchCountryFlags();
+
+    // Set up interval for real-time updates
+    const interval = setInterval(() => {
+      simulateRealTimeUpdates();
+      checkFlightStatus();
+      updatePriceAlerts();
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
+
+  // Fetch country flags for all available countries
+  const fetchCountryFlags = async () => {
+    const countries = [
+      "United States", "Canada", "United Kingdom", "Germany", "France", 
+      "Australia", "Japan", "India", "Brazil", "South Africa", 
+      "China", "Italy", "Spain", "Netherlands", "Sweden"
+    ];
+    
+    const flags = {};
+    
+    for (const country of countries) {
+      try {
+        const response = await fetch(`https://restcountries.com/v3.1/name/${country}?fullText=true`);
+        const data = await response.json();
+        if (data && data[0]) {
+          flags[country] = data[0].flags.png;
+        }
+      } catch (error) {
+        console.error(`Error fetching flag for ${country}:`, error);
+      }
+    }
+    
+    setCountryFlags(flags);
+  };
 
   const getBookings = () => {
     Axios.get("http://localhost:3001/api/bookings")
@@ -55,6 +129,8 @@ const Books = () => {
         setSubmitted(false);
         setIsEdit(false);
         setSelectedBooking({});
+        // Add real-time update
+        addRealTimeUpdate(`New booking created: ${data.from} → ${data.to}`);
       })
       .catch(() => setSubmitted(false));
   };
@@ -67,13 +143,17 @@ const Books = () => {
         setSubmitted(false);
         setIsEdit(false);
         setSelectedBooking({});
+        addRealTimeUpdate(`Booking #${data.id} updated successfully`);
       })
       .catch(() => setSubmitted(false));
   };
 
   const deleteBooking = (data) => {
     Axios.post("http://localhost:3001/api/deletebooking", data)
-      .then(() => getBookings())
+      .then(() => {
+        getBookings();
+        addRealTimeUpdate(`Booking #${data.id} deleted`);
+      })
       .catch((err) => console.error(err));
   };
 
@@ -83,12 +163,119 @@ const Books = () => {
     const filtered = books.filter(
       (b) =>
         b.from.toLowerCase().includes(term.toLowerCase()) ||
-        b.to.toLowerCase().includes(term.toLowerCase())
+        b.to.toLowerCase().includes(term.toLowerCase()) ||
+        b.id.toString().includes(term)
     );
     setFilteredBooks(filtered);
   };
 
-  // === AI-Driven Predictive Booking & Recommendation Engine (demo) ===
+  // Real-time features
+  const setupRealTimeData = () => {
+    // Initialize with some demo data
+    setRealTimeUpdates([
+      { id: 1, message: "Flight prices to Paris dropped by 15%", timestamp: new Date(), type: "price" },
+      { id: 2, message: "New flight route added: Tokyo → Sydney", timestamp: new Date(), type: "route" },
+      { id: 3, message: "System updated with new features", timestamp: new Date(), type: "system" }
+    ]);
+
+    setPriceAlerts([
+      { id: 1, route: "New York → London", oldPrice: 650, newPrice: 550, change: -15.4 },
+      { id: 2, route: "Dubai → Singapore", oldPrice: 420, newPrice: 380, change: -9.5 }
+    ]);
+
+    setFlightStatus({
+      "New York → London": { status: "On Time", departure: "08:30", arrival: "20:45", gate: "B12" },
+      "Dubai → Singapore": { status: "Delayed", departure: "14:20", arrival: "22:10", gate: "C05" }
+    });
+  };
+
+  const simulateRealTimeUpdates = () => {
+    // Simulate new real-time updates
+    const updateTypes = [
+      "price",
+      "route",
+      "system",
+      "weather",
+      "promotion"
+    ];
+    
+    const messages = [
+      "Last minute deals available for weekend flights",
+      "New security measures implemented at major airports",
+      "Extra baggage promotion: 25% off this week",
+      "Weather alert may affect flights in Northeast region",
+      "Loyalty points bonus: Double points on all bookings this month"
+    ];
+    
+    const newUpdate = {
+      id: Date.now(),
+      message: messages[Math.floor(Math.random() * messages.length)],
+      timestamp: new Date(),
+      type: updateTypes[Math.floor(Math.random() * updateTypes.length)]
+    };
+    
+    setRealTimeUpdates(prev => [newUpdate, ...prev.slice(0, 4)]);
+  };
+
+  const updatePriceAlerts = () => {
+    // Simulate price changes
+    const routes = ["London → Paris", "Tokyo → Seoul", "Sydney → Melbourne", "Berlin → Rome"];
+    const newRoute = routes[Math.floor(Math.random() * routes.length)];
+    const change = (Math.random() > 0.5 ? 1 : -1) * (5 + Math.random() * 15);
+    
+    const newAlert = {
+      id: Date.now(),
+      route: newRoute,
+      oldPrice: 500 + Math.random() * 300,
+      newPrice: 500 + Math.random() * 300,
+      change: parseFloat(change.toFixed(1))
+    };
+    
+    newAlert.newPrice = newAlert.oldPrice * (1 + newAlert.change / 100);
+    
+    setPriceAlerts(prev => [newAlert, ...prev.slice(0, 3)]);
+  };
+
+  const checkFlightStatus = () => {
+    // Simulate flight status changes
+    const statuses = ["On Time", "Delayed", "Boarding", "Departed"];
+    const routes = ["New York → London", "Dubai → Singapore", "Tokyo → Sydney", "Paris → Berlin"];
+    
+    const randomRoute = routes[Math.floor(Math.random() * routes.length)];
+    const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+    
+    setFlightStatus(prev => ({
+      ...prev,
+      [randomRoute]: {
+        status: randomStatus,
+        departure: "08:30",
+        arrival: "20:45",
+        gate: `${String.fromCharCode(65 + Math.floor(Math.random() * 6))}${Math.floor(10 + Math.random() * 20)}`
+      }
+    }));
+  };
+
+  const addRealTimeUpdate = (message) => {
+    const newUpdate = {
+      id: Date.now(),
+      message,
+      timestamp: new Date(),
+      type: "booking"
+    };
+    setRealTimeUpdates(prev => [newUpdate, ...prev.slice(0, 4)]);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "On Time": return "success";
+      case "Delayed": return "warning";
+      case "Boarding": return "info";
+      case "Departed": return "secondary";
+      default: return "default";
+    }
+  };
+
+  // AI Recommendations
   const generateRecommendations = () => {
     setRecommendations([
       {
@@ -111,11 +298,48 @@ const Books = () => {
       },
       {
         type: "Disruption Alert",
-        message: "Evening flights CMB → DXB may face congestion delays.",
+        message: "Evening flights may face congestion delays this week.",
         icon: <WarningAmberIcon sx={{ fontSize: 32 }} color="warning" />,
         color: "linear-gradient(135deg, #ffa726, #ef6c00)",
       },
     ]);
+  };
+
+  // Chat simulation
+  const sendChatMessage = (message) => {
+    const newMessage = {
+      id: Date.now(),
+      text: message,
+      sender: "user",
+      timestamp: new Date()
+    };
+    
+    setChatMessages(prev => [...prev, newMessage]);
+    
+    // Simulate AI response
+    setTimeout(() => {
+      const responses = [
+        "I can help you with that! What specific information do you need?",
+        "Great choice! That route is very popular this time of year.",
+        "I'll check the availability for you right away.",
+        "Based on your preferences, I recommend considering these options...",
+        "There's a special promotion running for that destination!"
+      ];
+      
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: responses[Math.floor(Math.random() * responses.length)],
+        sender: "ai",
+        timestamp: new Date()
+      };
+      
+      setChatMessages(prev => [...prev, aiMessage]);
+    }, 1000);
+  };
+
+  // Get country flag
+  const getCountryFlag = (countryName) => {
+    return countryFlags[countryName] || "";
   };
 
   return (
@@ -130,8 +354,8 @@ const Books = () => {
 
       <Box
         sx={{
-          width: "90%",
-          margin: "50px auto",
+          width: '95%',
+          margin: "20px auto",
           padding: "20px",
           borderRadius: 3,
           backgroundColor: darkMode ? "#1e1e1e" : "#fff",
@@ -144,97 +368,428 @@ const Books = () => {
             justifyContent: "space-between",
             alignItems: "center",
             mb: 4,
+            flexWrap: 'wrap',
+            gap: 2
           }}
         >
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            ✈️ AI-Driven Predictive Booking & Recommendations
-          </Typography>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={darkMode}
-                onChange={() => setDarkMode(!darkMode)}
-              />
-            }
-            label="Dark Mode"
-          />
-        </Box>
-
-        {/* AI Recommendations Section */}
-        <Paper
-          sx={{
-            p: 3,
-            mb: 4,
-            borderRadius: 3,
-            bgcolor: darkMode ? "#2a2a2a" : "#e8f4fd",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <InsightsIcon color="primary" sx={{ mr: 1, fontSize: 28 }} />
-            <Typography variant="h6" fontWeight="600">
-              Smart Recommendations
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              ✈️ AI-Powered Flight Booking System
             </Typography>
+            <Chip 
+              icon={<LiveTvIcon />} 
+              label="LIVE" 
+              color="error" 
+              variant="outlined"
+            />
           </Box>
-          <Grid container spacing={2}>
-            {recommendations.map((rec, index) => (
-              <Grid item xs={12} sm={6} md={3} key={index}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    height: "100%",
-                    background: rec.color,
-                    color: "#fff",
-                  }}
-                >
-                  <Box sx={{ mb: 1 }}>{rec.icon}</Box>
-                  <Typography variant="subtitle1" fontWeight="700">
-                    {rec.type}
-                  </Typography>
-                  <Typography variant="body2">{rec.message}</Typography>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
-        </Paper>
-
-        <Divider sx={{ mb: 3 }} />
-
-        {/* Search */}
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <TextField
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search bookings..."
-            fullWidth
-            sx={{
-              input: { color: darkMode ? "#fff" : "#000" },
-              label: { color: darkMode ? "#fff" : "#000" },
-            }}
-          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={darkMode}
+                  onChange={() => setDarkMode(!darkMode)}
+                />
+              }
+              label="Dark Mode"
+            />
+            <Tooltip title="Refresh real-time data">
+              <IconButton onClick={() => {
+                setupRealTimeData();
+                fetchCountryFlags();
+              }}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="AI Assistant">
+              <IconButton onClick={() => setOpenChat(true)}>
+                <ChatIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
-        {/* Booking Form */}
-        <BookForm
-          addBooking={addBooking}
-          updateBooking={updateBooking}
-          submitted={submitted}
-          data={selectedBooking}
-          isEdit={isEdit}
-          darkMode={darkMode}
-        />
+        {/* Tabs for different views */}
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, newValue) => setActiveTab(newValue)}
+          sx={{ mb: 3 }}
+        >
+          <Tab label="Dashboard" />
+          <Tab label="Bookings" />
+          <Tab label="Price Alerts" />
+          <Tab label="Flight Status" />
+        </Tabs>
 
-        {/* Bookings Table */}
-        <BooksTable
-          rows={filteredBooks}
-          selectedBooking={(data) => {
-            setSelectedBooking(data);
-            setIsEdit(true);
-          }}
-          deleteBooking={deleteBooking}
-          darkMode={darkMode}
-        />
+        {activeTab === 0 && (
+          <>
+            {/* Real-Time Updates Section */}
+            <Paper
+              sx={{
+                p: 3,
+                mb: 4,
+                borderRadius: 3,
+                bgcolor: darkMode ? "#2a2a2a" : "#f0f8ff",
+                border: '1px solid',
+                borderColor: darkMode ? '#444' : '#ddd'
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <NotificationsActiveIcon color="primary" sx={{ mr: 1, fontSize: 28 }} />
+                <Typography variant="h6" fontWeight="600">
+                  Real-Time Updates
+                </Typography>
+                <Chip 
+                  label="LIVE" 
+                  size="small" 
+                  color="error" 
+                  sx={{ ml: 2 }} 
+                />
+              </Box>
+              
+              <List>
+                {realTimeUpdates.map((update) => (
+                  <ListItem key={update.id} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <ListItemIcon>
+                      {update.type === 'price' && <TrendingUpIcon color="success" />}
+                      {update.type === 'route' && <FlightIcon color="info" />}
+                      {update.type === 'system' && <UpgradeIcon color="warning" />}
+                      {update.type === 'booking' && <PriceCheckIcon color="primary" />}
+                    </ListItemIcon>
+                    <ListItemText 
+                      primary={update.message} 
+                      secondary={new Date(update.timestamp).toLocaleTimeString()} 
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Paper>
+
+            {/* Popular Routes with Flags */}
+            <Paper
+              sx={{
+                p: 3,
+                mb: 4,
+                borderRadius: 3,
+                bgcolor: darkMode ? "#2a2a2a" : "#fff",
+              }}
+            >
+              <Typography variant="h6" fontWeight="600" gutterBottom>
+                🌍 Popular Routes
+              </Typography>
+              <Grid container spacing={2}>
+                {[
+                  { from: "United States", to: "United Kingdom" },
+                  { from: "Germany", to: "Spain" },
+                  { from: "Australia", to: "Japan" },
+                  { from: "France", to: "Italy" }
+                ].map((route, index) => (
+                  <Grid item xs={12} sm={6} md={3} key={index}>
+                    <Card variant="outlined">
+                      <CardContent sx={{ textAlign: 'center' }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
+                          <Avatar 
+                            src={getCountryFlag(route.from)} 
+                            sx={{ width: 32, height: 32, mr: 1 }}
+                            alt={route.from}
+                          />
+                          <FlightIcon sx={{ mx: 1 }} />
+                          <Avatar 
+                            src={getCountryFlag(route.to)} 
+                            sx={{ width: 32, height: 32, ml: 1 }}
+                            alt={route.to}
+                          />
+                        </Box>
+                        <Typography variant="body2" fontWeight="500">
+                          {route.from} → {route.to}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          From $499
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+
+            {/* AI Recommendations Section */}
+            <Paper
+              sx={{
+                p: 3,
+                mb: 4,
+                borderRadius: 3,
+                bgcolor: darkMode ? "#2a2a2a" : "#e8f4fd",
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                <InsightsIcon color="primary" sx={{ mr: 1, fontSize: 28 }} />
+                <Typography variant="h6" fontWeight="600">
+                  Smart Recommendations
+                </Typography>
+              </Box>
+              <Grid container spacing={2}>
+                {recommendations.map((rec, index) => (
+                  <Grid item xs={12} sm={6} md={3} key={index}>
+                    <Paper
+                      elevation={3}
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        height: "100%",
+                        background: rec.color,
+                        color: "#fff",
+                      }}
+                    >
+                      <Box sx={{ mb: 1 }}>{rec.icon}</Box>
+                      <Typography variant="subtitle1" fontWeight="700">
+                        {rec.type}
+                      </Typography>
+                      <Typography variant="body2">{rec.message}</Typography>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
+            </Paper>
+
+            {/* Quick Stats */}
+            <Grid container spacing={3} sx={{ mb: 4 }}>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ bgcolor: darkMode ? '#2a2a2a' : '#fff' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <PeopleAltIcon color="primary" />
+                      <Typography variant="h6" sx={{ ml: 1 }}>Total Bookings</Typography>
+                    </Box>
+                    <Typography variant="h4">{books.length}</Typography>
+                    <LinearProgress variant="determinate" value={70} sx={{ mt: 1 }} />
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ bgcolor: darkMode ? '#2a2a2a' : '#fff' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <PriceCheckIcon color="success" />
+                      <Typography variant="h6" sx={{ ml: 1 }}>Savings</Typography>
+                    </Box>
+                    <Typography variant="h4">$1,240</Typography>
+                    <Typography variant="body2" color="success.main">+12% this month</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ bgcolor: darkMode ? '#2a2a2a' : '#fff' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <ScheduleIcon color="warning" />
+                      <Typography variant="h6" sx={{ ml: 1 }}>Upcoming</Typography>
+                    </Box>
+                    <Typography variant="h4">3</Typography>
+                    <Typography variant="body2">Flights this week</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={3}>
+                <Card sx={{ bgcolor: darkMode ? '#2a2a2a' : '#fff' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                      <FlightIcon color="info" />
+                      <Typography variant="h6" sx={{ ml: 1 }}>Routes</Typography>
+                    </Box>
+                    <Typography variant="h4">12</Typography>
+                    <Typography variant="body2">Active destinations</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          </>
+        )}
+
+        {activeTab === 1 && (
+          <>
+            <Divider sx={{ mb: 3 }} />
+
+            {/* Search */}
+            <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+              <TextField
+                value={searchTerm}
+                onChange={(e) => handleSearch(e.target.value)}
+                placeholder="Search bookings by route, ID, or destination..."
+                fullWidth
+                sx={{
+                  input: { color: darkMode ? "#fff" : "#000" },
+                  label: { color: darkMode ? "#fff" : "#000" },
+                }}
+              />
+            </Box>
+
+            {/* Booking Form with Flags */}
+            <BookForm
+              addBooking={addBooking}
+              updateBooking={updateBooking}
+              submitted={submitted}
+              data={selectedBooking}
+              isEdit={isEdit}
+              darkMode={darkMode}
+              bookings={books}
+              countryFlags={countryFlags}
+            />
+
+            {/* Bookings Table with Flags */}
+            <BooksTable
+              rows={filteredBooks}
+              selectedBooking={(data) => {
+                setSelectedBooking(data);
+                setIsEdit(true);
+              }}
+              deleteBooking={deleteBooking}
+              darkMode={darkMode}
+              countryFlags={countryFlags}
+            />
+          </>
+        )}
+
+        {activeTab === 2 && (
+          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: darkMode ? "#2a2a2a" : "#fff" }}>
+            <Typography variant="h6" gutterBottom>
+              🚨 Price Alerts
+            </Typography>
+            <List>
+              {priceAlerts.map((alert) => {
+                const [from, to] = alert.route.split('→').map(s => s.trim());
+                return (
+                  <ListItem key={alert.id} divider>
+                    <ListItemAvatar>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar 
+                          src={getCountryFlag(from)} 
+                          sx={{ width: 24, height: 24, mr: 1 }}
+                          alt={from}
+                        />
+                        <FlightTakeoffIcon fontSize="small" />
+                        <Avatar 
+                          src={getCountryFlag(to)} 
+                          sx={{ width: 24, height: 24, ml: 1 }}
+                          alt={to}
+                        />
+                      </Box>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={alert.route}
+                      secondary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography 
+                            variant="body2" 
+                            color={alert.change < 0 ? "success.main" : "error.main"}
+                          >
+                            {alert.change < 0 ? '↓' : '↑'} {Math.abs(alert.change)}%
+                          </Typography>
+                          <Typography variant="body2">
+                            ${alert.oldPrice.toFixed(0)} → ${alert.newPrice.toFixed(0)}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Paper>
+        )}
+
+        {activeTab === 3 && (
+          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: darkMode ? "#2a2a2a" : "#fff" }}>
+            <Typography variant="h6" gutterBottom>
+              📊 Flight Status
+            </Typography>
+            <Grid container spacing={2}>
+              {Object.entries(flightStatus).map(([route, status]) => {
+                const [from, to] = route.split('→').map(s => s.trim());
+                return (
+                  <Grid item xs={12} sm={6} key={route}>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                          <Avatar 
+                            src={getCountryFlag(from)} 
+                            sx={{ width: 24, height: 24, mr: 1 }}
+                            alt={from}
+                          />
+                          <FlightTakeoffIcon fontSize="small" />
+                          <Typography variant="body2" sx={{ ml: 1, mr: 2 }}>{from}</Typography>
+                          <FlightLandIcon fontSize="small" />
+                          <Avatar 
+                            src={getCountryFlag(to)} 
+                            sx={{ width: 24, height: 24, ml: 1, mr: 1 }}
+                            alt={to}
+                          />
+                          <Typography variant="body2">{to}</Typography>
+                        </Box>
+                        <Chip 
+                          label={status.status} 
+                          color={getStatusColor(status.status)} 
+                          size="small" 
+                          sx={{ mb: 1 }}
+                        />
+                        <Typography variant="body2">Departure: {status.departure}</Typography>
+                        <Typography variant="body2">Arrival: {status.arrival}</Typography>
+                        <Typography variant="body2">Gate: {status.gate}</Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Paper>
+        )}
+
+        {/* AI Chat Dialog */}
+        <Dialog open={openChat} onClose={() => setOpenChat(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                <ChatIcon />
+              </Avatar>
+              <Typography variant="h6">AI Travel Assistant</Typography>
+            </Box>
+          </DialogTitle>
+          <DialogContent sx={{ height: '300px', overflow: 'auto' }}>
+            <List>
+              {chatMessages.map((msg) => (
+                <ListItem key={msg.id}>
+                  <Card 
+                    sx={{ 
+                      bgcolor: msg.sender === 'ai' ? 'primary.light' : 'grey.100',
+                      color: msg.sender === 'ai' ? 'white' : 'text.primary',
+                      ml: msg.sender === 'user' ? 'auto' : 0,
+                      maxWidth: '80%'
+                    }}
+                  >
+                    <CardContent sx={{ py: 1 }}>
+                      <Typography variant="body2">{msg.text}</Typography>
+                      <Typography variant="caption" display="block" sx={{ mt: 1, opacity: 0.7 }}>
+                        {new Date(msg.timestamp).toLocaleTimeString()}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </ListItem>
+              ))}
+            </List>
+          </DialogContent>
+          <DialogActions>
+            <TextField
+              placeholder="Ask about flights, prices, or recommendations..."
+              fullWidth
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                  sendChatMessage(e.target.value.trim());
+                  e.target.value = '';
+                }
+              }}
+            />
+          </DialogActions>
+        </Dialog>
       </Box>
     </Box>
   );

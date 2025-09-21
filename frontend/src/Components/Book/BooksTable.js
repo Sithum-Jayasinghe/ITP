@@ -17,6 +17,7 @@ import {
   Slide,
   Chip,
   Tooltip,
+  Box,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -30,6 +31,7 @@ import ChairIcon from "@mui/icons-material/Chair";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import InsightsIcon from "@mui/icons-material/Insights";
+import QrCodeIcon from "@mui/icons-material/QrCode";
 
 import { useState } from "react";
 import jsPDF from "jspdf";
@@ -87,21 +89,107 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
     showAlert(`Booking #${addedBooking.id} added successfully!`, "success");
   }
 
+  // Modern PDF generation
   const generatePDF = (booking) => {
     const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("Booking Details", 20, 20);
+    
+    // Add background color
+    doc.setFillColor(23, 107, 135);
+    doc.rect(0, 0, 220, 50, 'F');
+    
+    // Add logo/header
+    doc.setFontSize(28);
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.text("AIRGO", 105, 25, { align: "center" });
+    
     doc.setFontSize(12);
-    doc.text(`ID: ${booking.id}`, 20, 40);
-    doc.text(`From: ${booking.from}`, 20, 50);
-    doc.text(`To: ${booking.to}`, 20, 60);
-    doc.text(`Departure: ${booking.departure}`, 20, 70);
-    doc.text(`Return: ${booking.returnDate}`, 20, 80);
-    doc.text(`Passengers: ${booking.passengers}`, 20, 90);
-    doc.text(`Class: ${booking.travelClass}`, 20, 100);
-    doc.text(`Trip Type: ${booking.tripType}`, 20, 110);
-    doc.text(`Flexible Dates: ${booking.flexibleDates ? "Yes" : "No"}`, 20, 120);
-    doc.save(`Booking_${booking.id}.pdf`);
+    doc.setTextColor(200, 200, 200);
+    doc.text("Flight Booking Confirmation", 105, 35, { align: "center" });
+    
+    // Booking ID with styling
+    doc.setFillColor(240, 240, 240);
+    doc.roundedRect(15, 60, 180, 15, 3, 3, 'F');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text(`BOOKING REFERENCE: ${booking.id}`, 105, 70, { align: "center" });
+    
+    // Flight details section
+    doc.setFontSize(16);
+    doc.setTextColor(23, 107, 135);
+    doc.text("FLIGHT DETAILS", 20, 90);
+    
+    // Draw line separator
+    doc.setDrawColor(23, 107, 135);
+    doc.line(20, 93, 80, 93);
+    
+    // Flight route visualization
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text(booking.from, 30, 110);
+    doc.text("➜", 105, 110);
+    doc.text(booking.to, 160, 110);
+    
+    // Date information
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Departure: ${booking.departure}`, 30, 125);
+    if (booking.returnDate) {
+      doc.text(`Return: ${booking.returnDate}`, 140, 125);
+    }
+    
+    // Passenger details
+    doc.setFontSize(16);
+    doc.setTextColor(23, 107, 135);
+    doc.text("PASSENGER INFORMATION", 20, 145);
+    doc.line(20, 148, 95, 148);
+    
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Passengers: ${booking.passengers}`, 30, 160);
+    doc.text(`Class: ${booking.travelClass}`, 30, 170);
+    doc.text(`Trip Type: ${booking.tripType}`, 30, 180);
+    doc.text(`Flexible Dates: ${booking.flexibleDates ? "Yes" : "No"}`, 30, 190);
+    
+    // Travel tips section
+    doc.setFontSize(16);
+    doc.setTextColor(23, 107, 135);
+    doc.text("TRAVEL TIPS", 20, 210);
+    doc.line(20, 213, 55, 213);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    const insight = generateInsight(booking);
+    doc.text(`• ${insight.msg}`, 30, 225);
+    doc.text("• Check-in online 24 hours before departure", 30, 235);
+    doc.text("• Arrive at airport at least 2 hours before flight", 30, 245);
+    doc.text("• Keep identification documents handy", 30, 255);
+    
+    // Footer with QR code placeholder
+    doc.setFillColor(240, 240, 240);
+    doc.rect(0, 270, 220, 30, 'F');
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Thank you for choosing AirGo Airlines", 105, 280, { align: "center" });
+    doc.text("For assistance, contact: support@airgo.com | +1 (800) 123-4567", 105, 285, { align: "center" });
+    
+    // QR code placeholder
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.rect(180, 265, 30, 30, 'S');
+    doc.text("QR CODE", 195, 280, { align: "center" });
+    
+    // Page border
+    doc.setDrawColor(200, 200, 200);
+    doc.rect(5, 5, 200, 287);
+    
+    // Save the PDF
+    doc.save(`AirGo_Booking_${booking.id}.pdf`);
+    
+    showAlert(`PDF for Booking #${booking.id} generated!`, "success");
   };
 
   return (

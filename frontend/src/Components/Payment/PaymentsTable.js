@@ -24,6 +24,14 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import FlightIcon from "@mui/icons-material/Flight";
+import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
+import FlightLandIcon from "@mui/icons-material/FlightLand";
+import AirlineSeatReclineNormalIcon from "@mui/icons-material/AirlineSeatReclineNormal";
+import PersonIcon from "@mui/icons-material/Person";
+import PaymentIcon from "@mui/icons-material/Payment";
+import PhoneIcon from "@mui/icons-material/Phone";
+import SearchIcon from "@mui/icons-material/Search";
 import { QRCodeCanvas } from "qrcode.react";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
@@ -77,6 +85,7 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
   // === Export All to PDF ===
   const exportAllPDF = async () => {
     const doc = new jsPDF();
+    doc.setFont("helvetica", "normal");
     doc.text("All Payments Report", 20, 20);
     rows.forEach((row, i) => {
       doc.text(`${i + 1}. ${row.passenger} - LKR ${row.price}`, 20, 40 + i * 10);
@@ -87,6 +96,8 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
   // === Single PDF ===
   const generatePDF = async (row) => {
     const doc = new jsPDF("landscape");
+    doc.setFont("helvetica", "normal");
+
     const qrData = JSON.stringify(row);
     const qrImageUrl = await QRCode.toDataURL(qrData);
 
@@ -95,12 +106,14 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
     const taxes = 1500;
     const total = Number(row.price) + baggageCost + mealCost + taxes;
 
+    // Header Banner
     doc.setFillColor(25, 118, 210);
     doc.rect(0, 0, 297, 25, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
-    doc.text("✈️ AIRGOTravel Airlines - E-Receipt", 10, 17);
+    doc.text("AIRGO Travel Airlines - E-Receipt", 10, 17);
 
+    // Passenger & Flight Info
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(12);
     doc.text(`Passenger Name: ${row.passenger}`, 20, 45);
@@ -113,6 +126,7 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
     doc.text(`Arrival: Dubai (DXB) - 1:30 PM`, 120, 60);
     doc.text(`Date: October 15, 2050`, 120, 75);
 
+    // Payment Section
     doc.setFontSize(13);
     doc.setTextColor(25, 118, 210);
     doc.text("Payment & Extras", 20, 125);
@@ -123,20 +137,23 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
     doc.text(`Payment Method: ${row.method}`, 20, 155);
     doc.text(`Status: ${row.status}`, 20, 170);
 
-    doc.text(`🛄 Baggage (30kg): LKR ${baggageCost}`, 120, 140);
-    doc.text(`🍱 Meal: LKR ${mealCost}`, 120, 155);
-    doc.text(`🎟️ Taxes & Fees: LKR ${taxes}`, 120, 170);
+    doc.text(`Baggage (30kg): LKR ${baggageCost}`, 120, 140);
+    doc.text(`Meal: LKR ${mealCost}`, 120, 155);
+    doc.text(`Taxes & Fee: LKR ${taxes}`, 120, 170);
 
+    // Total
     doc.setFontSize(13);
     doc.setTextColor(200, 0, 0);
-    doc.text(`💰 TOTAL PAYMENT: LKR ${total}`, 20, 190);
+    doc.text(`TOTAL PAYMENT: LKR ${total}`, 20, 190);
 
+    // QR Code
     doc.setFontSize(14);
     doc.setTextColor(25, 118, 210);
     doc.text("E-Ticket Copy", 230, 40);
 
     doc.addImage(qrImageUrl, "PNG", 230, 60, 45, 45);
 
+    // Footer
     doc.setTextColor(100, 100, 100);
     doc.setFontSize(10);
     doc.text(
@@ -150,7 +167,7 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
 
   return (
     <>
-      {/* === Airline Themed Header Banner === */}
+      {/* Airline Banner */}
       <Box
         sx={{
           width: "100%",
@@ -185,6 +202,7 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
             textAlign: "center",
           }}
         >
+          <FlightIcon sx={{ fontSize: 50, mb: 1, color: "white" }} />
           <Typography
             variant="h3"
             sx={{
@@ -218,24 +236,27 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
         }}
       >
         <TextField
-          label="🔍 Search Passenger / Flight"
+          label="Search Passenger / Flight"
           variant="outlined"
           size="small"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           sx={{ width: "40%", borderRadius: 2 }}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+          }}
         />
         <Box sx={{ display: "flex", gap: 2 }}>
-          <Button variant="outlined" onClick={exportExcel}>
-            📊 Excel
+          <Button variant="outlined" onClick={exportExcel} startIcon={<FlightTakeoffIcon />}>
+            Excel Export
           </Button>
-          <Button variant="outlined" onClick={exportAllPDF}>
-            📑 PDF
+          <Button variant="outlined" onClick={exportAllPDF} startIcon={<FlightLandIcon />}>
+            PDF Export
           </Button>
         </Box>
       </Box>
 
-      {/* Table */}
+      {/* Payments Table */}
       <TableContainer
         component={Paper}
         elevation={6}
@@ -249,20 +270,20 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
           >
             <TableRow>
               {[
-                "id",
-                "flight",
-                "passenger",
-                "seat",
-                "price",
-                "method",
-                "status",
-                "phone",
-                "actions",
-                "ticket",
-                "receipt",
+                { id: "id", label: "ID", icon: <FlightIcon sx={{ fontSize: 16, mr: 0.5 }} /> },
+                { id: "flight", label: "FLIGHT", icon: <FlightTakeoffIcon sx={{ fontSize: 16, mr: 0.5 }} /> },
+                { id: "passenger", label: "PASSENGER", icon: <PersonIcon sx={{ fontSize: 16, mr: 0.5 }} /> },
+                { id: "seat", label: "SEAT", icon: <AirlineSeatReclineNormalIcon sx={{ fontSize: 16, mr: 0.5 }} /> },
+                { id: "price", label: "PRICE", icon: <PaymentIcon sx={{ fontSize: 16, mr: 0.5 }} /> },
+                { id: "method", label: "METHOD", icon: null },
+                { id: "status", label: "STATUS", icon: null },
+                { id: "phone", label: "PHONE", icon: <PhoneIcon sx={{ fontSize: 16, mr: 0.5 }} /> },
+                { id: "actions", label: "ACTIONS", icon: null },
+                { id: "ticket", label: "BOARDING PASS", icon: null },
+                { id: "receipt", label: "RECEIPT", icon: null },
               ].map((header) => (
                 <TableCell
-                  key={header}
+                  key={header.id}
                   sx={{
                     color: "#fff",
                     fontWeight: "bold",
@@ -270,12 +291,13 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                   }}
                 >
                   <TableSortLabel
-                    active={orderBy === header}
-                    direction={orderBy === header ? order : "asc"}
-                    onClick={() => handleSort(header)}
+                    active={orderBy === header.id}
+                    direction={orderBy === header.id ? order : "asc"}
+                    onClick={() => handleSort(header.id)}
                     sx={{ color: "white !important" }}
                   >
-                    {header.toUpperCase()}
+                    {header.icon}
+                    {header.label}
                   </TableSortLabel>
                 </TableCell>
               ))}
@@ -302,12 +324,25 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                       }
                     >
                       <TableCell align="center">{row.id}</TableCell>
-                      <TableCell align="center">{row.flight}</TableCell>
-                      <TableCell align="center">{row.passenger}</TableCell>
-                      <TableCell align="center">{row.seat}</TableCell>
                       <TableCell align="center">
-                        💸 LKR {row.price}
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <FlightTakeoffIcon sx={{ fontSize: 16, mr: 0.5, color: "primary.main" }} />
+                          {row.flight}
+                        </Box>
                       </TableCell>
+                      <TableCell align="center">
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <PersonIcon sx={{ fontSize: 16, mr: 0.5, color: "primary.main" }} />
+                          {row.passenger}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <AirlineSeatReclineNormalIcon sx={{ fontSize: 16, mr: 0.5, color: "primary.main" }} />
+                          {row.seat}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="center">LKR {row.price}</TableCell>
                       <TableCell align="center">{row.method}</TableCell>
                       <TableCell align="center">
                         <Chip
@@ -323,7 +358,12 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                           sx={{ fontWeight: "bold" }}
                         />
                       </TableCell>
-                      <TableCell align="center">{row.phone}</TableCell>
+                      <TableCell align="center">
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <PhoneIcon sx={{ fontSize: 16, mr: 0.5, color: "primary.main" }} />
+                          {row.phone}
+                        </Box>
+                      </TableCell>
                       <TableCell align="center">
                         <Tooltip title="Edit Payment">
                           <IconButton
@@ -361,7 +401,10 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                             <AirplanemodeActiveIcon
                               sx={{ color: "#1976d2", mb: 1 }}
                             />
-                            <QRCodeCanvas value={JSON.stringify(row)} size={70} />
+                            <QRCodeCanvas
+                              value={JSON.stringify(row)}
+                              size={70}
+                            />
                             <Typography
                               variant="caption"
                               sx={{
@@ -403,13 +446,16 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                         <Collapse in={openRow === row.id} timeout="auto">
                           <Box sx={{ p: 2, bgcolor: "#f9f9f9" }}>
                             <Typography variant="body2">
-                              📌 Booking Reference: #{row.id}
+                              <FlightIcon sx={{ fontSize: 16, mr: 1, verticalAlign: "text-bottom" }} />
+                              Booking Reference: #{row.id}
                             </Typography>
                             <Typography variant="body2">
-                              📞 Contact: {row.phone}
+                              <PhoneIcon sx={{ fontSize: 16, mr: 1, verticalAlign: "text-bottom" }} />
+                              Contact: {row.phone}
                             </Typography>
                             <Typography variant="body2">
-                              ✅ Payment Verified and recorded
+                              <FlightTakeoffIcon sx={{ fontSize: 16, mr: 1, verticalAlign: "text-bottom" }} />
+                              Payment Verified and recorded
                             </Typography>
                           </Box>
                         </Collapse>
@@ -420,9 +466,12 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
             ) : (
               <TableRow>
                 <TableCell colSpan={11} align="center">
-                  <Typography variant="body1" color="text.secondary">
-                    No Payments Found.
-                  </Typography>
+                  <Box sx={{ py: 3 }}>
+                    <FlightIcon sx={{ fontSize: 40, color: "text.secondary", mb: 1 }} />
+                    <Typography variant="body1" color="text.secondary">
+                      No Payments Found.
+                    </Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
             )}

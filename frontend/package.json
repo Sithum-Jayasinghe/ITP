@@ -8,6 +8,7 @@
     "@mui/icons-material": "^7.2.0",
     "@mui/material": "^7.2.0",
     "@mui/x-date-pickers": "^8.9.0",
+    "@react-pdf/renderer": "^4.3.0",
     "@react-three/drei": "^10.7.4",
     "@react-three/fiber": "^9.3.0",
     "@testing-library/dom": "^10.4.0",

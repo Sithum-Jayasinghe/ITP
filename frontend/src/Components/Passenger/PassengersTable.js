@@ -7,31 +7,72 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PictureAsPdf from "@mui/icons-material/PictureAsPdf";
 import TravelLuggageIcon from "@mui/icons-material/Luggage";
 import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLuggageStatus }) => {
   const totalBaggage = rows.reduce((sum, r) => sum + (r.baggagePrice || 0), 0);
   const totalMeal = rows.reduce((sum, r) => sum + (r.mealPrice || 0), 0);
 
-  const getSeatClass = (seat) => seat <= 20 ? "First Class" : "Economy";
+  const getSeatClass = (seat) => (seat <= 20 ? "First Class" : "Economy");
 
-  // Function to generate PDF for one passenger
+  // ✅ Generate Modern PDF for one passenger
   const generatePassengerPDF = (row) => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("Passenger Report", 14, 20);
+    const doc = new jsPDF("p", "mm", "a4");
 
-    doc.setFontSize(12);
-    doc.text(`ID: ${row.id}`, 14, 40);
-    doc.text(`Name: ${row.name}`, 14, 50);
-    doc.text(`Details: ${row.details}`, 14, 60);
-    doc.text(`Baggage: ${row.baggage}`, 14, 70);
-    doc.text(`Baggage Price: LKR ${row.baggagePrice}`, 14, 80);
-    doc.text(`Meal: ${row.meal}`, 14, 90);
-    doc.text(`Meal Price: LKR ${row.mealPrice}`, 14, 100);
-    doc.text(`Seat: ${row.seat} (${getSeatClass(row.seat)})`, 14, 110);
-    doc.text(`Luggage Status: ${row.luggageStatus || "Unknown"}`, 14, 120);
+    // Use safe font
+    doc.setFont("helvetica", "normal");
 
-    doc.save(`passenger_${row.id}.pdf`);
+    // 🔹 Header Banner
+    doc.setFillColor(0, 102, 204);
+    doc.rect(0, 0, 210, 25, "F");
+    doc.setTextColor("#fff");
+    doc.setFontSize(18);
+    doc.text("AirGo Airlines", 14, 16);
+    doc.setFontSize(11);
+    doc.text("Passenger Management Report", 150, 16, { align: "right" });
+
+    // 🔹 Passenger Info Title
+    doc.setTextColor("#000");
+    doc.setFontSize(14);
+    doc.text(`Passenger Report - ${row.name}`, 14, 40);
+
+    // 🔹 Passenger Table
+    const tableColumn = ["Field", "Details"];
+    const tableRows = [
+      ["ID", row.id],
+      ["Name", row.name],
+      ["Details", row.details],
+      ["Baggage", row.baggage],
+      ["Baggage Price", `LKR ${row.baggagePrice}`],
+      ["Meal", row.meal],
+      ["Meal Price", `LKR ${row.mealPrice}`],
+      ["Seat", `${row.seat} (${getSeatClass(row.seat)})`],
+      ["Luggage Status", row.luggageStatus || "Unknown"],
+    ];
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 50,
+      theme: "striped",
+      headStyles: {
+        fillColor: [0, 102, 204],
+        textColor: "#fff",
+        fontStyle: "bold",
+      },
+      bodyStyles: { fontSize: 11 },
+      alternateRowStyles: { fillColor: [245, 250, 255] },
+    });
+
+    // 🔹 Footer
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(9);
+    doc.setTextColor("#666");
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
+    doc.text("AirGo Airlines | Confidential", 200, pageHeight - 10, { align: "right" });
+
+    // ✅ Save File
+    doc.save(`Passenger_${row.id}.pdf`);
   };
 
   // Function to get color for luggage status chip
@@ -65,55 +106,71 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
           </TableHead>
 
           <TableBody>
-            {rows.length > 0 ? rows.map(row => (
-              <TableRow key={row.id} hover>
-                <TableCell>{row.id}</TableCell>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.details}</TableCell>
-                <TableCell>{row.baggage}</TableCell>
-                <TableCell>{row.baggagePrice}</TableCell>
-                <TableCell>{row.meal}</TableCell>
-                <TableCell>{row.mealPrice}</TableCell>
-                <TableCell>{row.seat} ({getSeatClass(row.seat)})</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={row.luggageStatus || "Unknown"} 
-                    color={getLuggageStatusColor(row.luggageStatus)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Tooltip title="Edit Passenger">
-                    <IconButton color="primary" sx={{ "&:hover": { backgroundColor: "#E0F7FA" } }} onClick={() => selectedPassenger(row)}>
-                      <EditIcon />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Delete Passenger">
-                    <IconButton color="error" sx={{ "&:hover": { backgroundColor: "#FFEBEE" } }} onClick={() => deletePassenger(row)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </Tooltip>
-                  {/* PDF Button */}
-                  <Tooltip title="Generate PDF">
-                    <IconButton color="secondary" sx={{ "&:hover": { backgroundColor: "#F3E5F5" } }} onClick={() => generatePassengerPDF(row)}>
-                      <PictureAsPdf />
-                    </IconButton>
-                  </Tooltip>
-                  {/* Luggage Tracking Button */}
-                  <Tooltip title="Track Luggage">
-                    <IconButton 
-                      color="info" 
-                      sx={{ "&:hover": { backgroundColor: "#E3F2FD" } }} 
-                      onClick={() => viewLuggageStatus(row)}
-                    >
-                      <TravelLuggageIcon />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            )) : (
+            {rows.length > 0 ? (
+              rows.map((row) => (
+                <TableRow key={row.id} hover>
+                  <TableCell>{row.id}</TableCell>
+                  <TableCell>{row.name}</TableCell>
+                  <TableCell>{row.details}</TableCell>
+                  <TableCell>{row.baggage}</TableCell>
+                  <TableCell>{row.baggagePrice}</TableCell>
+                  <TableCell>{row.meal}</TableCell>
+                  <TableCell>{row.mealPrice}</TableCell>
+                  <TableCell>
+                    {row.seat} ({getSeatClass(row.seat)})
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={row.luggageStatus || "Unknown"}
+                      color={getLuggageStatusColor(row.luggageStatus)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Tooltip title="Edit Passenger">
+                      <IconButton
+                        color="primary"
+                        sx={{ "&:hover": { backgroundColor: "#E0F7FA" } }}
+                        onClick={() => selectedPassenger(row)}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete Passenger">
+                      <IconButton
+                        color="error"
+                        sx={{ "&:hover": { backgroundColor: "#FFEBEE" } }}
+                        onClick={() => deletePassenger(row)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Generate PDF">
+                      <IconButton
+                        color="secondary"
+                        sx={{ "&:hover": { backgroundColor: "#F3E5F5" } }}
+                        onClick={() => generatePassengerPDF(row)}
+                      >
+                        <PictureAsPdf />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Track Luggage">
+                      <IconButton
+                        color="info"
+                        sx={{ "&:hover": { backgroundColor: "#E3F2FD" } }}
+                        onClick={() => viewLuggageStatus(row)}
+                      >
+                        <TravelLuggageIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
               <TableRow>
-                <TableCell colSpan={10} align="center">No Data</TableCell>
+                <TableCell colSpan={10} align="center">
+                  No Data
+                </TableCell>
               </TableRow>
             )}
           </TableBody>

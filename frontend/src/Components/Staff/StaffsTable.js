@@ -21,6 +21,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 
+// ✅ Status chip colors
 const statusColors = {
   Active: "#4caf50",
   Inactive: "#9e9e9e",
@@ -42,42 +43,77 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
     setStaffToDelete(null);
   };
 
+  // ✅ Generate modern AirGo Airlines PDF (safe encoding)
   const generateRowPDF = (staff) => {
     const doc = new jsPDF();
-    doc.text("Staff Details", 14, 20);
 
+    // 🔹 Force safe font
+    doc.setFont("helvetica", "normal");
+
+    // 🔹 Header
+    doc.setFillColor(0, 122, 204);
+    doc.rect(0, 0, 210, 25, "F");
+    doc.setFontSize(18);
+    doc.setTextColor("#ffffff");
+    doc.text("✈️ AirGo Airlines", 14, 16);
+    doc.setFontSize(11);
+    doc.text("Staff Management System", 150, 16);
+
+    // 🔹 Title
+    doc.setFontSize(14);
+    doc.setTextColor("#000000");
+    doc.text(`Staff Details Report - ${String(staff.name || "")}`, 14, 40);
+
+    // 🔹 Table Data
     const tableColumn = ["Field", "Value"];
     const tableRows = [
-      ["ID", staff.id],
-      ["Name", staff.name],
-      ["Role", staff.role],
-      ["Contact", staff.num],
-      ["Email", staff.email],
-      ["Certificate", staff.certificate],
-      ["Schedule", staff.schedule],
-      ["Status", staff.status],
+      ["ID", String(staff.id || "")],
+      ["Name", String(staff.name || "")],
+      ["Role", String(staff.role || "")],
+      ["Contact", String(staff.num || "")],
+      ["Email", String(staff.email || "")],
+      ["Certificate", String(staff.certificate || "")],
+      ["Schedule", String(staff.schedule || "")],
+      ["Status", String(staff.status || "")],
     ];
 
     autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
-      startY: 30,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [0, 118, 255] },
+      startY: 50,
+      theme: "striped",
+      headStyles: {
+        fillColor: [0, 122, 204],
+        textColor: "#fff",
+        fontStyle: "bold",
+      },
+      bodyStyles: { fontSize: 11 },
+      alternateRowStyles: { fillColor: [240, 248, 255] },
       didParseCell: (data) => {
         if (data.column.index === 1 && data.row.index === 7) {
-          data.cell.styles.fillColor = statusColors[staff.status];
+          data.cell.styles.fillColor = statusColors[staff.status] || "#ccc";
           data.cell.styles.textColor = "#fff";
         }
       },
     });
 
-    doc.save(`staff_${staff.id}.pdf`);
+    // 🔹 Footer
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(9);
+    doc.setTextColor("#666666");
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, pageHeight - 10);
+    doc.text(`AirGo Airlines | Page 1 of 1`, 160, pageHeight - 10);
+
+    // ✅ Save
+    doc.save(`AirGo_Staff_${staff.id}.pdf`);
   };
 
   return (
     <>
-      <TableContainer component={Paper} sx={{ mt: 2, borderRadius: 3, overflow: "hidden" }}>
+      <TableContainer
+        component={Paper}
+        sx={{ mt: 2, borderRadius: 3, overflow: "hidden", boxShadow: 3 }}
+      >
         <Table>
           <TableHead sx={{ backgroundColor: "#007acc" }}>
             <TableRow>
@@ -105,7 +141,14 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
                   <TableCell>{row.certificate}</TableCell>
                   <TableCell>{row.schedule}</TableCell>
                   <TableCell>
-                    <Chip label={row.status} sx={{ backgroundColor: statusColors[row.status], color: "#fff" }} />
+                    <Chip
+                      label={row.status}
+                      sx={{
+                        backgroundColor: statusColors[row.status],
+                        color: "#fff",
+                        fontWeight: "bold",
+                      }}
+                    />
                   </TableCell>
                   <TableCell>
                     <Tooltip title="Update">
@@ -151,8 +194,11 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
         </Table>
       </TableContainer>
 
+      {/* Confirm Delete */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>Are you sure you want to delete this staff member?</DialogTitle>
+        <DialogTitle>
+          Are you sure you want to delete this staff member?
+        </DialogTitle>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
           <Button color="error" onClick={confirmDelete}>
