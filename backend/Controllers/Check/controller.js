@@ -74,7 +74,7 @@ const updateCheck = (req, res, next) => {
         .catch(error => res.json({ error }));
 };
 
-// ✅ Delete a check
+// Delete checking
 const deleteCheck = (req, res, next) => {
     const checkId = req.body.checkId;
 
