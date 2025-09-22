@@ -19,15 +19,14 @@ import BadgeIcon from "@mui/icons-material/Badge";
 
 import { useEffect, useState } from "react";
 
-// Dropdown options for the form
+// Dropdown options
 const nationalities = ["Sri Lankan", "Indian", "American", "Other"];
 const flights = ["AI101", "UL202", "BA303"];
 const seats = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 const statuses = ["Checked-In", "Pending", "Boarded"];
 
-// Main functional component for the check-in form
 const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
-  // State variables for form inputs
+  // State
   const [checkId, setCheckId] = useState("");
   const [passengerName, setPassengerName] = useState("");
   const [passportNumber, setPassportNumber] = useState("");
@@ -35,22 +34,23 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
   const [flightNumber, setFlightNumber] = useState("");
   const [seatNumber, setSeatNumber] = useState("");
   const [status, setStatus] = useState("");
-
-  // State for face scan process
   const [faceScanSuccess, setFaceScanSuccess] = useState(false);
   const [scanning, setScanning] = useState(false);
 
-  // Snackbar alert control
+  // Validation errors
+  const [errors, setErrors] = useState({});
+
+  // Snackbar
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertSeverity, setAlertSeverity] = useState("success");
 
-  // Reset form when submission is complete
+  // Reset form
   useEffect(() => {
     if (!submitted) resetForm();
   }, [submitted]);
 
-  // Populate form fields if editing existing passenger data
+  // Populate when editing
   useEffect(() => {
     if (data && data.checkId) {
       setCheckId(data.checkId);
@@ -64,7 +64,6 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
     }
   }, [data]);
 
-  // Reset all form fields to empty/default values
   const resetForm = () => {
     setCheckId("");
     setPassengerName("");
@@ -75,16 +74,16 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
     setStatus("");
     setFaceScanSuccess(false);
     setScanning(false);
+    setErrors({});
   };
 
-  // Simulate a face scan with random success/failure
+  // Face scan simulation
   const handleFaceScan = () => {
     setScanning(true);
     setAlertOpen(false);
 
-    // Mock async scan delay (2 seconds)
     setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% success chance
+      const success = Math.random() > 0.3; // 70% chance
       setFaceScanSuccess(success);
       setScanning(false);
       setAlertOpen(true);
@@ -93,7 +92,49 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
     }, 2000);
   };
 
+  // ✅ Validation logic
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!checkId || Number(checkId) <= 0) {
+      newErrors.checkId = "Check ID must be a positive number";
+    }
+
+    if (!passengerName.trim() || !/^[A-Za-z\s]+$/.test(passengerName)) {
+      newErrors.passengerName = "Passenger Name is required (letters only)";
+    }
+
+    if (!passportNumber.trim() || !/^[A-Za-z0-9]+$/.test(passportNumber)) {
+      newErrors.passportNumber = "Passport Number is required (alphanumeric)";
+    }
+
+    if (!nationality) {
+      newErrors.nationality = "Select a nationality";
+    }
+
+    if (!flightNumber) {
+      newErrors.flightNumber = "Select a flight number";
+    }
+
+    if (!seatNumber) {
+      newErrors.seatNumber = "Select a seat number";
+    }
+
+    if (!status) {
+      newErrors.status = "Select a status";
+    }
+
+    if (!faceScanSuccess) {
+      newErrors.faceScan = "Face scan must be verified";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = () => {
+    if (!validateForm()) return;
+
     const checkData = {
       checkId,
       passengerName,
@@ -110,6 +151,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
     } else {
       addCheck(checkData);
     }
+    resetForm();
   };
 
   return (
@@ -122,13 +164,10 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
         boxShadow: 3
       }}
     >
-      {/* Title */}
       <Typography variant="h5" mb={2}>✈ Airline Check-In Form</Typography>
 
-      {/* Grid container for form fields */}
       <Grid container spacing={2}>
-
-        {/* Check ID field */}
+        {/* Check ID */}
         <Grid item xs={12} sm={6}>
           <TextField
             label="Check ID"
@@ -136,6 +175,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             fullWidth
             value={checkId}
             onChange={(e) => setCheckId(e.target.value)}
+            error={!!errors.checkId}
+            helperText={errors.checkId}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -146,13 +187,15 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
           />
         </Grid>
 
-        {/* Passenger Name field */}
+        {/* Passenger Name */}
         <Grid item xs={12} sm={6}>
           <TextField
             label="Passenger Name"
             fullWidth
             value={passengerName}
             onChange={(e) => setPassengerName(e.target.value)}
+            error={!!errors.passengerName}
+            helperText={errors.passengerName}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -163,17 +206,19 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
           />
         </Grid>
 
-        {/* Passport Number field */}
+        {/* Passport Number */}
         <Grid item xs={12} sm={6}>
           <TextField
             label="Passport Number"
             fullWidth
             value={passportNumber}
             onChange={(e) => setPassportNumber(e.target.value)}
+            error={!!errors.passportNumber}
+            helperText={errors.passportNumber}
           />
         </Grid>
 
-        {/* Nationality dropdown */}
+        {/* Nationality */}
         <Grid item xs={12} sm={6}>
           <TextField
             select
@@ -181,6 +226,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             fullWidth
             value={nationality}
             onChange={(e) => setNationality(e.target.value)}
+            error={!!errors.nationality}
+            helperText={errors.nationality}
           >
             {nationalities.map((option) => (
               <MenuItem key={option} value={option}>{option}</MenuItem>
@@ -188,7 +235,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
           </TextField>
         </Grid>
 
-        {/* Flight Number dropdown */}
+        {/* Flight Number */}
         <Grid item xs={12} sm={6}>
           <TextField
             select
@@ -196,6 +243,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             fullWidth
             value={flightNumber}
             onChange={(e) => setFlightNumber(e.target.value)}
+            error={!!errors.flightNumber}
+            helperText={errors.flightNumber}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -210,7 +259,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
           </TextField>
         </Grid>
 
-        {/* Seat Number dropdown */}
+        {/* Seat Number */}
         <Grid item xs={12} sm={6}>
           <TextField
             select
@@ -218,6 +267,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             fullWidth
             value={seatNumber}
             onChange={(e) => setSeatNumber(e.target.value)}
+            error={!!errors.seatNumber}
+            helperText={errors.seatNumber}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -232,7 +283,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
           </TextField>
         </Grid>
 
-        {/* Status dropdown */}
+        {/* Status */}
         <Grid item xs={12} sm={6}>
           <TextField
             select
@@ -240,6 +291,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             fullWidth
             value={status}
             onChange={(e) => setStatus(e.target.value)}
+            error={!!errors.status}
+            helperText={errors.status}
           >
             {statuses.map((option) => (
               <MenuItem key={option} value={option}>{option}</MenuItem>
@@ -247,7 +300,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
           </TextField>
         </Grid>
 
-        {/* Face Scan button and indicator */}
+        {/* Face Scan */}
         <Grid item xs={12} sx={{ display: "flex", alignItems: "center" }}>
           <IconButton
             onClick={handleFaceScan}
@@ -257,16 +310,16 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
           >
             {scanning ? <CircularProgress size={24} /> : <FaceIcon fontSize="large" />}
           </IconButton>
-          <Typography>
+          <Typography color={errors.faceScan ? "error" : "inherit"}>
             {scanning
               ? "Scanning..."
               : faceScanSuccess
               ? "Face Verified"
-              : "Scan Face"}
+              : errors.faceScan || "Scan Face"}
           </Typography>
         </Grid>
 
-        {/* Submit button */}
+        {/* Submit */}
         <Grid item xs={12}>
           <Button
             variant="contained"
@@ -274,14 +327,13 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             fullWidth
             sx={{ py: 1.5 }}
             onClick={handleSubmit}
-            disabled={!faceScanSuccess} // Only allow submit after successful face scan
           >
             {isEdit ? "Update Check-In" : "Check-In Passenger"}
           </Button>
         </Grid>
       </Grid>
 
-      {/* Snackbar alert for scan result */}
+      {/* Snackbar */}
       <Snackbar
         open={alertOpen}
         autoHideDuration={3000}
