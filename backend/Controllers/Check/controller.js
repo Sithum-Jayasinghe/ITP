@@ -1,6 +1,6 @@
 const Check = require('../../Models/Check/model');
 
-// ✅ Get all checks
+// Get all check
 const getChecks = (req, res, next) => {
     Check.find()
         .then(response => res.json({ response }))
