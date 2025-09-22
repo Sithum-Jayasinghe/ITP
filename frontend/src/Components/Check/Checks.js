@@ -97,3 +97,51 @@ const Checks = () => {
         {/* Register users table */}
         <RegistersTable />
 
+        {/* Search and Download section */}
+        <Box sx={{ my: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <TextField
+            label="🔍 Search Check-Ins"
+            variant="outlined"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ width: "60%" }}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={downloadAllChecks}
+            disabled={checks.length === 0}
+          >
+            Download All Checks
+          </Button>
+        </Box>
+
+        {/* Check Form   */}
+        
+        <CheckForm
+          addCheck={addCheck}
+          updateCheck={updateCheck}
+          submitted={submitted}
+          data={selectedCheck}
+          isEdit={isEdit}
+        />
+
+        {/* Checks Table */}
+
+        <ChecksTable
+          rows={filteredChecks}
+          users={users}
+          selectedCheck={(data) => {
+            setSelectedCheck(data);
+            setIsEdit(true);
+          }}
+          deleteCheck={(data) =>
+            window.confirm("Are you sure to delete?") && deleteCheck(data)
+          }
+        />
+      </Box>
+    </Box>
+  );
+};
+
+export default Checks;
