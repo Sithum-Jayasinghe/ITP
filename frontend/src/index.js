@@ -5,7 +5,7 @@ import App from './App';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 // Components
-import Users from './Components/User/Users';
+//import Users from './Components/User/Users';
 import Payments from './Components/Payment/Payments';
 import Schedules from './Components/Schedule/Schedules';
 import Staffs from './Components/Staff/staffs';
@@ -28,7 +28,7 @@ root.render(
       <Routes>
         <Route path="/" element={<App />} />
       
-        <Route path="/users" element={<Users />} />
+        
         <Route path="/payments" element={<Payments />} />
         <Route path="/schedules" element={<Schedules />} />
         <Route path="/staffs" element={<Staffs />} />

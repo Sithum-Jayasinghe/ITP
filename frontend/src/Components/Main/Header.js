@@ -10,7 +10,7 @@ const Header = () => {
       
       
       <div className="button-container">
-        <button className="user-button" onClick={() => navigate('/users')}>Users</button>
+      
         <button className="user-button" onClick={() => navigate('/schedules')}>Shedules</button>
          <button className="user-button" onClick={() => navigate('/staffs')}>Staff</button>
          <button className="user-button" onClick={() => navigate('/books')}>Booking</button>
