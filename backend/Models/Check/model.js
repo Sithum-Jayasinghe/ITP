@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-// adding
+
 const checkSchema = new Schema({
     checkId: { type: Number, required: true, unique: true },
     passengerName: { type: String, required: true },
