@@ -1,4 +1,4 @@
-
+ 
 import React from "react";
 import {
   Paper,
@@ -34,7 +34,7 @@ const ScheduleTable = ({ rows, selectedSchedule, deleteSchedule }) => {
     // Add title with logo
     doc.setFontSize(20);
     doc.setTextColor(255, 255, 255);
-    doc.text("✈️ Flight Schedule Details", 105, 20, { align: "center" });
+    doc.text("Flight Schedule Details", 105, 20, { align: "center" });
     
     // Reset text color
     doc.setTextColor(0, 0, 0);

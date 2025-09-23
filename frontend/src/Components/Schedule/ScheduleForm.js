@@ -221,7 +221,7 @@ const ScheduleForm = ({
           borderRadius: 3,
           boxShadow: 4,
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          background: "linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)", // 🔹 gradient background
+          background: "linear-gradient(90deg, #9cc7f3ff 0%, #9cc7f3ff 100%)", // 🔹 gradient background color
           color: "#fff",
         }}
       >
