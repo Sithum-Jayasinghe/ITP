@@ -115,13 +115,40 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
 
         {/* Inputs */}
         <Input
-          type="number"
-          placeholder="User ID"
+          type="text"
+          placeholder="User NIC"
           value={id}
-          onChange={(e) => setId(e.target.value)}
-          startAdornment={<InputAdornment position="start"><BadgeIcon /></InputAdornment>}
+          onChange={(e) => {
+            const value = e.target.value;
+
+            // ❌ Block negative numbers
+            if (value.startsWith("-")) return;
+
+            // ✅ Allow only letters + numbers
+            if (!/^[0-9a-zA-Z]*$/.test(value)) return;
+
+            // ✅ Restrict to max 12 characters
+            if (value.length > 12) return;
+
+            setId(value);
+          }}
+          startAdornment={
+            <InputAdornment position="start">
+              <BadgeIcon />
+            </InputAdornment>
+          }
           fullWidth
         />
+        <Typography variant="caption" color="error">
+          {id && id.startsWith("-")
+            ? "NIC cannot be negative"
+            : id && id.length !== 12
+              ? "NIC must be exactly 12 characters"
+              : ""}
+        </Typography>
+
+
+
         <Input
           type="text"
           placeholder="Full Name"

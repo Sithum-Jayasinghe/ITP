@@ -35,7 +35,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Plane from './Components/Images/p3.png';
 import Logo from './Components/Images/logo.png';
-import Video2 from './Components/Images/family.mp4';
+import Video2 from './Components/Images/back.mp4';
 
 // Keyframe animations  
 const float = keyframes`
@@ -262,6 +262,47 @@ const SocialIcon = styled(IconButton)(({ theme }) => ({
   },
 }));
 
+// Video container with watermark overlay
+const VideoContainer = styled('div')({
+  position: 'relative',
+  maxWidth: '1300px',
+  margin: '20px auto',
+  overflow: 'hidden',
+});
+
+const VideoElement = styled('video')({
+  width: '100%',
+  height: '700px',
+  borderRadius: '8px',
+  objectFit: 'cover',
+});
+
+// Watermark overlay - adjust position based on where your watermark is
+const WatermarkOverlay = styled('div')({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'rgba(0, 0, 0, 0.1)', // Subtle dark overlay
+  pointerEvents: 'none',
+  zIndex: 1,
+});
+
+// Specific watermark cover - adjust position/size based on watermark location
+const WatermarkCover = styled('div')({
+  position: 'absolute',
+  backgroundColor: 'rgba(0, 0, 0, 0.3)', // Darker cover for watermark area
+  borderRadius: '4px',
+  zIndex: 2,
+  pointerEvents: 'none',
+  // Adjust these values based on your watermark position:
+  bottom: '20px',
+  right: '20px',
+  width: '150px',
+  height: '40px',
+});
+
 // High-quality destination images from Unsplash
 const destinationImages = {
   "Dubai": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&h=400&fit=crop&auto=format",
@@ -452,18 +493,30 @@ function App() {
 
       <Header />
 
-      {/* video */}
-      <div style={{ maxWidth: "1300px", margin: "20px auto" }}>
-        <video
+      {/* Video with watermark overlay */}
+      <VideoContainer>
+        <VideoElement
           autoPlay
           loop
           muted
           playsInline
-          style={{ width: "100%", height: "700px", borderRadius: "8px", objectFit: "cover" }}
         >
           <source src={Video2} type="video/mp4" />
-        </video>
-      </div>
+        </VideoElement>
+        <WatermarkOverlay />
+        {/* Adjust the WatermarkCover position based on where your watermark is located */}
+        <WatermarkCover style={{
+          // Common watermark positions - adjust as needed:
+          // bottom: '20px', right: '20px' - for bottom-right watermark
+          // top: '20px', right: '20px' - for top-right watermark  
+          // bottom: '20px', left: '20px' - for bottom-left watermark
+          // top: '20px', left: '20px' - for top-left watermark
+          bottom: '20px',
+          right: '20px',
+          width: '150px',
+          height: '40px',
+        }} />
+      </VideoContainer>
 
 
       {/* Welcome Section with Booking Form */}
