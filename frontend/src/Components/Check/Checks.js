@@ -62,31 +62,32 @@ const Checks = () => {
 
   // Download all checks as CSV
   const downloadAllChecks = () => {
-    const headers = "Check ID,Passenger Name,Passport Number,Nationality,Flight Number,Seat Number,Status\n";
+    const headers =
+      "Check ID,Passenger Name,Passport Number,Nationality,Flight Number,Seat Number,Status\n";
     const csvContent = checks.reduce((acc, check) => {
-      return acc + `${check.checkId},${check.passengerName},${check.passportNumber},${check.nationality},${check.flightNumber},${check.seatNumber},${check.status}\n`;
+      return (
+        acc +
+        `${check.checkId},${check.passengerName},${check.passportNumber},${check.nationality},${check.flightNumber},${check.seatNumber},${check.status}\n`
+      );
     }, headers);
-    
+
     const element = document.createElement("a");
-    const file = new Blob([csvContent], { type: 'text/csv' });
+    const file = new Blob([csvContent], { type: "text/csv" });
     element.href = URL.createObjectURL(file);
-    element.download = `all_checks_${new Date().toISOString().split('T')[0]}.csv`;
+    element.download = `all_checks_${new Date().toISOString().split("T")[0]}.csv`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
   };
 
-  // Filter checks based on search
   const filteredChecks = checks.filter(
     (check) =>
       check.flightNumber?.toLowerCase().includes(search.toLowerCase()) ||
-      check.passengerName?.toLowerCase().includes(search.toLowerCase()) ||
-      check.destination?.toLowerCase().includes(search.toLowerCase())
+      check.passengerName?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <Box sx={{ width: "100%", minHeight: "100vh", bgcolor: "#f5f5f5" }}>
-      {/* Header */}
       <Header />
 
       <Box sx={{ width: "calc(100% - 80px)", mx: "auto", mt: 5 }}>
@@ -94,10 +95,10 @@ const Checks = () => {
           🛫 Airline Check-In System
         </Typography>
 
-        {/* Register users table */}
+        {/* Registered users */}
         <RegistersTable />
 
-        {/* Search and Download section */}
+        {/* Search & Download */}
         <Box sx={{ my: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <TextField
             label="🔍 Search Check-Ins"
@@ -123,6 +124,8 @@ const Checks = () => {
           submitted={submitted}
           data={selectedCheck}
           isEdit={isEdit}
+          existingChecks={checks}
+          registeredUsers={users} // ✅ Pass registered users for ID validation
         />
 
         {/* Checks Table */}

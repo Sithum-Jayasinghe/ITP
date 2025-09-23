@@ -14,7 +14,10 @@ import {
   Fade,
   Zoom,
   Slide,
-  Grow
+  Grow,
+  Container,
+  Grid,
+  Link
 } from '@mui/material';
 import { styled, keyframes, CssVarsProvider } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -23,11 +26,16 @@ import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import FlightLandIcon from '@mui/icons-material/FlightLand';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import PhoneIcon from '@mui/icons-material/Phone';
+import EmailIcon from '@mui/icons-material/Email';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Plane from './Components/Images/p3.png';
 import Logo from './Components/Images/logo.png';
 import Video2 from './Components/Images/family.mp4';
-
-
 
 // Keyframe animations  
 const float = keyframes`
@@ -226,6 +234,34 @@ const Particle = styled('div')({
   animation: `${float} 15s infinite ease-in-out`,
 });
 
+// Footer Styled Components
+const FooterWrapper = styled('footer')(({ theme }) => ({
+  backgroundColor: '#1a2a6c',
+  color: 'white',
+  padding: theme.spacing(6, 0),
+  marginTop: theme.spacing(8),
+}));
+
+const FooterLink = styled(Link)(({ theme }) => ({
+  color: 'rgba(255, 255, 255, 0.7)',
+  display: 'block',
+  marginBottom: theme.spacing(1),
+  textDecoration: 'none',
+  transition: 'color 0.3s ease',
+  '&:hover': {
+    color: 'white',
+  },
+}));
+
+const SocialIcon = styled(IconButton)(({ theme }) => ({
+  color: 'white',
+  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  marginRight: theme.spacing(1),
+  '&:hover': {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+}));
+
 // High-quality destination images from Unsplash
 const destinationImages = {
   "Dubai": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&h=400&fit=crop&auto=format",
@@ -361,12 +397,12 @@ function App() {
     <div className="App">
       {/* Logo at the top left corner */}
       <LogoImage src={Logo} alt="AirGo Logo" />
-      
-      
+
+
       {/* 3D Plane Background with Clouds, particles and Routes */}
       <BackgroundWrapper>
         <AnimatedPlane src={Plane} alt="Flying plane" />
-        
+
         {/* Cloud Elements */}
         {clouds.map(cloud => (
           <Cloud
@@ -382,7 +418,7 @@ function App() {
             }}
           />
         ))}
-        
+
         {/* Route Paths */}
         {routes.map(route => (
           <RoutePath
@@ -397,7 +433,7 @@ function App() {
             }}
           />
         ))}
-        
+
         {/* Floating particles */}
         {particles.map(particle => (
           <Particle
@@ -416,28 +452,27 @@ function App() {
 
       <Header />
 
-  {/* video */}
-   <div style={{ maxWidth: "1300px", margin: "20px auto" }}>
-  <video 
-    autoPlay 
-    loop 
-    muted 
-    playsInline 
-    style={{ width: "100%", borderRadius: "8px" }}
-  >
-    <source src={Video2} type="video/mp4" />
-  </video>
-</div>
+      {/* video */}
+      <div style={{ maxWidth: "1300px", margin: "20px auto" }}>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{ width: "100%", height: "700px", borderRadius: "8px", objectFit: "cover" }}
+        >
+          <source src={Video2} type="video/mp4" />
+        </video>
+      </div>
 
 
-      
       {/* Welcome Section with Booking Form */}
-      <Box sx={{ 
-        display: "flex", 
-        flexDirection: "column", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        minHeight: "60vh", 
+      <Box sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "60vh",
         textAlign: "center",
         padding: 4,
         position: 'relative',
@@ -445,13 +480,13 @@ function App() {
       }}>
         <Fade in={true} timeout={1000}>
           <Box>
-            <Typography 
-              variant="h3" 
-              component="h1" 
-              gutterBottom 
-              sx={{ 
-                fontWeight: 'bold', 
-                color: '#1a2a6c', 
+            <Typography
+              variant="h3"
+              component="h1"
+              gutterBottom
+              sx={{
+                fontWeight: 'bold',
+                color: '#1a2a6c',
                 mb: 2,
                 background: 'linear-gradient(45deg, #1a2a6c, #2b59c3)',
                 backgroundClip: 'text',
@@ -475,29 +510,29 @@ function App() {
             </Grow>
           </Box>
         </Fade>
-        
+
         {/* Animated flight icons */}
-        <FlightTakeoffIcon 
-          sx={{ 
-            position: 'absolute', 
-            top: '20%', 
-            left: '10%', 
-            fontSize: 40, 
+        <FlightTakeoffIcon
+          sx={{
+            position: 'absolute',
+            top: '20%',
+            left: '10%',
+            fontSize: 40,
             color: '#1a2a6c',
             opacity: 0.7,
             animation: `${float} 6s infinite ease-in-out`,
-          }} 
+          }}
         />
-        <FlightLandIcon 
-          sx={{ 
-            position: 'absolute', 
-            bottom: '20%', 
-            right: '10%', 
-            fontSize: 40, 
+        <FlightLandIcon
+          sx={{
+            position: 'absolute',
+            bottom: '20%',
+            right: '10%',
+            fontSize: 40,
             color: '#2b59c3',
             opacity: 0.7,
             animation: `${float} 7s infinite ease-in-out reverse`,
-          }} 
+          }}
         />
       </Box>
 
@@ -505,16 +540,16 @@ function App() {
       <TrendingContainer>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
           <TrendingUpIcon sx={{ fontSize: 40, color: '#1a2a6c', mr: 2 }} />
-          <Typography 
-            variant="h3" 
-            component="h2" 
-            gutterBottom 
+          <Typography
+            variant="h3"
+            component="h2"
+            gutterBottom
             sx={{ textAlign: 'center', fontWeight: 'bold', color: '#1a2a6c' }}
           >
             Trending destinations
           </Typography>
         </Box>
-        
+
         <Typography variant="h6" color="text.secondary" sx={{ textAlign: 'center', mb: 4 }}>
           Discover the most popular flight routes with amazing deals
         </Typography>
@@ -525,13 +560,13 @@ function App() {
             <Typography variant="caption" display="block" gutterBottom sx={{ fontWeight: 'bold' }}>
               Select route
             </Typography>
-            <select 
-              value={selectedRoute} 
+            <select
+              value={selectedRoute}
               onChange={(e) => setSelectedRoute(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                borderRadius: '8px', 
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
                 border: '1px solid #ccc',
                 transition: 'all 0.3s ease',
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -552,10 +587,10 @@ function App() {
               type="date"
               value={departureDate}
               onChange={(e) => setDepartureDate(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                borderRadius: '8px', 
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
                 border: '1px solid #ccc',
                 transition: 'all 0.3s ease',
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -567,13 +602,13 @@ function App() {
             <Typography variant="caption" display="block" gutterBottom sx={{ fontWeight: 'bold' }}>
               Budget
             </Typography>
-            <select 
-              value={budget} 
+            <select
+              value={budget}
               onChange={(e) => setBudget(e.target.value)}
-              style={{ 
-                width: '100%', 
-                padding: '12px', 
-                borderRadius: '8px', 
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '8px',
                 border: '1px solid #ccc',
                 transition: 'all 0.3s ease',
                 background: 'rgba(255, 255, 255, 0.8)',
@@ -588,11 +623,11 @@ function App() {
             </select>
           </Box>
 
-          <Button 
-            variant="outlined" 
-            onClick={handleClearFilters} 
-            sx={{ 
-              alignSelf: 'flex-end', 
+          <Button
+            variant="outlined"
+            onClick={handleClearFilters}
+            sx={{
+              alignSelf: 'flex-end',
               mb: 0.5,
               animation: `${pulse} 2s infinite`,
             }}
@@ -608,15 +643,15 @@ function App() {
           <ScrollButton onClick={scrollLeft} sx={{ left: -20 }}>
             <ChevronLeftIcon />
           </ScrollButton>
-          
+
           <ScrollContainer ref={scrollRef}>
             {trendingDestinations.map((destination, index) => (
               <Zoom in={!isScrolling} timeout={500} key={destination.id} style={{ transitionDelay: `${index * 100}ms` }}>
                 <DestinationCard>
                   <DestinationImage imageUrl={getImageUrl(destination.city)}>
                     {!destinationImages[destination.city] && (
-                      <Typography 
-                        variant="h6" 
+                      <Typography
+                        variant="h6"
                         sx={{ color: 'white', zIndex: 1, textShadow: '2px 2px 4px rgba(0,0,0,0.5)', fontSize: '1.2rem', fontWeight: 'bold' }}
                       >
                         {destination.city}
@@ -633,37 +668,37 @@ function App() {
                     <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: '0.8rem' }}>
                       {destination.dates}
                     </Typography>
-                    
+
                     <Box sx={{ mt: 1 }}>
                       <Typography variant="caption" color="text.secondary">From</Typography>
                       <PriceText>{destination.price}*</PriceText>
                       <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: '0.7rem' }}>
                         Seen: {destination.seen}
                       </Typography>
-                      <Chip 
-                        label={destination.details} 
-                        size="small" 
-                        sx={{ 
-                          mt: 1, 
-                          fontSize: '0.7rem', 
+                      <Chip
+                        label={destination.details}
+                        size="small"
+                        sx={{
+                          mt: 1,
+                          fontSize: '0.7rem',
                           backgroundColor: '#e3f2fd',
                           animation: `${pulse} 3s infinite`,
-                        }} 
+                        }}
                       />
                     </Box>
-                    
-                    <Button 
-                      variant="contained" 
-                      fullWidth 
-                      sx={{ 
-                        mt: 2, 
-                        backgroundColor: '#1a2a6c', 
-                        '&:hover': { 
+
+                    <Button
+                      variant="contained"
+                      fullWidth
+                      sx={{
+                        mt: 2,
+                        backgroundColor: '#1a2a6c',
+                        '&:hover': {
                           backgroundColor: '#2b59c3',
                           transform: 'translateY(-2px)',
                           boxShadow: '0 4px 12px rgba(43, 89, 195, 0.4)',
-                        }, 
-                        py: 1, 
+                        },
+                        py: 1,
                         fontSize: '0.8rem',
                         transition: 'all 0.3s ease',
                       }}
@@ -683,10 +718,10 @@ function App() {
 
         {/* Additional Info Box */}
         <Zoom in={true} timeout={1000}>
-          <Box sx={{ 
-            mt: 6, 
-            p: 3, 
-            backgroundColor: 'rgba(232, 245, 233, 0.8)', 
+          <Box sx={{
+            mt: 6,
+            p: 3,
+            backgroundColor: 'rgba(232, 245, 233, 0.8)',
             backdropFilter: 'blur(10px)',
             borderRadius: 2,
             border: '1px solid rgba(46, 125, 50, 0.2)',
@@ -700,7 +735,7 @@ function App() {
                 ✈️ Special Offer!
               </Typography>
               <Typography variant="body1" sx={{ mb: 2 }}>
-                Book any of these trending destinations today and get <strong>10% off</strong> on your next booking! 
+                Book any of these trending destinations today and get <strong>10% off</strong> on your next booking!
                 Use promo code: <strong>AIRGO10</strong>
               </Typography>
               <Typography variant="body2" color="text.secondary">
@@ -710,6 +745,86 @@ function App() {
           </Box>
         </Zoom>
       </TrendingContainer>
+
+      {/* Footer Section */}
+      <FooterWrapper>
+        <Container maxWidth="lg">
+          <Grid container spacing={4}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'white' }}>
+                AirGo
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mb: 2 }}>
+                Your trusted partner for flight bookings. We offer the best deals on flights to destinations worldwide.
+              </Typography>
+              <Box>
+                <SocialIcon>
+                  <FacebookIcon />
+                </SocialIcon>
+                <SocialIcon>
+                  <TwitterIcon />
+                </SocialIcon>
+                <SocialIcon>
+                  <InstagramIcon />
+                </SocialIcon>
+                <SocialIcon>
+                  <LinkedInIcon />
+                </SocialIcon>
+              </Box>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'white' }}>
+                Quick Links
+              </Typography>
+              <FooterLink href="#">Home</FooterLink>
+              <FooterLink href="#">Flights</FooterLink>
+              <FooterLink href="#">Destinations</FooterLink>
+              <FooterLink href="#">Deals & Offers</FooterLink>
+              <FooterLink href="#">About Us</FooterLink>
+              <FooterLink href="#">Contact Us</FooterLink>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'white' }}>
+                Popular Destinations
+              </Typography>
+              <FooterLink href="#">Dubai</FooterLink>
+              <FooterLink href="#">Singapore</FooterLink>
+              <FooterLink href="#">London</FooterLink>
+              <FooterLink href="#">Tokyo</FooterLink>
+              <FooterLink href="#">Sydney</FooterLink>
+              <FooterLink href="#">New York</FooterLink>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', color: 'white' }}>
+                Contact Info
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <PhoneIcon sx={{ fontSize: 16, mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} />
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  +94 11 234 5678
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <EmailIcon sx={{ fontSize: 16, mr: 1, color: 'rgba(255, 255, 255, 0.7)' }} />
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  info@airgo.com
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 1 }}>
+                <LocationOnIcon sx={{ fontSize: 16, mr: 1, mt: 0.5, color: 'rgba(255, 255, 255, 0.7)' }} />
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                  123 Airport Road,<br />
+                  Colombo, Sri Lanka
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+          <Divider sx={{ my: 4, backgroundColor: 'rgba(255, 255, 255, 0.2)' }} />
+          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', textAlign: 'center' }}>
+            © {new Date().getFullYear()} AirGo. All rights reserved. | Terms of Service | Privacy Policy
+          </Typography>
+        </Container>
+      </FooterWrapper>
 
       {/* AI Chatbot */}
       <Chatbot />

@@ -30,9 +30,7 @@ import debounce from "lodash.debounce";
 import * as XLSX from "xlsx";
 import { PieChart, Pie, Cell, Legend, ResponsiveContainer } from "recharts";
 import Header from "../Main/Header";
-import PayBanner from "../Images/pay.png";
-import Banner2 from "../Images/ban1.png";
-import Banner3 from "../Images/ban2.png";
+import PaymentVideo from "../Images/pay2.mp4";
 
 const PAGE_SIZE = 10;
 const COLORS = ["#4caf50", "#ff9800", "#f44336"];
@@ -57,17 +55,7 @@ const Payments = () => {
 
   const paymentsRef = useRef();
   const previousPaymentRef = useRef();
-
-  // === Banner slideshow ===
-  const banners = [PayBanner, Banner2, Banner3];
-  const [currentBanner, setCurrentBanner] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % banners.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [banners.length]);
+  const videoRef = useRef();
 
   useEffect(() => { getPayments(); }, []);
 
@@ -197,69 +185,120 @@ const Payments = () => {
     <>
       <Header />
 
-      {/* === Modern Slideshow Banner === */}
-      <Box
-        sx={{
-          width: "100%",
-          height: "250px",
-          position: "relative",
-          borderRadius: "16px",
-          overflow: "hidden",
-          mb: 3,
-          boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-        }}
-      >
-        {banners.map((banner, index) => (
-          <Box
-            key={index}
-            component="img"
-            src={banner}
-            alt={`Banner ${index}`}
-            sx={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              borderRadius: "16px",
+      {/* === Enhanced 3D Video Banner === */}
+      <Box sx={{ 
+        maxWidth: "1200px", 
+        margin: "30px auto",
+        perspective: "1000px",
+        position: "relative"
+      }}>
+        <Box
+          sx={{
+            transform: "rotateX(5deg) rotateY(0deg)",
+            transformStyle: "preserve-3d",
+            transition: "transform 0.5s ease",
+            "&:hover": {
+              transform: "rotateX(3deg) rotateY(2deg)",
+            },
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            borderRadius: "16px",
+            overflow: "hidden",
+            position: "relative",
+            "&::before": {
+              content: '""',
               position: "absolute",
               top: 0,
               left: 0,
-              opacity: currentBanner === index ? 1 : 0,
-              transform: currentBanner === index ? "scale(1)" : "scale(1.1)",
-              transition: "opacity 2s ease-in-out, transform 8s ease-in-out",
-              filter: "brightness(0.75) saturate(1.2)", // more vivid colors
-            }}
-          />
-        ))}
-        {/* Overlay */}
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            background: "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "column",
-            color: "white",
-            textAlign: "center",
-            px: 2,
+              right: 0,
+              bottom: 0,
+              background: "linear-gradient(45deg, rgba(26, 42, 108, 0.4) 0%, rgba(43, 89, 195, 0.3) 50%, rgba(30, 60, 138, 0.4) 100%)",
+              zIndex: 2,
+              borderRadius: "16px",
+            }
           }}
         >
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: "bold",
-              textShadow: "2px 2px 8px rgba(0,0,0,0.9)",
+          <video 
+            ref={videoRef}
+            autoPlay 
+            loop 
+            muted 
+            playsInline 
+            style={{ 
+              width: "100%", 
+              height: "300px",
+              objectFit: "cover",
+              display: "block",
+              borderRadius: "16px",
+              transform: "translateZ(20px)",
             }}
           >
-            ✈️ My Bookings & Payments
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            sx={{ mt: 1, textShadow: "1px 1px 6px rgba(0,0,0,0.8)" }}
+            <source src={PaymentVideo} type="video/mp4" />
+          </video>
+          
+          {/* Overlay Content */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              color: "white",
+              textAlign: "center",
+              zIndex: 3,
+              padding: 3,
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.6))",
+            }}
           >
-            Secure • Fast • Real-time Airline Payments
-          </Typography>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: "bold",
+                textShadow: "2px 2px 8px rgba(0,0,0,0.9)",
+                mb: 2,
+                fontSize: { xs: "1.8rem", md: "2.5rem" }
+              }}
+            >
+              ✈️ Secure Payment Gateway
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{ 
+                textShadow: "1px 1px 6px rgba(0,0,0,0.8)",
+                mb: 3,
+                fontSize: { xs: "1rem", md: "1.25rem" }
+              }}
+            >
+              Fast • Secure • Reliable Airline Payments
+            </Typography>
+            <Button
+              variant="contained"
+              size="large"
+              sx={{
+                background: "linear-gradient(45deg, #ff6b35 30%, #f7931e 90%)",
+                fontWeight: "bold",
+                fontSize: "1.1rem",
+                padding: "12px 30px",
+                borderRadius: "50px",
+                boxShadow: "0 8px 20px rgba(247, 147, 30, 0.4)",
+                "&:hover": {
+                  background: "linear-gradient(45deg, #f7931e 30%, #ff6b35 90%)",
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 12px 25px rgba(247, 147, 30, 0.5)",
+                },
+                transition: "all 0.3s ease",
+              }}
+              onClick={() => {
+                document.getElementById('payment-form')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              Pay Now
+            </Button>
+          </Box>
         </Box>
       </Box>
 
@@ -271,7 +310,9 @@ const Payments = () => {
         </Box>
 
         {/* Payment Form */}
-        <PaymentForm addPayment={addPayment} updatePayment={updatePayment} submitted={submitted} data={selectedPayment} isEdit={isEdit} />
+        <div id="payment-form">
+          <PaymentForm addPayment={addPayment} updatePayment={updatePayment} submitted={submitted} data={selectedPayment} isEdit={isEdit} />
+        </div>
 
         {/* Payments Table */}
         {loading ? <CircularProgress sx={{ display: "block", mx: "auto", mt: 5 }} /> : (

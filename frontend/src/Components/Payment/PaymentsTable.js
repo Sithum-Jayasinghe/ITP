@@ -37,7 +37,107 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import * as XLSX from "xlsx";
 import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
-import Plane5 from "../Images/sky.jpg";
+
+// Replace this import with your actual 3D airline image
+// For example: import AirlineBanner from "../Images/airline-3d-banner.jpg";
+// Using a placeholder for demonstration
+const AirlineBanner = "https://placehold.co/1200x400/1976d2/white?text=AIRGO+Travel+Airlines";
+
+// CSS styles for animations
+const styles = `
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  
+  @keyframes glow {
+    0%, 100% { text-shadow: 2px 2px 10px rgba(0,0,0,0.8); }
+    50% { text-shadow: 3px 3px 15px rgba(255,255,255,0.3); }
+  }
+  
+  .animated-banner {
+    animation: fadeIn 0.8s ease-out, pulse 8s infinite ease-in-out;
+    transition: transform 0.3s ease;
+  }
+  
+  .animated-banner:hover {
+    transform: translateY(-5px);
+  }
+  
+  .animated-float {
+    animation: float 3s infinite ease-in-out;
+  }
+  
+  .animated-glow {
+    animation: glow 4s infinite ease-in-out;
+  }
+  
+  .table-row-animated {
+    animation: slideIn 0.4s ease-out;
+    transition: all 0.3s ease;
+  }
+  
+  .table-row-animated:hover {
+    transform: scale(1.01) rotate(0.5deg);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+  }
+  
+  .table-row-animated:active {
+    transform: scale(0.995);
+  }
+  
+  .card-3d {
+    transition: all 0.3s ease;
+    transform-style: preserve-3d;
+  }
+  
+  .card-3d:hover {
+    transform: perspective(1000px) rotateY(5deg) scale(1.05);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+  }
+  
+  .button-3d {
+    transition: all 0.2s ease;
+  }
+  
+  .button-3d:hover {
+    transform: scale(1.05) rotateY(5deg);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+  }
+  
+  .button-3d:active {
+    transform: scale(0.95);
+  }
+  
+  .icon-hover:hover {
+    transform: scale(1.2) rotate(5deg);
+    transition: transform 0.2s ease;
+  }
+  
+  .chip-hover:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+  }
+  
+  .collapse-animated {
+    transition: height 0.4s ease, opacity 0.4s ease;
+  }
+`;
 
 const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
   const [search, setSearch] = useState("");
@@ -46,6 +146,16 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
   const [orderBy, setOrderBy] = useState("id");
   const [order, setOrder] = useState("asc");
   const [openRow, setOpenRow] = useState(null);
+
+  // Inject CSS styles
+  React.useEffect(() => {
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+    return () => {
+      document.head.removeChild(styleSheet);
+    };
+  }, []);
 
   // === Sorting ===
   const handleSort = (property) => {
@@ -167,94 +277,109 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
 
   return (
     <>
-      {/* Airline Banner */}
-      <Box
-        sx={{
-          width: "100%",
-          height: 220,
-          position: "relative",
-          mb: 3,
-          borderRadius: 3,
-          overflow: "hidden",
-          boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-        }}
-      >
+      {/* Airline Banner with 3D effect */}
+      <div className="animated-banner">
         <Box
-          component="img"
-          src={Plane5}
-          alt="Airline Banner"
           sx={{
             width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: "brightness(0.5)",
-          }}
-        />
-        <Box
-          sx={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            color: "white",
-            textAlign: "center",
+            height: 220,
+            position: "relative",
+            mb: 3,
+            borderRadius: 3,
+            overflow: "hidden",
+            boxShadow: "0 12px 30px rgba(0,0,0,0.5)",
           }}
         >
-          <FlightIcon sx={{ fontSize: 50, mb: 1, color: "white" }} />
-          <Typography
-            variant="h3"
+          <Box
+            component="img"
+            src={AirlineBanner}
+            alt="Airline Banner"
             sx={{
-              fontWeight: "bold",
-              textShadow: "2px 2px 10px rgba(0,0,0,0.8)",
-              letterSpacing: 2,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              filter: "brightness(0.7)",
+            }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "center",
+              color: "white",
+              textAlign: "center",
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(25,118,210,0.5))",
             }}
           >
-            ✈️ AIRGO Travel
-          </Typography>
-          <Typography
-            variant="h6"
-            sx={{
-              mt: 1,
-              textShadow: "1px 1px 6px rgba(0,0,0,0.7)",
-              fontStyle: "italic",
-            }}
-          >
-            Modern Payments & Booking Dashboard
-          </Typography>
+            <div className="animated-float">
+              <FlightIcon sx={{ fontSize: 50, mb: 1, color: "white", filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.5))" }} />
+            </div>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: "bold",
+                letterSpacing: 2,
+              }}
+              className="animated-glow"
+            >
+              ✈️ AIRGO Travel
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                mt: 1,
+                textShadow: "1px 1px 6px rgba(0,0,0,0.7)",
+                fontStyle: "italic",
+              }}
+            >
+              Modern Payments & Booking Dashboard
+            </Typography>
+          </Box>
         </Box>
-      </Box>
+      </div>
 
       {/* Toolbar */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          mb: 2,
-          alignItems: "center",
-        }}
-      >
-        <TextField
-          label="Search Passenger / Flight"
-          variant="outlined"
-          size="small"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: "40%", borderRadius: 2 }}
-          InputProps={{
-            startAdornment: <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />,
+      <div style={{ animation: "fadeIn 0.5s ease-out" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            mb: 2,
+            alignItems: "center",
           }}
-        />
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button variant="outlined" onClick={exportExcel} startIcon={<FlightTakeoffIcon />}>
-            Excel Export
-          </Button>
-          <Button variant="outlined" onClick={exportAllPDF} startIcon={<FlightLandIcon />}>
-            PDF Export
-          </Button>
+        >
+          <TextField
+            label="Search Passenger / Flight"
+            variant="outlined"
+            size="small"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            sx={{ width: "40%", borderRadius: 2 }}
+            InputProps={{
+              startAdornment: (
+                <div className="icon-hover">
+                  <SearchIcon sx={{ mr: 1, color: "text.secondary" }} />
+                </div>
+              ),
+            }}
+          />
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <div className="button-3d">
+              <Button variant="outlined" onClick={exportExcel} startIcon={<FlightTakeoffIcon />}>
+                Excel Export
+              </Button>
+            </div>
+            <div className="button-3d">
+              <Button variant="outlined" onClick={exportAllPDF} startIcon={<FlightLandIcon />}>
+                PDF Export
+              </Button>
+            </div>
+          </Box>
         </Box>
-      </Box>
+      </div>
 
       {/* Payments Table */}
       <TableContainer
@@ -290,15 +415,17 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                     textAlign: "center",
                   }}
                 >
-                  <TableSortLabel
-                    active={orderBy === header.id}
-                    direction={orderBy === header.id ? order : "asc"}
-                    onClick={() => handleSort(header.id)}
-                    sx={{ color: "white !important" }}
-                  >
-                    {header.icon}
-                    {header.label}
-                  </TableSortLabel>
+                  <div className="icon-hover">
+                    <TableSortLabel
+                      active={orderBy === header.id}
+                      direction={orderBy === header.id ? order : "asc"}
+                      onClick={() => handleSort(header.id)}
+                      sx={{ color: "white !important" }}
+                    >
+                      {header.icon}
+                      {header.label}
+                    </TableSortLabel>
+                  </div>
                 </TableCell>
               ))}
             </TableRow>
@@ -308,17 +435,11 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
             {filteredRows.length > 0 ? (
               filteredRows
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row) => (
+                .map((row, index) => (
                   <React.Fragment key={row.id}>
                     <TableRow
-                      hover
-                      sx={{
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": {
-                          backgroundColor: "rgba(25,118,210,0.08)",
-                          transform: "scale(1.01)",
-                        },
-                      }}
+                      className="table-row-animated"
+                      style={{ animationDelay: `${index * 0.05}s`, cursor: "pointer" }}
                       onClick={() =>
                         setOpenRow(openRow === row.id ? null : row.id)
                       }
@@ -345,18 +466,20 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                       <TableCell align="center">LKR {row.price}</TableCell>
                       <TableCell align="center">{row.method}</TableCell>
                       <TableCell align="center">
-                        <Chip
-                          label={row.status}
-                          color={
-                            row.status === "Paid"
-                              ? "success"
-                              : row.status === "Pending"
-                              ? "warning"
-                              : "error"
-                          }
-                          variant="filled"
-                          sx={{ fontWeight: "bold" }}
-                        />
+                        <div className="chip-hover">
+                          <Chip
+                            label={row.status}
+                            color={
+                              row.status === "Paid"
+                                ? "success"
+                                : row.status === "Pending"
+                                ? "warning"
+                                : "error"
+                            }
+                            variant="filled"
+                            sx={{ fontWeight: "bold" }}
+                          />
+                        </div>
                       </TableCell>
                       <TableCell align="center">
                         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -366,84 +489,101 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                       </TableCell>
                       <TableCell align="center">
                         <Tooltip title="Edit Payment">
-                          <IconButton
-                            color="primary"
-                            onClick={() => selectedPayment(row)}
-                          >
-                            <EditIcon />
-                          </IconButton>
+                          <div className="icon-hover">
+                            <IconButton
+                              color="primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                selectedPayment(row);
+                              }}
+                            >
+                              <EditIcon />
+                            </IconButton>
+                          </div>
                         </Tooltip>
                         <Tooltip title="Delete Payment">
-                          <IconButton
-                            color="error"
-                            onClick={() => deletePayment(row)}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
+                          <div className="icon-hover">
+                            <IconButton
+                              color="error"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deletePayment(row);
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </div>
                         </Tooltip>
                       </TableCell>
 
                       {/* Boarding Pass QR Card */}
                       <TableCell align="center">
-                        <Card
-                          sx={{
-                            borderRadius: 3,
-                            boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
-                            p: 1,
-                            background:
-                              "linear-gradient(135deg,#ffffffcc,#e3f2fdcc)",
-                            backdropFilter: "blur(10px)",
-                            transition: "0.3s",
-                            "&:hover": { transform: "scale(1.05)" },
-                          }}
-                        >
-                          <CardContent sx={{ textAlign: "center", p: 1.5 }}>
-                            <AirplanemodeActiveIcon
-                              sx={{ color: "#1976d2", mb: 1 }}
-                            />
-                            <QRCodeCanvas
-                              value={JSON.stringify(row)}
-                              size={70}
-                            />
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                mt: 1,
-                                display: "block",
-                                fontWeight: 600,
-                              }}
-                            >
-                              {row.passenger}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
-                              {row.flight}
-                            </Typography>
-                          </CardContent>
-                        </Card>
+                        <div className="card-3d">
+                          <Card
+                            sx={{
+                              borderRadius: 3,
+                              boxShadow: "0 6px 20px rgba(0,0,0,0.15)",
+                              p: 1,
+                              background:
+                                "linear-gradient(135deg,#ffffffcc,#e3f2fdcc)",
+                              backdropFilter: "blur(10px)",
+                            }}
+                          >
+                            <CardContent sx={{ textAlign: "center", p: 1.5 }}>
+                              <div className="animated-float">
+                                <AirplanemodeActiveIcon
+                                  sx={{ color: "#1976d2", mb: 1 }}
+                                />
+                              </div>
+                              <QRCodeCanvas
+                                value={JSON.stringify(row)}
+                                size={70}
+                              />
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  mt: 1,
+                                  display: "block",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {row.passenger}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {row.flight}
+                              </Typography>
+                            </CardContent>
+                          </Card>
+                        </div>
                       </TableCell>
 
                       <TableCell align="center">
-                        <Tooltip title="Download Receipt">
-                          <Button
-                            variant="contained"
-                            color="success"
-                            size="small"
-                            startIcon={<PictureAsPdfIcon />}
-                            onClick={() => generatePDF(row)}
-                          >
-                            PDF
-                          </Button>
-                        </Tooltip>
+                        <div className="button-3d">
+                          <Tooltip title="Download Receipt">
+                            <Button
+                              variant="contained"
+                              color="success"
+                              size="small"
+                              startIcon={<PictureAsPdfIcon />}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                generatePDF(row);
+                              }}
+                            >
+                              PDF
+                            </Button>
+                          </Tooltip>
+                        </div>
                       </TableCell>
                     </TableRow>
 
                     {/* Expandable Details */}
                     <TableRow>
                       <TableCell colSpan={11} sx={{ p: 0 }}>
-                        <Collapse in={openRow === row.id} timeout="auto">
+                        <Collapse in={openRow === row.id} timeout="auto" className="collapse-animated">
                           <Box sx={{ p: 2, bgcolor: "#f9f9f9" }}>
                             <Typography variant="body2">
                               <FlightIcon sx={{ fontSize: 16, mr: 1, verticalAlign: "text-bottom" }} />
@@ -467,7 +607,9 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
               <TableRow>
                 <TableCell colSpan={11} align="center">
                   <Box sx={{ py: 3 }}>
-                    <FlightIcon sx={{ fontSize: 40, color: "text.secondary", mb: 1 }} />
+                    <div className="animated-float">
+                      <FlightIcon sx={{ fontSize: 40, color: "text.secondary", mb: 1 }} />
+                    </div>
                     <Typography variant="body1" color="text.secondary">
                       No Payments Found.
                     </Typography>

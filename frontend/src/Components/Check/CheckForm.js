@@ -23,10 +23,17 @@ import { useEffect, useState } from "react";
 const nationalities = ["Sri Lankan", "Indian", "American", "Other"];
 const flights = ["AI101", "UL202", "BA303"];
 const seats = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
-const statuses = ["Checked-In", "Pending", "Boarded"];
+const statuses = ["Economy", "Business", "FirstClass"];
 
-const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
-  // State
+const CheckForm = ({
+  addCheck,
+  updateCheck,
+  submitted,
+  data,
+  isEdit,
+  existingChecks = [],
+  registeredUsers = []
+}) => {
   const [checkId, setCheckId] = useState("");
   const [passengerName, setPassengerName] = useState("");
   const [passportNumber, setPassportNumber] = useState("");
@@ -37,20 +44,15 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
   const [faceScanSuccess, setFaceScanSuccess] = useState(false);
   const [scanning, setScanning] = useState(false);
 
-  // Validation errors
   const [errors, setErrors] = useState({});
-
-  // Snackbar
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertSeverity, setAlertSeverity] = useState("success");
 
-  // Reset form
   useEffect(() => {
     if (!submitted) resetForm();
   }, [submitted]);
 
-  // Populate when editing
   useEffect(() => {
     if (data && data.checkId) {
       setCheckId(data.checkId);
@@ -83,7 +85,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
     setAlertOpen(false);
 
     setTimeout(() => {
-      const success = Math.random() > 0.3; // 70% chance
+      const success = Math.random() > 0.3;
       setFaceScanSuccess(success);
       setScanning(false);
       setAlertOpen(true);
@@ -92,41 +94,35 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
     }, 2000);
   };
 
-  // ✅ Validation logic
+  // ✅ Validation
   const validateForm = () => {
     const newErrors = {};
 
+    // Check ID validation
     if (!checkId || Number(checkId) <= 0) {
       newErrors.checkId = "Check ID must be a positive number";
+    } else if (
+      !isEdit &&
+      existingChecks.some((check) => check.checkId.toString() === checkId.toString())
+    ) {
+      newErrors.checkId = "Check ID already exists.";
+    } else if (
+      !registeredUsers.some((user) => user.id.toString() === checkId.toString())
+    ) {
+      newErrors.checkId = "Check ID must match a Registered User ID.";
     }
 
     if (!passengerName.trim() || !/^[A-Za-z\s]+$/.test(passengerName)) {
       newErrors.passengerName = "Passenger Name is required (letters only)";
     }
-
     if (!passportNumber.trim() || !/^[A-Za-z0-9]+$/.test(passportNumber)) {
       newErrors.passportNumber = "Passport Number is required (alphanumeric)";
     }
-
-    if (!nationality) {
-      newErrors.nationality = "Select a nationality";
-    }
-
-    if (!flightNumber) {
-      newErrors.flightNumber = "Select a flight number";
-    }
-
-    if (!seatNumber) {
-      newErrors.seatNumber = "Select a seat number";
-    }
-
-    if (!status) {
-      newErrors.status = "Select a status";
-    }
-
-    if (!faceScanSuccess) {
-      newErrors.faceScan = "Face scan must be verified";
-    }
+    if (!nationality) newErrors.nationality = "Select a nationality";
+    if (!flightNumber) newErrors.flightNumber = "Select a flight number";
+    if (!seatNumber) newErrors.seatNumber = "Select a seat number";
+    if (!status) newErrors.status = "Select a status";
+    if (!faceScanSuccess) newErrors.faceScan = "Face scan must be verified";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -146,24 +142,14 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
       faceScanSuccess
     };
 
-    if (isEdit) {
-      updateCheck(checkData);
-    } else {
-      addCheck(checkData);
-    }
+    if (isEdit) updateCheck(checkData);
+    else addCheck(checkData);
+
     resetForm();
   };
 
   return (
-    <Box
-      sx={{
-        p: 3,
-        mb: 4,
-        borderRadius: 3,
-        backgroundColor: "#f9f9f9",
-        boxShadow: 3
-      }}
-    >
+    <Box sx={{ p: 3, mb: 4, borderRadius: 3, backgroundColor: "#f9f9f9", boxShadow: 3 }}>
       <Typography variant="h5" mb={2}>✈ Airline Check-In Form</Typography>
 
       <Grid container spacing={2}>
@@ -179,11 +165,10 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             helperText={errors.checkId}
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <BadgeIcon />
-                </InputAdornment>
-              )
+                <InputAdornment position="start"><BadgeIcon /></InputAdornment>
+              ),
             }}
+            disabled={isEdit}
           />
         </Grid>
 
@@ -197,11 +182,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             error={!!errors.passengerName}
             helperText={errors.passengerName}
             InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <FaceIcon />
-                </InputAdornment>
-              )
+              startAdornment: <InputAdornment position="start"><FaceIcon /></InputAdornment>
             }}
           />
         </Grid>
@@ -247,10 +228,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             helperText={errors.flightNumber}
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <FlightIcon />
-                </InputAdornment>
-              )
+                <InputAdornment position="start"><FlightIcon /></InputAdornment>
+              ),
             }}
           >
             {flights.map((option) => (
@@ -271,10 +250,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
             helperText={errors.seatNumber}
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <SeatIcon />
-                </InputAdornment>
-              )
+                <InputAdornment position="start"><SeatIcon /></InputAdornment>
+              ),
             }}
           >
             {seats.map((option) => (
@@ -287,7 +264,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
         <Grid item xs={12} sm={6}>
           <TextField
             select
-            label="Status"
+            label="Class Type"
             fullWidth
             value={status}
             onChange={(e) => setStatus(e.target.value)}
@@ -333,15 +310,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
         </Grid>
       </Grid>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={alertOpen}
-        autoHideDuration={3000}
-        onClose={() => setAlertOpen(false)}
-      >
-        <Alert severity={alertSeverity} sx={{ width: "100%" }}>
-          {alertMessage}
-        </Alert>
+      <Snackbar open={alertOpen} autoHideDuration={3000} onClose={() => setAlertOpen(false)}>
+        <Alert severity={alertSeverity} sx={{ width: "100%" }}>{alertMessage}</Alert>
       </Snackbar>
     </Box>
   );

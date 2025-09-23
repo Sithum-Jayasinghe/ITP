@@ -15,8 +15,9 @@ import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import FlightLandIcon from "@mui/icons-material/FlightLand";
 import EventSeatIcon from "@mui/icons-material/EventSeat";
 import ScheduleIcon from "@mui/icons-material/Schedule";
+import SheduleVideo from "../Images/Schdule.mp4"; // ✅ video file
 
-// Example airport list for Departure & Arrival
+// Example airport list
 const airports = [
   "Colombo Bandaranaike International Airport (CMB)",
   "London Heathrow Airport (LHR)",
@@ -76,14 +77,12 @@ const ScheduleForm = ({
   const [status, setStatus] = useState("");
   const [errors, setErrors] = useState({});
 
-  // Reset form when submission completes
+  // Reset form
   useEffect(() => {
-    if (!submitted) {
-      resetForm();
-    }
+    if (!submitted) resetForm();
   }, [submitted]);
 
-  // Load existing schedule data when editing
+  // Load existing schedule when editing
   useEffect(() => {
     if (data && data.id) {
       setId(data.id);
@@ -111,57 +110,43 @@ const ScheduleForm = ({
     setErrors({});
   };
 
-  // Validate form
+  // Validation
   const validateForm = () => {
     const newErrors = {};
-
-    // Flight ID validation
     if (!id) newErrors.id = "Flight ID is required.";
-    else if (!/^\d+$/.test(id))
-      newErrors.id = "Flight ID must be a valid number.";
-    else if (Number(id) <= 0)
-      newErrors.id = "Flight ID must be greater than 0.";
+    else if (!/^\d+$/.test(id)) newErrors.id = "Flight ID must be a number.";
+    else if (Number(id) <= 0) newErrors.id = "Flight ID must be greater than 0.";
 
-    // Flight Name validation
-    if (!flightName.trim())
-      newErrors.flightName = "Flight Name is required.";
+    if (!flightName.trim()) newErrors.flightName = "Flight Name is required.";
     else if (!/^[A-Za-z0-9\s-]+$/.test(flightName))
       newErrors.flightName =
         "Flight Name can only contain letters, numbers, spaces, or dashes.";
 
-    // Departure & Arrival
     if (!departure.trim()) newErrors.departure = "Select a departure airport.";
     if (!arrival.trim()) newErrors.arrival = "Select an arrival airport.";
     if (departure && arrival && departure === arrival)
       newErrors.arrival = "Arrival cannot be the same as departure.";
 
-    // Date & Time
     if (!dtime) newErrors.dtime = "Select departure date & time.";
     if (!atime) newErrors.atime = "Select arrival date & time.";
     if (dtime && atime && dayjs(atime).isBefore(dtime))
       newErrors.atime = "Arrival time must be after departure.";
 
-    // Aircraft
     if (!aircraft.trim()) newErrors.aircraft = "Select an aircraft type.";
 
-    // Seats validation
     if (!seats) newErrors.seats = "Seats are required.";
-    else if (!/^\d+$/.test(seats))
-      newErrors.seats = "Seats must be a valid whole number.";
-    else if (Number(seats) <= 0)
-      newErrors.seats = "Seats must be greater than 0.";
+    else if (!/^\d+$/.test(seats)) newErrors.seats = "Seats must be a number.";
+    else if (Number(seats) <= 0) newErrors.seats = "Seats must be greater than 0.";
 
-    // Status
     if (!status.trim()) newErrors.status = "Select flight status.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
+  // Submit
   const handleSubmit = () => {
     if (!validateForm()) return;
-
     const scheduleData = {
       id,
       flightName,
@@ -173,27 +158,79 @@ const ScheduleForm = ({
       seats: Number(seats),
       status,
     };
-
-    if (isEdit) updateSchedule(scheduleData);
-    else addSchedule(scheduleData);
-
+    isEdit ? updateSchedule(scheduleData) : addSchedule(scheduleData);
     resetForm();
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
+      {/* ✅ Video Banner */}
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: "280px",
+          mb: 5,
+          overflow: "hidden",
+          borderRadius: "12px",
+          boxShadow: "0 6px 16px rgba(0,0,0,0.3)",
+        }}
+      >
+        <video
+          src={SheduleVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "brightness(0.6)",
+          }}
+        />
+        <Typography
+          variant="h3"
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            color: "#fff",
+            fontWeight: "bold",
+            textShadow: "3px 3px 12px rgba(0,0,0,0.8)",
+            textAlign: "center",
+          }}
+        >
+          Flight Scheduling
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 400, mt: 1, opacity: 0.9 }}
+          >
+            Manage and track flights with ease
+          </Typography>
+        </Typography>
+      </Box>
+
+      {/* ✅ Form */}
       <Box
         sx={{
           maxWidth: 700,
           margin: "40px auto",
           padding: 4,
-          bgcolor: "#f5f9ff",
           borderRadius: 3,
           boxShadow: 4,
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+          background: "linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)", // 🔹 gradient background
+          color: "#fff",
         }}
       >
-        <Typography variant="h4" fontWeight="700" color="primary" gutterBottom>
+        <Typography
+          variant="h4"
+          fontWeight="700"
+          gutterBottom
+          sx={{ color: "#fff" }}
+        >
           Flight Schedule Management
         </Typography>
 
@@ -210,6 +247,7 @@ const ScheduleForm = ({
               disabled={isEdit}
               error={!!errors.id}
               helperText={errors.id || "Unique flight identifier"}
+              InputProps={{ style: { backgroundColor: "#fff" } }}
             />
           </Grid>
 
@@ -224,6 +262,7 @@ const ScheduleForm = ({
               error={!!errors.flightName}
               helperText={errors.flightName}
               placeholder="e.g. UL123"
+              InputProps={{ style: { backgroundColor: "#fff" } }}
             />
           </Grid>
 
@@ -239,6 +278,7 @@ const ScheduleForm = ({
               error={!!errors.departure}
               helperText={errors.departure}
               InputProps={{
+                style: { backgroundColor: "#fff" },
                 startAdornment: (
                   <InputAdornment position="start">
                     <FlightTakeoffIcon color="primary" />
@@ -266,6 +306,7 @@ const ScheduleForm = ({
               error={!!errors.arrival}
               helperText={errors.arrival}
               InputProps={{
+                style: { backgroundColor: "#fff" },
                 startAdornment: (
                   <InputAdornment position="start">
                     <FlightLandIcon color="primary" />
@@ -296,6 +337,7 @@ const ScheduleForm = ({
                   helperText={errors.dtime}
                   InputProps={{
                     ...params.InputProps,
+                    style: { backgroundColor: "#fff" },
                     startAdornment: (
                       <InputAdornment position="start">
                         <ScheduleIcon color="primary" />
@@ -322,6 +364,7 @@ const ScheduleForm = ({
                   helperText={errors.atime}
                   InputProps={{
                     ...params.InputProps,
+                    style: { backgroundColor: "#fff" },
                     startAdornment: (
                       <InputAdornment position="start">
                         <ScheduleIcon color="primary" />
@@ -345,6 +388,7 @@ const ScheduleForm = ({
               error={!!errors.aircraft}
               helperText={errors.aircraft}
               InputProps={{
+                style: { backgroundColor: "#fff" },
                 startAdornment: (
                   <InputAdornment position="start">
                     <EventSeatIcon color="primary" />
@@ -372,6 +416,7 @@ const ScheduleForm = ({
               error={!!errors.seats}
               helperText={errors.seats || "Number of passenger seats available"}
               inputProps={{ min: 1 }}
+              InputProps={{ style: { backgroundColor: "#fff" } }}
             />
           </Grid>
 
@@ -386,6 +431,7 @@ const ScheduleForm = ({
               required
               error={!!errors.status}
               helperText={errors.status}
+              InputProps={{ style: { backgroundColor: "#fff" } }}
             >
               {flightStatuses.map(({ value, label }) => (
                 <MenuItem key={value} value={value}>
@@ -399,10 +445,17 @@ const ScheduleForm = ({
           <Grid item xs={12} sx={{ textAlign: "center", marginTop: 3 }}>
             <Button
               variant="contained"
-              color="primary"
+              color="secondary"
               onClick={handleSubmit}
               disabled={submitted}
-              sx={{ width: 220, fontWeight: "bold", fontSize: "1.1rem" }}
+              sx={{
+                width: 220,
+                fontWeight: "bold",
+                fontSize: "1.1rem",
+                backgroundColor: "#fff",
+                color: "#1976d2",
+                "&:hover": { backgroundColor: "#e3f2fd" },
+              }}
             >
               {isEdit ? "Update Schedule" : "Add Schedule"}
             </Button>

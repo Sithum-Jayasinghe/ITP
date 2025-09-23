@@ -16,6 +16,7 @@ import Axios from "axios";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import Header from "../Main/Header";
+import StaffVideo from "../Images/st1.mp4"; // ✅ video file
 
 const Staffs = () => {
   const [staffs, setStaffs] = useState([]);
@@ -26,7 +27,7 @@ const Staffs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
-  // Custom theme
+  // ✅ Custom theme
   const theme = useMemo(
     () =>
       createTheme({
@@ -39,34 +40,11 @@ const Staffs = () => {
             paper: darkMode ? "#1e1e1e" : "#fff",
           },
         },
-        components: {
-          MuiTextField: {
-            styleOverrides: {
-              root: {
-                "& label": { color: darkMode ? "#ccc" : "rgba(0,0,0,0.7)" },
-                "& label.Mui-focused": { color: "#00c6e6" },
-                "& .MuiInputBase-input": { color: darkMode ? "#fff" : "#000" },
-                "& .MuiOutlinedInput-root": {
-                  "& fieldset": { borderColor: darkMode ? "#555" : "#ccc" },
-                  "&:hover fieldset": { borderColor: "#00c6e6" },
-                  "&.Mui-focused fieldset": { borderColor: "#00c6e6" },
-                },
-              },
-            },
-          },
-          MuiButton: {
-            styleOverrides: {
-              root: {
-                textTransform: "none",
-                fontWeight: 600,
-              },
-            },
-          },
-        },
       }),
     [darkMode]
   );
 
+  // ✅ Fetch staff
   useEffect(() => {
     getStaffs();
   }, []);
@@ -111,95 +89,100 @@ const Staffs = () => {
   };
 
   const handleSearch = (term) => {
-    setSearchTerm(term);
-    if (term === "") {
-      setFilteredStaffs(staffs);
-    } else {
-      const filtered = staffs.filter(
-        (s) =>
-          s.name.toLowerCase().includes(term.toLowerCase()) ||
-          s.role.toLowerCase().includes(term.toLowerCase()) ||
-          s.email.toLowerCase().includes(term.toLowerCase())
-      );
-      setFilteredStaffs(filtered);
-    }
-  };
+  setSearchTerm(term);
+  if (term === "") {
+    setFilteredStaffs(staffs);
+  } else {
+    const filtered = staffs.filter((s) =>
+      s.id.toString().toLowerCase().includes(term.toLowerCase()) || // ✅ convert number to string
+      s.name.toLowerCase().includes(term.toLowerCase()) ||
+      s.role.toLowerCase().includes(term.toLowerCase()) ||
+      s.email.toLowerCase().includes(term.toLowerCase())
+    );
+    setFilteredStaffs(filtered);
+  }
+};
 
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    doc.text("Staff List", 14, 20);
 
-    const tableColumn = [
-      "ID",
-      "Name",
-      "Role",
-      "Contact",
-      "Email",
-      "Certificate",
-      "Schedule",
-      "Status",
-    ];
-    const tableRows = [];
-
-    filteredStaffs.forEach((staff) => {
-      const staffData = [
-        staff.id,
-        staff.name,
-        staff.role,
-        staff.num,
-        staff.email,
-        staff.certificate,
-        staff.schedule,
-        staff.status,
-      ];
-      tableRows.push(staffData);
-    });
-
-    autoTable(doc, {
-      head: [tableColumn],
-      body: tableRows,
-      startY: 30,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [0, 118, 255] },
-    });
-
-    doc.save("staff_list.pdf");
-  };
+ 
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Header /> {/* Added Header at the top */}
-      <Box sx={{ width: "90%", margin: "50px auto" }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-          <Typography variant="h4" sx={{ color: theme.palette.primary.main, fontWeight: 600 }}>
-            Staff Management System
-          </Typography>
-          <IconButton onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? <Brightness7Icon /> : <Brightness4Icon />}
-          </IconButton>
-        </Box>
+      <Header />
 
-        {/* Search and PDF */}
-        <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-          <TextField
-            label="Search Staff..."
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            fullWidth
-          />
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: theme.palette.secondary.main,
-              "&:hover": { backgroundColor: "#009bbf" },
-            }}
-            onClick={generatePDF}
+      {/* ✅ Full Page Video Banner Section */}
+      <Box
+        sx={{
+          position: "relative",
+          width: "100%",
+          height: "350px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+          mb: 5,
+        }}
+      >
+        {/* Background Video */}
+        <video
+          src={StaffVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "brightness(0.6)", // darken video for text contrast
+          }}
+        />
+
+        {/* Overlay Text */}
+        <Typography
+          variant="h3"
+          sx={{
+            position: "absolute",
+            color: "#fff",
+            fontWeight: "bold",
+            textShadow: "3px 3px 12px rgba(0,0,0,0.8)",
+            textAlign: "center",
+          }}
+        >
+          Staff Management System
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 400, mt: 1, opacity: 0.9 }}
           >
-            Export PDF
-          </Button>
-        </Box>
+            Manage your airline workforce with ease
+          </Typography>
+        </Typography>
 
+        {/* Dark mode toggle on banner */}
+        <IconButton
+          onClick={() => setDarkMode(!darkMode)}
+          sx={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            backgroundColor: "rgba(255,255,255,0.2)",
+          }}
+        >
+          {darkMode ? (
+            <Brightness7Icon sx={{ color: "#fff" }} />
+          ) : (
+            <Brightness4Icon sx={{ color: "#fff" }} />
+          )}
+        </IconButton>
+      </Box>
+
+      {/* ✅ Main Content */}
+      <Box sx={{ width: "90%", margin: "auto" }}>
+        {/* Search + PDF Export */}
+        
+
+        {/* Staff Form */}
         <StaffForm
           addStaff={addStaff}
           updateStaff={updateStaff}
@@ -208,6 +191,7 @@ const Staffs = () => {
           isEdit={isEdit}
         />
 
+        {/* Staff Table */}
         <StaffsTable
           rows={filteredStaffs}
           selectedStaff={(data) => {

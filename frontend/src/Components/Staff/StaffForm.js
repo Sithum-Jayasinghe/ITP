@@ -17,7 +17,8 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 
-const roles = ["Manager", "Cashier", "Cleaner", "Technician"];
+// ✅ Added Pilot and Cabin Crew
+const roles = ["Manager", "Cashier", "Cleaner", "Technician", "Pilot", "Cabin Crew"];
 const schedules = ["Morning", "Evening", "Night"];
 const statuses = ["Active", "Inactive", "On Leave"];
 
@@ -141,7 +142,7 @@ const StaffForm = ({ addStaff, updateStaff, submitted, data, isEdit }) => {
           <TextField
             fullWidth
             type="text"
-            label="Employee ID"
+            label="Employee ID "
             value={id}
             onChange={(e) => setId(e.target.value)}
             error={!!errors.id}
