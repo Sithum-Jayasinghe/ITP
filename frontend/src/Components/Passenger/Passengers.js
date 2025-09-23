@@ -1,4 +1,8 @@
-import { Box, TextField, InputAdornment, Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Chip, IconButton, Paper, Card, CardContent, Grid } from "@mui/material";
+import { 
+  Box, TextField, InputAdornment, Snackbar, Alert, Dialog, DialogTitle, 
+  DialogContent, DialogActions, Button, Typography, Chip, IconButton, 
+  Paper, Card, CardContent, Grid 
+} from "@mui/material";
 import PassengerForm from "./PassengerForm";
 import PassengersTable from "./PassengersTable";
 import Axios from "axios";
@@ -11,7 +15,6 @@ import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import FlightLandIcon from '@mui/icons-material/FlightLand';
 import ConveyorBeltIcon from '@mui/icons-material/CompareArrows';
 import SecurityIcon from '@mui/icons-material/Security';
-import Pssenger from '../Images/pase.jpg';
 
 const Passengers = () => {
   const [passengers, setPassengers] = useState([]);
@@ -23,7 +26,6 @@ const Passengers = () => {
   const [luggageStatus, setLuggageStatus] = useState({});
   const [trackingDialogOpen, setTrackingDialogOpen] = useState(false);
   const [selectedLuggage, setSelectedLuggage] = useState(null);
-
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [passengerToDelete, setPassengerToDelete] = useState(null);
 
@@ -49,7 +51,11 @@ const Passengers = () => {
         });
         setLuggageStatus(initialStatus);
       })
-      .catch(console.error);
+      .catch(error => {
+        console.error("Error fetching passengers:", error);
+        // Initialize with empty array if API fails
+        setPassengers([]);
+      });
   };
 
   const getLuggageStatus = () => {
@@ -273,7 +279,7 @@ const Passengers = () => {
     );
   };
 
-  //Update an existing passenger//
+  // Add a new passenger
   const addPassenger = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/createpassenger", data)
@@ -291,14 +297,24 @@ const Passengers = () => {
           }
         }));
       })
-      .catch(console.error);
+      .catch(error => {
+        console.error("Error adding passenger:", error);
+        setSubmitted(false);
+      });
   };
 
   const updatePassenger = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/updatepassenger", data)
-      .then(() => { getPassengers(); setSubmitted(false); setIsEdit(false); })
-      .catch(console.error);
+      .then(() => { 
+        getPassengers(); 
+        setSubmitted(false); 
+        setIsEdit(false); 
+      })
+      .catch(error => {
+        console.error("Error updating passenger:", error);
+        setSubmitted(false);
+      });
   };
 
   const showAlert = (message, severity) => setAlert({ open: true, message, severity });
@@ -308,12 +324,12 @@ const Passengers = () => {
     setDeleteDialogOpen(true);
   };
   
-  //Handle passenger deletion after confirmation//
+  // Handle passenger deletion after confirmation
   const handleDelete = () => {
     Axios.post("http://localhost:3001/api/deletepassenger", { id: passengerToDelete.id })
       .then(() => { 
         getPassengers(); 
-        showAlert("Passenger Deleted Successfully", "error"); 
+        showAlert("Passenger Deleted Successfully", "success"); 
         // Remove luggage status for deleted passenger
         setLuggageStatus(prev => {
           const newStatus = { ...prev };
@@ -321,8 +337,14 @@ const Passengers = () => {
           return newStatus;
         });
       })
-      .catch(console.error)
-      .finally(() => { setDeleteDialogOpen(false); setPassengerToDelete(null); });
+      .catch(error => {
+        console.error("Error deleting passenger:", error);
+        showAlert("Error deleting passenger", "error");
+      })
+      .finally(() => { 
+        setDeleteDialogOpen(false); 
+        setPassengerToDelete(null); 
+      });
   };
 
   const handleCloseAlert = () => setAlert({ ...alert, open: false });
@@ -344,7 +366,9 @@ const Passengers = () => {
     showAlert("Luggage status refreshed", "info");
   };
 
-  const filteredPassengers = passengers.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredPassengers = passengers.filter(p => 
+    p.name && p.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   // Add luggage status to passengers for display in table
   const passengersWithLuggageStatus = filteredPassengers.map(passenger => ({
@@ -406,7 +430,7 @@ const Passengers = () => {
                 <strong>Passenger:</strong> {selectedLuggage.name}
               </Typography>
               <Typography variant="body1" gutterBottom>
-                <strong>Flight:</strong> {selectedLuggage.flightNumber || "N/A"}
+                <strong>Passenger ID:</strong> {selectedLuggage.id}
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center", my: 2 }}>
                 <Typography variant="body1" sx={{ mr: 1 }}>

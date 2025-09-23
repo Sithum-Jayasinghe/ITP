@@ -1,6 +1,6 @@
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  IconButton, Tooltip, Typography, Chip
+  IconButton, Tooltip, Typography, Chip, Box
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -13,7 +13,21 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
   const totalBaggage = rows.reduce((sum, r) => sum + (r.baggagePrice || 0), 0);
   const totalMeal = rows.reduce((sum, r) => sum + (r.mealPrice || 0), 0);
 
-  const getSeatClass = (seat) => (seat <= 20 ? "First Class" : "Economy");
+  // ✅ Fixed: Handle seat data correctly
+  const getSeatClass = (seats) => {
+    if (!seats || !Array.isArray(seats) || seats.length === 0) return "Unknown";
+    
+    // Get class from first seat (you can modify this logic as needed)
+    const firstSeat = seats[0];
+    if (firstSeat <= 16) return "First Class";
+    if (firstSeat <= 40) return "Business";
+    return "Economy";
+  };
+
+  const formatSeats = (seats) => {
+    if (!seats || !Array.isArray(seats)) return "No seats";
+    return seats.sort((a, b) => a - b).join(", ");
+  };
 
   // ✅ Generate Modern PDF for one passenger
   const generatePassengerPDF = (row) => {
@@ -41,12 +55,14 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
     const tableRows = [
       ["ID", row.id],
       ["Name", row.name],
-      ["Details", row.details],
-      ["Baggage", row.baggage],
-      ["Baggage Price", `LKR ${row.baggagePrice}`],
-      ["Meal", row.meal],
-      ["Meal Price", `LKR ${row.mealPrice}`],
-      ["Seat", `${row.seat} (${getSeatClass(row.seat)})`],
+      ["Age", row.age || "N/A"],
+      ["Passport", row.passport || "N/A"],
+      ["Baggage", row.baggage || "N/A"],
+      ["Baggage Price", `LKR ${row.baggagePrice || 0}`],
+      ["Meal", row.meal || "N/A"],
+      ["Meal Price", `LKR ${row.mealPrice || 0}`],
+      ["Seats", formatSeats(row.seats)],
+      ["Seat Class", getSeatClass(row.seats)],
       ["Luggage Status", row.luggageStatus || "Unknown"],
     ];
 
@@ -72,7 +88,7 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
     doc.text("AirGo Airlines | Confidential", 200, pageHeight - 10, { align: "right" });
 
     // ✅ Save File
-    doc.save(`Passenger_${row.id}.pdf`);
+    doc.save(`Passenger_${row.id}_${row.name}.pdf`);
   };
 
   // Function to get color for luggage status chip
@@ -88,18 +104,20 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
 
   return (
     <>
-      <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
+      <TableContainer component={Paper} sx={{ boxShadow: 3, mt: 3 }}>
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: "#f0f0f0" }}>
               <TableCell>ID</TableCell>
               <TableCell>Name</TableCell>
-              <TableCell>Details</TableCell>
+              <TableCell>Age</TableCell>
+              <TableCell>Passport</TableCell>
               <TableCell>Baggage</TableCell>
               <TableCell>Baggage Price</TableCell>
               <TableCell>Meal</TableCell>
               <TableCell>Meal Price</TableCell>
-              <TableCell>Seat</TableCell>
+              <TableCell>Seats</TableCell>
+              <TableCell>Seat Class</TableCell>
               <TableCell>Luggage Status</TableCell>
               <TableCell align="center">Actions</TableCell>
             </TableRow>
@@ -111,13 +129,17 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
                 <TableRow key={row.id} hover>
                   <TableCell>{row.id}</TableCell>
                   <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.details}</TableCell>
-                  <TableCell>{row.baggage}</TableCell>
-                  <TableCell>{row.baggagePrice}</TableCell>
-                  <TableCell>{row.meal}</TableCell>
-                  <TableCell>{row.mealPrice}</TableCell>
+                  <TableCell>{row.age || "N/A"}</TableCell>
+                  <TableCell>{row.passport || "N/A"}</TableCell>
+                  <TableCell>{row.baggage || "N/A"}</TableCell>
+                  <TableCell>LKR {row.baggagePrice || 0}</TableCell>
+                  <TableCell>{row.meal || "N/A"}</TableCell>
+                  <TableCell>LKR {row.mealPrice || 0}</TableCell>
                   <TableCell>
-                    {row.seat} ({getSeatClass(row.seat)})
+                    {formatSeats(row.seats)}
+                  </TableCell>
+                  <TableCell>
+                    {getSeatClass(row.seats)}
                   </TableCell>
                   <TableCell>
                     <Chip
@@ -127,49 +149,53 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <Tooltip title="Edit Passenger">
-                      <IconButton
-                        color="primary"
-                        sx={{ "&:hover": { backgroundColor: "#E0F7FA" } }}
-                        onClick={() => selectedPassenger(row)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete Passenger">
-                      <IconButton
-                        color="error"
-                        sx={{ "&:hover": { backgroundColor: "#FFEBEE" } }}
-                        onClick={() => deletePassenger(row)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Generate PDF">
-                      <IconButton
-                        color="secondary"
-                        sx={{ "&:hover": { backgroundColor: "#F3E5F5" } }}
-                        onClick={() => generatePassengerPDF(row)}
-                      >
-                        <PictureAsPdf />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Track Luggage">
-                      <IconButton
-                        color="info"
-                        sx={{ "&:hover": { backgroundColor: "#E3F2FD" } }}
-                        onClick={() => viewLuggageStatus(row)}
-                      >
-                        <TravelLuggageIcon />
-                      </IconButton>
-                    </Tooltip>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                      <Tooltip title="Edit Passenger">
+                        <IconButton
+                          color="primary"
+                          sx={{ "&:hover": { backgroundColor: "#E0F7FA" } }}
+                          onClick={() => selectedPassenger(row)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete Passenger">
+                        <IconButton
+                          color="error"
+                          sx={{ "&:hover": { backgroundColor: "#FFEBEE" } }}
+                          onClick={() => deletePassenger(row)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Generate PDF">
+                        <IconButton
+                          color="secondary"
+                          sx={{ "&:hover": { backgroundColor: "#F3E5F5" } }}
+                          onClick={() => generatePassengerPDF(row)}
+                        >
+                          <PictureAsPdf />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Track Luggage">
+                        <IconButton
+                          color="info"
+                          sx={{ "&:hover": { backgroundColor: "#E3F2FD" } }}
+                          onClick={() => viewLuggageStatus(row)}
+                        >
+                          <TravelLuggageIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={10} align="center">
-                  No Data
+                <TableCell colSpan={12} align="center" sx={{ py: 3 }}>
+                  <Typography variant="body1" color="textSecondary">
+                    No passenger data available
+                  </Typography>
                 </TableCell>
               </TableRow>
             )}
@@ -177,9 +203,12 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
         </Table>
       </TableContainer>
 
-      <Typography sx={{ mt: 2, fontWeight: "bold" }}>
-        Total Baggage Price: LKR {totalBaggage} | Total Meal Price: LKR {totalMeal}
-      </Typography>
+      {rows.length > 0 && (
+        <Typography sx={{ mt: 2, fontWeight: "bold", p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+          Total Baggage Price: LKR {totalBaggage} | Total Meal Price: LKR {totalMeal} | 
+          Total Passengers: {rows.length}
+        </Typography>
+      )}
     </>
   );
 };

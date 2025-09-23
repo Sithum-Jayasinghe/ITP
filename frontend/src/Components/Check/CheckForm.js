@@ -9,13 +9,16 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
-  Box
+  Box,
+  Avatar,
+  Autocomplete
 } from "@mui/material";
 
 import FaceIcon from "@mui/icons-material/Face";
 import FlightIcon from "@mui/icons-material/Flight";
 import SeatIcon from "@mui/icons-material/EventSeat";
 import BadgeIcon from "@mui/icons-material/Badge";
+import PersonIcon from "@mui/icons-material/Person";
 
 import { useEffect, useState } from "react";
 
@@ -25,7 +28,7 @@ const flights = ["AI101", "UL202", "BA303"];
 const seats = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B"];
 const statuses = ["Economy", "Business", "FirstClass"];
 
-const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
+const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] }) => {
   // State
   const [checkId, setCheckId] = useState("");
   const [passengerName, setPassengerName] = useState("");
@@ -36,6 +39,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
   const [status, setStatus] = useState("");
   const [faceScanSuccess, setFaceScanSuccess] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userProfilePhoto, setUserProfilePhoto] = useState("");
 
   // Validation errors
   const [errors, setErrors] = useState({});
@@ -61,8 +66,25 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
       setSeatNumber(data.seatNumber);
       setStatus(data.status);
       setFaceScanSuccess(data.faceScanSuccess || false);
+      setUserProfilePhoto(data.profilePhoto || "");
+      
+      // Find and set the selected user
+      const user = users.find(u => u.name === data.passengerName);
+      if (user) {
+        setSelectedUser(user);
+      }
     }
-  }, [data]);
+  }, [data, users]);
+
+  // Auto-fill form when user is selected
+  useEffect(() => {
+    if (selectedUser) {
+      setPassengerName(selectedUser.name);
+      setPassportNumber(selectedUser.passportNumber || "");
+      setNationality(selectedUser.nationality || "");
+      setUserProfilePhoto(selectedUser.profilePhoto || "");
+    }
+  }, [selectedUser]);
 
   const resetForm = () => {
     setCheckId("");
@@ -74,6 +96,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
     setStatus("");
     setFaceScanSuccess(false);
     setScanning(false);
+    setSelectedUser(null);
+    setUserProfilePhoto("");
     setErrors({});
   };
 
@@ -100,12 +124,12 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
       newErrors.checkId = "Check ID must be a positive number";
     }
 
-    if (!passengerName.trim() || !/^[A-Za-z\s]+$/.test(passengerName)) {
-      newErrors.passengerName = "Passenger Name is required (letters only)";
+    if (!passengerName.trim()) {
+      newErrors.passengerName = "Passenger Name is required";
     }
 
-    if (!passportNumber.trim() || !/^[A-Za-z0-9]+$/.test(passportNumber)) {
-      newErrors.passportNumber = "Passport Number is required (alphanumeric)";
+    if (!passportNumber.trim()) {
+      newErrors.passportNumber = "Passport Number is required";
     }
 
     if (!nationality) {
@@ -143,7 +167,8 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
       flightNumber,
       seatNumber,
       status,
-      faceScanSuccess
+      faceScanSuccess,
+      profilePhoto: userProfilePhoto // Include profile photo
     };
 
     if (isEdit) {
@@ -153,6 +178,11 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
     }
     resetForm();
   };
+
+  // Filter unique users for autocomplete
+  const uniqueUsers = users.filter((user, index, self) => 
+    index === self.findIndex(u => u.name === user.name)
+  );
 
   return (
     <Box
@@ -187,24 +217,58 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit }) => {
           />
         </Grid>
 
-        {/* Passenger Name */}
+        {/* Passenger Name with Autocomplete */}
         <Grid item xs={12} sm={6}>
-          <TextField
-            label="Passenger Name"
-            fullWidth
-            value={passengerName}
-            onChange={(e) => setPassengerName(e.target.value)}
-            error={!!errors.passengerName}
-            helperText={errors.passengerName}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <FaceIcon />
-                </InputAdornment>
-              )
+          <Autocomplete
+            options={uniqueUsers}
+            getOptionLabel={(option) => option.name}
+            value={selectedUser}
+            onChange={(event, newValue) => {
+              setSelectedUser(newValue);
             }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Passenger Name"
+                error={!!errors.passengerName}
+                helperText={errors.passengerName}
+                InputProps={{
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <InputAdornment position="start">
+                        <PersonIcon />
+                      </InputAdornment>
+                      {params.InputProps.startAdornment}
+                    </>
+                  )
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar 
+                  src={option.profilePhoto} 
+                  sx={{ width: 24, height: 24 }}
+                />
+                {option.name} ({option.passportNumber})
+              </Box>
+            )}
           />
         </Grid>
+
+        {/* User Profile Photo Preview */}
+        {userProfilePhoto && (
+          <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar 
+              src={userProfilePhoto} 
+              sx={{ width: 60, height: 60 }}
+            />
+            <Typography variant="body2" color="text.secondary">
+              Profile photo loaded from registration
+            </Typography>
+          </Grid>
+        )}
 
         {/* Passport Number */}
         <Grid item xs={12} sm={6}>

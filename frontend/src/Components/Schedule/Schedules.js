@@ -32,7 +32,7 @@ import { MapContainer, TileLayer, Marker, Polyline, Popup, ZoomControl, useMap }
 import L from "leaflet";
 import { divIcon } from "leaflet";
 
-import SheduleForm from "./ScheduleForm";
+import ScheduleForm from "./ScheduleForm";
 import ScheduleTable from "./ScheduleTable";
 import BooksTable from "../Book/BooksTable";
 
@@ -45,14 +45,11 @@ import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
 import FlightLandIcon from '@mui/icons-material/FlightLand';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
 import ZoomInMapIcon from '@mui/icons-material/ZoomInMap';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import LayersIcon from '@mui/icons-material/Layers';
 import TerrainIcon from '@mui/icons-material/Terrain';
-import AirplanemodeActiveIcon from '@mui/icons-material/AirplanemodeActive';
-import WeatherIcon from '@mui/icons-material/WbSunny';
-import TrafficIcon from '@mui/icons-material/Traffic';
 import AnimationIcon from '@mui/icons-material/Animation';
 import SatelliteIcon from '@mui/icons-material/Satellite';
+import WeatherIcon from '@mui/icons-material/WbSunny';
 
 import 'leaflet/dist/leaflet.css';
 import Header from "../Main/Header";
@@ -601,7 +598,7 @@ const Schedules = () => {
       </Box>
 
       {/* Schedule Form */}
-      <SheduleForm
+      <ScheduleForm
         addSchedule={addSchedule}
         updateSchedule={updateSchedule}
         submitted={submitted}

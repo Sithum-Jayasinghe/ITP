@@ -15,7 +15,7 @@ import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
 import FlightLandIcon from "@mui/icons-material/FlightLand";
 import EventSeatIcon from "@mui/icons-material/EventSeat";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import SheduleVideo from "../Images/Schdule.mp4"; // ✅ video file
+import SheduleVideo from "../Images/Schdule.mp4";
 
 // Example airport list
 const airports = [
@@ -59,13 +59,7 @@ const flightStatuses = [
   { value: "Arrived", label: "Arrived" },
 ];
 
-const ScheduleForm = ({
-  addSchedule,
-  updateSchedule,
-  submitted,
-  data,
-  isEdit,
-}) => {
+const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) => {
   const [id, setId] = useState("");
   const [flightName, setFlightName] = useState("");
   const [departure, setDeparture] = useState("");
@@ -110,38 +104,98 @@ const ScheduleForm = ({
     setErrors({});
   };
 
-  // Validation
+  // ✅ Enhanced validation with date constraints
   const validateForm = () => {
     const newErrors = {};
+    const today = dayjs().startOf('day');
+    
+    // Flight ID validation
     if (!id) newErrors.id = "Flight ID is required.";
     else if (!/^\d+$/.test(id)) newErrors.id = "Flight ID must be a number.";
     else if (Number(id) <= 0) newErrors.id = "Flight ID must be greater than 0.";
 
+    // Flight Name validation
     if (!flightName.trim()) newErrors.flightName = "Flight Name is required.";
     else if (!/^[A-Za-z0-9\s-]+$/.test(flightName))
       newErrors.flightName =
         "Flight Name can only contain letters, numbers, spaces, or dashes.";
 
+    // Airport validation
     if (!departure.trim()) newErrors.departure = "Select a departure airport.";
     if (!arrival.trim()) newErrors.arrival = "Select an arrival airport.";
     if (departure && arrival && departure === arrival)
       newErrors.arrival = "Arrival cannot be the same as departure.";
 
-    if (!dtime) newErrors.dtime = "Select departure date & time.";
-    if (!atime) newErrors.atime = "Select arrival date & time.";
-    if (dtime && atime && dayjs(atime).isBefore(dtime))
-      newErrors.atime = "Arrival time must be after departure.";
+    // ✅ Departure date validation - Only today or past dates allowed
+    if (!dtime) {
+      newErrors.dtime = "Select departure date & time.";
+    } else {
+      const departureDate = dtime.startOf('day');
+      // Check if departure date is in the future
+      if (departureDate.isAfter(today)) {
+        newErrors.dtime = "Departure date cannot be in the future. Only today or past dates are allowed.";
+      }
+    }
 
+    // ✅ Arrival date validation - Must be after departure
+    if (!atime) {
+      newErrors.atime = "Select arrival date & time.";
+    } else if (dtime && dayjs(atime).isBefore(dtime)) {
+      newErrors.atime = "Arrival time must be after departure time.";
+    }
+
+    // Aircraft validation
     if (!aircraft.trim()) newErrors.aircraft = "Select an aircraft type.";
 
+    // Seats validation
     if (!seats) newErrors.seats = "Seats are required.";
     else if (!/^\d+$/.test(seats)) newErrors.seats = "Seats must be a number.";
     else if (Number(seats) <= 0) newErrors.seats = "Seats must be greater than 0.";
 
+    // Status validation
     if (!status.trim()) newErrors.status = "Select flight status.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // ✅ Handle departure date change with validation
+  const handleDepartureChange = (newDtime) => {
+    setDtime(newDtime);
+    
+    // Clear departure error when user selects a new date
+    if (errors.dtime) {
+      setErrors({ ...errors, dtime: "" });
+    }
+    
+    // If arrival time exists and is before new departure time, clear it
+    if (atime && newDtime && dayjs(atime).isBefore(newDtime)) {
+      setAtime(null);
+      if (errors.atime) {
+        setErrors({ ...errors, atime: "" });
+      }
+    }
+  };
+
+  // ✅ Handle arrival date change with validation
+  const handleArrivalChange = (newAtime) => {
+    setAtime(newAtime);
+    
+    // Clear arrival error when user selects a new date
+    if (errors.atime) {
+      setErrors({ ...errors, atime: "" });
+    }
+  };
+
+  // ✅ Custom validator for DateTimePicker - Disable future dates for departure
+  const shouldDisableDepartureDate = (date) => {
+    return dayjs(date).isAfter(dayjs(), 'day');
+  };
+
+  // ✅ Custom validator for DateTimePicker - Enable only dates after departure for arrival
+  const shouldDisableArrivalDate = (date) => {
+    if (!dtime) return false;
+    return dayjs(date).isBefore(dtime, 'minute');
   };
 
   // Submit
@@ -162,9 +216,16 @@ const ScheduleForm = ({
     resetForm();
   };
 
+  // ✅ Clear error when user starts typing in a field
+  const clearError = (field) => {
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: "" });
+    }
+  };
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      {/* ✅ Video Banner */}
+      {/* Video Banner */}
       <Box
         sx={{
           position: "relative",
@@ -212,7 +273,7 @@ const ScheduleForm = ({
         </Typography>
       </Box>
 
-      {/* ✅ Form */}
+      {/* Form */}
       <Box
         sx={{
           maxWidth: 700,
@@ -221,7 +282,7 @@ const ScheduleForm = ({
           borderRadius: 3,
           boxShadow: 4,
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          background: "linear-gradient(90deg, #9cc7f3ff 0%, #9cc7f3ff 100%)", // 🔹 gradient background color
+          background: "linear-gradient(90deg, #4a83bbff 0%, #5089b7ff 100%)",
           color: "#fff",
         }}
       >
@@ -241,7 +302,10 @@ const ScheduleForm = ({
               label="Flight ID"
               type="text"
               value={id}
-              onChange={(e) => setId(e.target.value)}
+              onChange={(e) => {
+                setId(e.target.value);
+                clearError("id");
+              }}
               fullWidth
               required
               disabled={isEdit}
@@ -256,7 +320,10 @@ const ScheduleForm = ({
             <TextField
               label="Flight Name / Number"
               value={flightName}
-              onChange={(e) => setFlightName(e.target.value)}
+              onChange={(e) => {
+                setFlightName(e.target.value);
+                clearError("flightName");
+              }}
               fullWidth
               required
               error={!!errors.flightName}
@@ -271,7 +338,10 @@ const ScheduleForm = ({
             <TextField
               label="Departure Airport"
               value={departure}
-              onChange={(e) => setDeparture(e.target.value)}
+              onChange={(e) => {
+                setDeparture(e.target.value);
+                clearError("departure");
+              }}
               fullWidth
               select
               required
@@ -299,7 +369,10 @@ const ScheduleForm = ({
             <TextField
               label="Arrival Airport"
               value={arrival}
-              onChange={(e) => setArrival(e.target.value)}
+              onChange={(e) => {
+                setArrival(e.target.value);
+                clearError("arrival");
+              }}
               fullWidth
               select
               required
@@ -327,14 +400,17 @@ const ScheduleForm = ({
             <DateTimePicker
               label="Departure Date & Time"
               value={dtime}
-              onChange={setDtime}
+              onChange={handleDepartureChange}
+              shouldDisableDate={shouldDisableDepartureDate}
+              minDateTime={dayjs().subtract(1, 'year')} // Allow dates up to 1 year back
+              maxDateTime={dayjs()} // Disable future dates
               renderInput={(params) => (
                 <TextField
                   {...params}
                   fullWidth
                   required
                   error={!!errors.dtime}
-                  helperText={errors.dtime}
+                  helperText={errors.dtime || "Only today or past dates allowed"}
                   InputProps={{
                     ...params.InputProps,
                     style: { backgroundColor: "#fff" },
@@ -354,14 +430,16 @@ const ScheduleForm = ({
             <DateTimePicker
               label="Arrival Date & Time"
               value={atime}
-              onChange={setAtime}
+              onChange={handleArrivalChange}
+              shouldDisableDate={shouldDisableArrivalDate}
+              minDateTime={dtime || dayjs().subtract(1, 'year')}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   fullWidth
                   required
                   error={!!errors.atime}
-                  helperText={errors.atime}
+                  helperText={errors.atime || "Must be after departure time"}
                   InputProps={{
                     ...params.InputProps,
                     style: { backgroundColor: "#fff" },
@@ -381,7 +459,10 @@ const ScheduleForm = ({
             <TextField
               label="Aircraft Type"
               value={aircraft}
-              onChange={(e) => setAircraft(e.target.value)}
+              onChange={(e) => {
+                setAircraft(e.target.value);
+                clearError("aircraft");
+              }}
               fullWidth
               select
               required
@@ -410,7 +491,10 @@ const ScheduleForm = ({
               label="Total Seats"
               type="text"
               value={seats}
-              onChange={(e) => setSeats(e.target.value)}
+              onChange={(e) => {
+                setSeats(e.target.value);
+                clearError("seats");
+              }}
               fullWidth
               required
               error={!!errors.seats}
@@ -425,7 +509,10 @@ const ScheduleForm = ({
             <TextField
               label="Flight Status"
               value={status}
-              onChange={(e) => setStatus(e.target.value)}
+              onChange={(e) => {
+                setStatus(e.target.value);
+                clearError("status");
+              }}
               fullWidth
               select
               required
@@ -459,6 +546,54 @@ const ScheduleForm = ({
             >
               {isEdit ? "Update Schedule" : "Add Schedule"}
             </Button>
+          </Grid>
+
+          {/* ✅ Validation Summary */}
+          {Object.keys(errors).length > 0 && (
+            <Grid item xs={12}>
+              <Box
+                sx={{
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  padding: 2,
+                  borderRadius: 1,
+                  border: "1px solid rgba(255, 255, 255, 0.3)",
+                  mt: 2,
+                }}
+              >
+                <Typography variant="body2" sx={{ color: "#ffeb3b", fontWeight: "bold" }}>
+                  ⚠️ Please fix the following errors before submitting:
+                </Typography>
+                <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px", color: "#ffeb3b" }}>
+                  {Object.values(errors).map((error, index) => (
+                    <li key={index} style={{ fontSize: "0.9rem" }}>
+                      {error}
+                    </li>
+                  ))}
+                </ul>
+              </Box>
+            </Grid>
+          )}
+
+          {/* ✅ Date Validation Info */}
+          <Grid item xs={12}>
+            <Box
+              sx={{
+                backgroundColor: "rgba(255, 255, 255, 0.1)",
+                padding: 2,
+                borderRadius: 1,
+                border: "1px solid rgba(255, 255, 255, 0.3)",
+                mt: 1,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: "#e3f2fd", fontWeight: "bold" }}>
+                📋 Date Validation Rules:
+              </Typography>
+              <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px", color: "#e3f2fd" }}>
+                <li style={{ fontSize: "0.9rem" }}>• Departure date must be today or any past date</li>
+                <li style={{ fontSize: "0.9rem" }}>• Arrival date must be after departure date</li>
+                <li style={{ fontSize: "0.9rem" }}>• Future departure dates are not allowed</li>
+              </ul>
+            </Box>
           </Grid>
         </Grid>
       </Box>

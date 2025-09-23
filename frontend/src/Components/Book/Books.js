@@ -14,7 +14,6 @@ import {
   LinearProgress,
   IconButton,
   Tooltip,
-  Badge,
   Tabs,
   Tab,
   Button,
@@ -38,7 +37,6 @@ import InsightsIcon from "@mui/icons-material/Insights";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import UpgradeIcon from "@mui/icons-material/Upgrade";
 import WorkIcon from "@mui/icons-material/Work";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import FlightIcon from "@mui/icons-material/Flight";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -66,16 +64,54 @@ const Books = () => {
   const [flightStatus, setFlightStatus] = useState({});
   const [openChat, setOpenChat] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
-  const [countryFlags, setCountryFlags] = useState({});
 
-  // Simulated real-time data updates
+  // ✅ Country → ISO code mapper for flagcdn.com
+  const getCountryCode = (countryName) => {
+    const codes = {
+      "Sri Lanka": "lk",
+      "India": "in",
+      "United Arab Emirates": "ae",
+      "Singapore": "sg",
+      "Thailand": "th",
+      "United States": "us",
+      "Canada": "ca",
+      "United Kingdom": "gb",
+      "Germany": "de",
+      "France": "fr",
+      "Australia": "au",
+      "Japan": "jp",
+      "Brazil": "br",
+      "South Africa": "za",
+      "China": "cn",
+      "Italy": "it",
+      "Spain": "es",
+      "Netherlands": "nl",
+      "Sweden": "se"
+    };
+    return codes[countryName] || "xx"; // fallback
+  };
+
+  // ✅ Get flag URL from flagcdn
+  const getCountryFlag = (countryName) => {
+    const code = getCountryCode(countryName);
+    return `https://flagcdn.com/w40/${code}.png`;
+  };
+
+  // USD to LKR conversion rate
+  const USD_TO_LKR = 300;
+
+  // Convert USD → LKR
+  const convertToLKR = (usdAmount) => Math.round(usdAmount * USD_TO_LKR);
+
+  // Format as currency
+  const formatLKR = (amount) => `LKR ${amount.toLocaleString()}`;
+
+  // Simulated data setup
   useEffect(() => {
     getBookings();
     generateRecommendations();
     setupRealTimeData();
-    fetchCountryFlags();
 
-    // Set up interval for real-time updates
     const interval = setInterval(() => {
       simulateRealTimeUpdates();
       checkFlightStatus();
@@ -84,31 +120,6 @@ const Books = () => {
 
     return () => clearInterval(interval);
   }, []);
-
-  // Fetch country flags for all available countries
-  const fetchCountryFlags = async () => {
-    const countries = [
-      "United States", "Canada", "United Kingdom", "Germany", "France", 
-      "Australia", "Japan", "India", "Brazil", "South Africa", 
-      "China", "Italy", "Spain", "Netherlands", "Sweden"
-    ];
-    
-    const flags = {};
-    
-    for (const country of countries) {
-      try {
-        const response = await fetch(`https://restcountries.com/v3.1/name/${country}?fullText=true`);
-        const data = await response.json();
-        if (data && data[0]) {
-          flags[country] = data[0].flags.png;
-        }
-      } catch (error) {
-        console.error(`Error fetching flag for ${country}:`, error);
-      }
-    }
-    
-    setCountryFlags(flags);
-  };
 
   const getBookings = () => {
     Axios.get("http://localhost:3001/api/bookings")
@@ -129,7 +140,6 @@ const Books = () => {
         setSubmitted(false);
         setIsEdit(false);
         setSelectedBooking({});
-        // Add real-time update
         addRealTimeUpdate(`New booking created: ${data.from} → ${data.to}`);
       })
       .catch(() => setSubmitted(false));
@@ -169,9 +179,7 @@ const Books = () => {
     setFilteredBooks(filtered);
   };
 
-  // Real-time features
   const setupRealTimeData = () => {
-    // Initialize with some demo data
     setRealTimeUpdates([
       { id: 1, message: "Flight prices to Paris dropped by 15%", timestamp: new Date(), type: "price" },
       { id: 2, message: "New flight route added: Tokyo → Sydney", timestamp: new Date(), type: "route" },
@@ -179,26 +187,20 @@ const Books = () => {
     ]);
 
     setPriceAlerts([
-      { id: 1, route: "New York → London", oldPrice: 650, newPrice: 550, change: -15.4 },
-      { id: 2, route: "Dubai → Singapore", oldPrice: 420, newPrice: 380, change: -9.5 }
+      { id: 1, route: "New York → London", oldPrice: convertToLKR(650), newPrice: convertToLKR(550), change: -15.4 },
+      { id: 2, route: "Dubai → Singapore", oldPrice: convertToLKR(420), newPrice: convertToLKR(380), change: -9.5 },
+      { id: 3, route: "Colombo → Mumbai", oldPrice: convertToLKR(601), newPrice: convertToLKR(526), change: -12.5 }
     ]);
 
     setFlightStatus({
       "New York → London": { status: "On Time", departure: "08:30", arrival: "20:45", gate: "B12" },
-      "Dubai → Singapore": { status: "Delayed", departure: "14:20", arrival: "22:10", gate: "C05" }
+      "Dubai → Singapore": { status: "Delayed", departure: "14:20", arrival: "22:10", gate: "C05" },
+      "Colombo → Mumbai": { status: "On Time", departure: "10:15", arrival: "11:45", gate: "A08" }
     });
   };
 
   const simulateRealTimeUpdates = () => {
-    // Simulate new real-time updates
-    const updateTypes = [
-      "price",
-      "route",
-      "system",
-      "weather",
-      "promotion"
-    ];
-    
+    const updateTypes = ["price", "route", "system", "weather", "promotion"];
     const messages = [
       "Last minute deals available for weekend flights",
       "New security measures implemented at major airports",
@@ -206,44 +208,58 @@ const Books = () => {
       "Weather alert may affect flights in Northeast region",
       "Loyalty points bonus: Double points on all bookings this month"
     ];
-    
+
     const newUpdate = {
       id: Date.now(),
       message: messages[Math.floor(Math.random() * messages.length)],
       timestamp: new Date(),
       type: updateTypes[Math.floor(Math.random() * updateTypes.length)]
     };
-    
+
     setRealTimeUpdates(prev => [newUpdate, ...prev.slice(0, 4)]);
   };
 
   const updatePriceAlerts = () => {
-    // Simulate price changes
-    const routes = ["London → Paris", "Tokyo → Seoul", "Sydney → Melbourne", "Berlin → Rome"];
+    const routes = [
+      "London → Paris",
+      "Tokyo → Seoul",
+      "Sydney → Melbourne",
+      "Berlin → Rome",
+      "Colombo → Dubai",
+      "Colombo → Singapore"
+    ];
     const newRoute = routes[Math.floor(Math.random() * routes.length)];
     const change = (Math.random() > 0.5 ? 1 : -1) * (5 + Math.random() * 15);
-    
+
+    const basePriceUSD = 500 + Math.random() * 300;
+    const oldPriceLKR = convertToLKR(basePriceUSD);
+    const newPriceLKR = convertToLKR(basePriceUSD * (1 + change / 100));
+
     const newAlert = {
       id: Date.now(),
       route: newRoute,
-      oldPrice: 500 + Math.random() * 300,
-      newPrice: 500 + Math.random() * 300,
+      oldPrice: oldPriceLKR,
+      newPrice: newPriceLKR,
       change: parseFloat(change.toFixed(1))
     };
-    
-    newAlert.newPrice = newAlert.oldPrice * (1 + newAlert.change / 100);
-    
+
     setPriceAlerts(prev => [newAlert, ...prev.slice(0, 3)]);
   };
 
   const checkFlightStatus = () => {
-    // Simulate flight status changes
     const statuses = ["On Time", "Delayed", "Boarding", "Departed"];
-    const routes = ["New York → London", "Dubai → Singapore", "Tokyo → Sydney", "Paris → Berlin"];
-    
+    const routes = [
+      "New York → London",
+      "Dubai → Singapore",
+      "Tokyo → Sydney",
+      "Paris → Berlin",
+      "Colombo → Mumbai",
+      "Colombo → Male"
+    ];
+
     const randomRoute = routes[Math.floor(Math.random() * routes.length)];
     const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    
+
     setFlightStatus(prev => ({
       ...prev,
       [randomRoute]: {
@@ -275,37 +291,35 @@ const Books = () => {
     }
   };
 
-  // AI Recommendations
   const generateRecommendations = () => {
     setRecommendations([
       {
         type: "Best Time",
-        message: "Book flights 6–8 weeks early to unlock the lowest fares.",
+        message: `Book flights 6–8 weeks early to unlock fares from ${formatLKR(convertToLKR(450))}.`,
         icon: <AccessTimeIcon sx={{ fontSize: 32 }} color="info" />,
         color: "linear-gradient(135deg, #42a5f5, #1e88e5)",
       },
       {
         type: "Upgrade",
-        message: "Business Class upgrades are trending 20% cheaper this week.",
+        message: `Business Class upgrades from ${formatLKR(convertToLKR(1200))} - 20% cheaper this week.`,
         icon: <UpgradeIcon sx={{ fontSize: 32 }} color="success" />,
         color: "linear-gradient(135deg, #66bb6a, #388e3c)",
       },
       {
         type: "Baggage",
-        message: "Extra baggage is 10% cheaper if purchased during booking.",
+        message: `Extra baggage ${formatLKR(convertToLKR(50))} if purchased during booking.`,
         icon: <WorkIcon sx={{ fontSize: 32 }} color="secondary" />,
         color: "linear-gradient(135deg, #ab47bc, #7b1fa2)",
       },
       {
-        type: "Disruption Alert",
-        message: "Evening flights may face congestion delays this week.",
-        icon: <WarningAmberIcon sx={{ fontSize: 32 }} color="warning" />,
+        type: "Special Offer",
+        message: `Colombo to Mumbai: ${formatLKR(convertToLKR(601))} → ${formatLKR(convertToLKR(526))}`,
+        icon: <PriceCheckIcon sx={{ fontSize: 32 }} color="warning" />,
         color: "linear-gradient(135deg, #ffa726, #ef6c00)",
       },
     ]);
   };
 
-  // Chat simulation
   const sendChatMessage = (message) => {
     const newMessage = {
       id: Date.now(),
@@ -313,33 +327,28 @@ const Books = () => {
       sender: "user",
       timestamp: new Date()
     };
-    
+
     setChatMessages(prev => [...prev, newMessage]);
-    
-    // Simulate AI response
+
     setTimeout(() => {
       const responses = [
         "I can help you with that! What specific information do you need?",
         "Great choice! That route is very popular this time of year.",
+        `Current best price for Colombo to Mumbai: ${formatLKR(convertToLKR(526))}`,
         "I'll check the availability for you right away.",
         "Based on your preferences, I recommend considering these options...",
-        "There's a special promotion running for that destination!"
+        `There's a special promotion running! Prices start from ${formatLKR(convertToLKR(450))}`
       ];
-      
+
       const aiMessage = {
         id: Date.now() + 1,
         text: responses[Math.floor(Math.random() * responses.length)],
         sender: "ai",
         timestamp: new Date()
       };
-      
+
       setChatMessages(prev => [...prev, aiMessage]);
     }, 1000);
-  };
-
-  // Get country flag
-  const getCountryFlag = (countryName) => {
-    return countryFlags[countryName] || "";
   };
 
   return (
@@ -376,10 +385,10 @@ const Books = () => {
             <Typography variant="h4" sx={{ fontWeight: 700 }}>
               ✈️ AI-Powered Flight Booking System
             </Typography>
-            <Chip 
-              icon={<LiveTvIcon />} 
-              label="LIVE" 
-              color="error" 
+            <Chip
+              icon={<LiveTvIcon />}
+              label="LIVE"
+              color="error"
               variant="outlined"
             />
           </Box>
@@ -396,7 +405,6 @@ const Books = () => {
             <Tooltip title="Refresh real-time data">
               <IconButton onClick={() => {
                 setupRealTimeData();
-                fetchCountryFlags();
               }}>
                 <RefreshIcon />
               </IconButton>
@@ -409,9 +417,9 @@ const Books = () => {
           </Box>
         </Box>
 
-        {/* Tabs for different views */}
-        <Tabs 
-          value={activeTab} 
+        {/* Tabs */}
+        <Tabs
+          value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
           sx={{ mb: 3 }}
         >
@@ -423,88 +431,58 @@ const Books = () => {
 
         {activeTab === 0 && (
           <>
-            {/* Real-Time Updates Section */}
-            <Paper
-              sx={{
-                p: 3,
-                mb: 4,
-                borderRadius: 3,
-                bgcolor: darkMode ? "#2a2a2a" : "#f0f8ff",
-                border: '1px solid',
-                borderColor: darkMode ? '#444' : '#ddd'
-              }}
-            >
+            {/* Real-Time Updates */}
+            <Paper sx={{ p: 3, mb: 4, borderRadius: 3 }}>
               <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <NotificationsActiveIcon color="primary" sx={{ mr: 1, fontSize: 28 }} />
                 <Typography variant="h6" fontWeight="600">
                   Real-Time Updates
                 </Typography>
-                <Chip 
-                  label="LIVE" 
-                  size="small" 
-                  color="error" 
-                  sx={{ ml: 2 }} 
-                />
+                <Chip label="LIVE" size="small" color="error" sx={{ ml: 2 }} />
               </Box>
-              
               <List>
                 {realTimeUpdates.map((update) => (
-                  <ListItem key={update.id} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <ListItem key={update.id}>
                     <ListItemIcon>
                       {update.type === 'price' && <TrendingUpIcon color="success" />}
                       {update.type === 'route' && <FlightIcon color="info" />}
                       {update.type === 'system' && <UpgradeIcon color="warning" />}
                       {update.type === 'booking' && <PriceCheckIcon color="primary" />}
                     </ListItemIcon>
-                    <ListItemText 
-                      primary={update.message} 
-                      secondary={new Date(update.timestamp).toLocaleTimeString()} 
+                    <ListItemText
+                      primary={update.message}
+                      secondary={new Date(update.timestamp).toLocaleTimeString()}
                     />
                   </ListItem>
                 ))}
               </List>
             </Paper>
 
-            {/* Popular Routes with Flags */}
-            <Paper
-              sx={{
-                p: 3,
-                mb: 4,
-                borderRadius: 3,
-                bgcolor: darkMode ? "#2a2a2a" : "#fff",
-              }}
-            >
+            {/* Popular Routes */}
+            <Paper sx={{ p: 3, mb: 4, borderRadius: 3 }}>
               <Typography variant="h6" fontWeight="600" gutterBottom>
                 🌍 Popular Routes
               </Typography>
               <Grid container spacing={2}>
                 {[
-                  { from: "United States", to: "United Kingdom" },
-                  { from: "Germany", to: "Spain" },
-                  { from: "Australia", to: "Japan" },
-                  { from: "France", to: "Italy" }
+                  { from: "Sri Lanka", to: "India", price: convertToLKR(526) },
+                  { from: "Canada", to: "United Arab Emirates", price: convertToLKR(850) },
+                  { from: "United States", to: "Singapore", price: convertToLKR(720) },
+                  { from: "Germany", to: "Thailand", price: convertToLKR(650) }
                 ].map((route, index) => (
                   <Grid item xs={12} sm={6} md={3} key={index}>
                     <Card variant="outlined">
                       <CardContent sx={{ textAlign: 'center' }}>
                         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 1 }}>
-                          <Avatar 
-                            src={getCountryFlag(route.from)} 
-                            sx={{ width: 32, height: 32, mr: 1 }}
-                            alt={route.from}
-                          />
+                          <Avatar src={getCountryFlag(route.from)} sx={{ width: 32, height: 32, mr: 1 }} />
                           <FlightIcon sx={{ mx: 1 }} />
-                          <Avatar 
-                            src={getCountryFlag(route.to)} 
-                            sx={{ width: 32, height: 32, ml: 1 }}
-                            alt={route.to}
-                          />
+                          <Avatar src={getCountryFlag(route.to)} sx={{ width: 32, height: 32, ml: 1 }} />
                         </Box>
                         <Typography variant="body2" fontWeight="500">
                           {route.from} → {route.to}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          From $499
+                          From {formatLKR(route.price)}
                         </Typography>
                       </CardContent>
                     </Card>
@@ -528,6 +506,7 @@ const Books = () => {
                   Smart Recommendations
                 </Typography>
               </Box>
+
               <Grid container spacing={2}>
                 {recommendations.map((rec, index) => (
                   <Grid item xs={12} sm={6} md={3} key={index}>
@@ -552,79 +531,12 @@ const Books = () => {
               </Grid>
             </Paper>
 
-            {/* Quick Stats */}
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ bgcolor: darkMode ? '#2a2a2a' : '#fff' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <PeopleAltIcon color="primary" />
-                      <Typography variant="h6" sx={{ ml: 1 }}>Total Bookings</Typography>
-                    </Box>
-                    <Typography variant="h4">{books.length}</Typography>
-                    <LinearProgress variant="determinate" value={70} sx={{ mt: 1 }} />
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ bgcolor: darkMode ? '#2a2a2a' : '#fff' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <PriceCheckIcon color="success" />
-                      <Typography variant="h6" sx={{ ml: 1 }}>Savings</Typography>
-                    </Box>
-                    <Typography variant="h4">$1,240</Typography>
-                    <Typography variant="body2" color="success.main">+12% this month</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ bgcolor: darkMode ? '#2a2a2a' : '#fff' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <ScheduleIcon color="warning" />
-                      <Typography variant="h6" sx={{ ml: 1 }}>Upcoming</Typography>
-                    </Box>
-                    <Typography variant="h4">3</Typography>
-                    <Typography variant="body2">Flights this week</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <Card sx={{ bgcolor: darkMode ? '#2a2a2a' : '#fff' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                      <FlightIcon color="info" />
-                      <Typography variant="h6" sx={{ ml: 1 }}>Routes</Typography>
-                    </Box>
-                    <Typography variant="h4">12</Typography>
-                    <Typography variant="body2">Active destinations</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </Grid>
           </>
         )}
 
         {activeTab === 1 && (
           <>
             <Divider sx={{ mb: 3 }} />
-
-            {/* Search */}
-            <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
-              <TextField
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                placeholder="Search bookings by route, ID, or destination..."
-                fullWidth
-                sx={{
-                  input: { color: darkMode ? "#fff" : "#000" },
-                  label: { color: darkMode ? "#fff" : "#000" },
-                }}
-              />
-            </Box>
-
-            {/* Booking Form with Flags */}
             <BookForm
               addBooking={addBooking}
               updateBooking={updateBooking}
@@ -633,10 +545,7 @@ const Books = () => {
               isEdit={isEdit}
               darkMode={darkMode}
               bookings={books}
-              countryFlags={countryFlags}
             />
-
-            {/* Bookings Table with Flags */}
             <BooksTable
               rows={filteredBooks}
               selectedBooking={(data) => {
@@ -645,13 +554,12 @@ const Books = () => {
               }}
               deleteBooking={deleteBooking}
               darkMode={darkMode}
-              countryFlags={countryFlags}
             />
           </>
         )}
 
         {activeTab === 2 && (
-          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: darkMode ? "#2a2a2a" : "#fff" }}>
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
             <Typography variant="h6" gutterBottom>
               🚨 Price Alerts
             </Typography>
@@ -659,34 +567,26 @@ const Books = () => {
               {priceAlerts.map((alert) => {
                 const [from, to] = alert.route.split('→').map(s => s.trim());
                 return (
-                  <ListItem key={alert.id} divider>
+                  <ListItem key={alert.id}>
                     <ListItemAvatar>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar 
-                          src={getCountryFlag(from)} 
-                          sx={{ width: 24, height: 24, mr: 1 }}
-                          alt={from}
-                        />
+                        <Avatar src={getCountryFlag(from)} sx={{ width: 24, height: 24, mr: 1 }} />
                         <FlightTakeoffIcon fontSize="small" />
-                        <Avatar 
-                          src={getCountryFlag(to)} 
-                          sx={{ width: 24, height: 24, ml: 1 }}
-                          alt={to}
-                        />
+                        <Avatar src={getCountryFlag(to)} sx={{ width: 24, height: 24, ml: 1 }} />
                       </Box>
                     </ListItemAvatar>
                     <ListItemText
                       primary={alert.route}
                       secondary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography 
-                            variant="body2" 
+                          <Typography
+                            variant="body2"
                             color={alert.change < 0 ? "success.main" : "error.main"}
                           >
                             {alert.change < 0 ? '↓' : '↑'} {Math.abs(alert.change)}%
                           </Typography>
                           <Typography variant="body2">
-                            ${alert.oldPrice.toFixed(0)} → ${alert.newPrice.toFixed(0)}
+                            {formatLKR(alert.oldPrice)} → {formatLKR(alert.newPrice)}
                           </Typography>
                         </Box>
                       }
@@ -699,7 +599,7 @@ const Books = () => {
         )}
 
         {activeTab === 3 && (
-          <Paper sx={{ p: 3, borderRadius: 3, bgcolor: darkMode ? "#2a2a2a" : "#fff" }}>
+          <Paper sx={{ p: 3, borderRadius: 3 }}>
             <Typography variant="h6" gutterBottom>
               📊 Flight Status
             </Typography>
@@ -711,25 +611,17 @@ const Books = () => {
                     <Card variant="outlined">
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                          <Avatar 
-                            src={getCountryFlag(from)} 
-                            sx={{ width: 24, height: 24, mr: 1 }}
-                            alt={from}
-                          />
+                          <Avatar src={getCountryFlag(from)} sx={{ width: 24, height: 24, mr: 1 }} />
                           <FlightTakeoffIcon fontSize="small" />
                           <Typography variant="body2" sx={{ ml: 1, mr: 2 }}>{from}</Typography>
                           <FlightLandIcon fontSize="small" />
-                          <Avatar 
-                            src={getCountryFlag(to)} 
-                            sx={{ width: 24, height: 24, ml: 1, mr: 1 }}
-                            alt={to}
-                          />
+                          <Avatar src={getCountryFlag(to)} sx={{ width: 24, height: 24, ml: 1, mr: 1 }} />
                           <Typography variant="body2">{to}</Typography>
                         </Box>
-                        <Chip 
-                          label={status.status} 
-                          color={getStatusColor(status.status)} 
-                          size="small" 
+                        <Chip
+                          label={status.status}
+                          color={getStatusColor(status.status)}
+                          size="small"
                           sx={{ mb: 1 }}
                         />
                         <Typography variant="body2">Departure: {status.departure}</Typography>
@@ -744,7 +636,7 @@ const Books = () => {
           </Paper>
         )}
 
-        {/* AI Chat Dialog */}
+        {/* AI Chat */}
         <Dialog open={openChat} onClose={() => setOpenChat(false)} maxWidth="sm" fullWidth>
           <DialogTitle>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -758,8 +650,8 @@ const Books = () => {
             <List>
               {chatMessages.map((msg) => (
                 <ListItem key={msg.id}>
-                  <Card 
-                    sx={{ 
+                  <Card
+                    sx={{
                       bgcolor: msg.sender === 'ai' ? 'primary.light' : 'grey.100',
                       color: msg.sender === 'ai' ? 'white' : 'text.primary',
                       ml: msg.sender === 'user' ? 'auto' : 0,

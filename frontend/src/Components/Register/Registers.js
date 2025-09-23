@@ -52,6 +52,7 @@ const Registers = () => {
   };
 
   const addRegister = (data) => {
+    setSubmitted(true);
     Axios.post("http://localhost:3001/api/createregister", data)
       .then(() => {
         getRegisters();
@@ -76,6 +77,7 @@ const Registers = () => {
   };
 
   const updateRegister = (data) => {
+    setSubmitted(true);
     Axios.post("http://localhost:3001/api/updateregister", data)
       .then(() => {
         getRegisters();
@@ -189,15 +191,20 @@ const Registers = () => {
               AirGo Registration
             </Typography>
             <Typography variant="subtitle1" sx={{ color: "#ddd" }}>
-              Create your account to book and manage flights
+              {showLogin ? "Login to your account" : "Create your account to book and manage flights"}
             </Typography>
           </Box>
 
           {/* Show Login or Register form */}
           {showLogin ? (
             <LoginForm
-              onRegisterClick={() => setShowLogin(false)}
+              onRegisterClick={() => {
+                setShowLogin(false);
+                setIsEdit(false);
+                setSelectedRegister({});
+              }}
               profilePhoto={loginProfile}
+              registeredUsers={registers}
             />
           ) : (
             <RegisterForm
@@ -206,84 +213,95 @@ const Registers = () => {
               submitted={submitted}
               data={selectedRegister}
               isEdit={isEdit}
-              onLoginClick={() => setShowLogin(true)}
+              onLoginClick={() => {
+                setShowLogin(true);
+                setIsEdit(false);
+                setSelectedRegister({});
+              }}
+              existingUsers={registers}
             />
           )}
 
-          {/* Registered users list */}
-          {!showLogin && (
+          {/* Registered users list - Only show when not in login mode and not editing */}
+          {!showLogin && !isEdit && registers.length > 0 && (
             <>
-              {registers.length === 0 ? (
-                <Typography align="center" sx={{ mt: 5, color: "#fff" }}>
-                  No users found.
-                </Typography>
-              ) : (
-                <Grid container spacing={3} sx={{ mt: 3 }}>
-                  {registers.map((row) => (
-                    <Grid item xs={12} sm={6} md={4} key={row.id}>
-                      <Paper
-                        elevation={4}
-                        sx={{
-                          p: 3,
-                          borderRadius: 3,
-                          background: "rgba(255,255,255,0.9)",
-                          textAlign: "center",
-                          transition: "all 0.3s",
-                          "&:hover": {
-                            transform: "translateY(-6px)",
-                            boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
-                          },
-                        }}
-                      >
-                        <Avatar
-                          src={row.profilePhoto}
-                          alt={row.name}
-                          sx={{ width: 80, height: 80, margin: "auto", mb: 2 }}
-                        />
-                        <Typography variant="h6">{row.name}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {row.email}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {row.phone}
-                        </Typography>
-                        <Box sx={{ display: "flex", justifyContent: "center", mt: 2, gap: 1 }}>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<EditIcon />}
-                            onClick={() => {
-                              setSelectedRegister(row);
-                              setIsEdit(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            size="small"
-                            startIcon={<DeleteIcon />}
-                            onClick={() => confirmDeleteRegister(row)}
-                          >
-                            Delete
-                          </Button>
-                        </Box>
-                      </Paper>
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
+              <Typography 
+                variant="h5" 
+                sx={{ 
+                  mt: 5, 
+                  color: "#fff", 
+                  textAlign: "center",
+                  textShadow: "1px 1px 3px rgba(0,0,0,0.5)"
+                }}
+              >
+                Registered Users
+              </Typography>
+              <Grid container spacing={3} sx={{ mt: 2 }}>
+                {registers.map((row) => (
+                  <Grid item xs={12} sm={6} md={4} key={row.id}>
+                    <Paper
+                      elevation={4}
+                      sx={{
+                        p: 3,
+                        borderRadius: 3,
+                        background: "rgba(255,255,255,0.9)",
+                        textAlign: "center",
+                        transition: "all 0.3s",
+                        "&:hover": {
+                          transform: "translateY(-6px)",
+                          boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
+                        },
+                      }}
+                    >
+                      <Avatar
+                        src={row.profilePhoto}
+                        alt={row.name}
+                        sx={{ width: 80, height: 80, margin: "auto", mb: 2 }}
+                      />
+                      <Typography variant="h6">{row.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {row.email}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {row.phone}
+                      </Typography>
+                      <Box sx={{ display: "flex", justifyContent: "center", mt: 2, gap: 1 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<EditIcon />}
+                          onClick={() => {
+                            setSelectedRegister(row);
+                            setIsEdit(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          size="small"
+                          startIcon={<DeleteIcon />}
+                          onClick={() => confirmDeleteRegister(row)}
+                        >
+                          Delete
+                        </Button>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                ))}
+              </Grid>
             </>
           )}
         </Paper>
 
-        {/* Delete Confirmation */}
+        {/* Delete Confirmation Dialog */}
         <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
           <DialogTitle>Delete User</DialogTitle>
           <DialogContent>
             <DialogContentText>
               Are you sure you want to delete <strong>{registerToDelete?.name}</strong>?
+              This action cannot be undone.
             </DialogContentText>
           </DialogContent>
           <DialogActions>

@@ -21,57 +21,7 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { useState, useRef, useEffect } from "react";
 
-// -------------------------
-// PDF GENERATOR FUNCTIONS
-// -------------------------
-
-// Flight Schedule PDF
-const generateSchedulePDF = (row) => {
-  const doc = new jsPDF();
-
-  // Header
-  doc.setFillColor(25, 118, 210); // Blue
-  doc.rect(0, 0, 210, 20, "F");
-  doc.setFontSize(16);
-  doc.setTextColor("#fff");
-  doc.text(" Airline Flight Schedule", 14, 14);
-
-  // Body
-  doc.setTextColor("#000");
-  doc.setFontSize(12);
-
-  const details = [
-    ["Flight ID", row.id],
-    ["Flight Name", row.flightName],
-    ["Departure", row.departure],
-    ["Arrival", row.arrival],
-    ["Departure Time", row.dtime],
-    ["Arrival Time", row.atime],
-    ["Aircraft", row.aircraft],
-    ["Seats", row.seats],
-    ["Status", row.status],
-  ];
-
-  let y = 40;
-  details.forEach(([label, value]) => {
-    doc.setFillColor(240, 240, 240);
-    doc.rect(14, y - 6, 50, 8, "F");
-    doc.text(label, 16, y - 1);
-
-    doc.text(":", 70, y - 1);
-    doc.text(value ? String(value) : "-", 76, y - 1);
-    y += 10;
-  });
-
-  // Footer
-  doc.setFontSize(10);
-  doc.setTextColor("gray");
-  doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 280);
-
-  doc.save(`flight_${row.id}.pdf`);
-};
-
-// Check-In PDF (with decoration)
+// PDF GENERATOR FUNCTION
 const generateCheckPDF = (row) => {
   const doc = new jsPDF();
 
@@ -115,10 +65,7 @@ const generateCheckPDF = (row) => {
   doc.save(`checkin_${row.checkId}.pdf`);
 };
 
-// -------------------------
 // MAIN COMPONENT
-// -------------------------
-
 const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [selectedQrData, setSelectedQrData] = useState(null);
@@ -126,9 +73,9 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
   const qrCanvasRef = useRef(null);
 
-  const getUserPhoto = (name) => {
-    const user = users.find((u) => u.name === name);
-    return user?.profilePhoto || "";
+  // Use profilePhoto from row data first, then fallback to users lookup
+  const getUserPhoto = (row) => {
+    return row.profilePhoto || "";
   };
 
   // Generate QR code when selectedQrData changes
@@ -195,6 +142,7 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
       flightNumber: row.flightNumber,
       seatNumber: row.seatNumber,
       status: row.status,
+      profilePhoto: row.profilePhoto, // Include profile photo in QR data
       timestamp: new Date().toISOString(),
     };
 
@@ -219,7 +167,7 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
                 <Avatar
-                  src={row.profilePhoto || getUserPhoto(row.passengerName)}
+                  src={getUserPhoto(row)}
                   sx={{ width: 56, height: 56 }}
                 />
                 <Box>
@@ -227,6 +175,11 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
                   <Typography variant="body2" color="text.secondary">
                     ID: {row.checkId}
                   </Typography>
+                  {row.profilePhoto && (
+                    <Typography variant="caption" color="success.main">
+                      ✓ Photo from registration
+                    </Typography>
+                  )}
                 </Box>
               </Box>
 
@@ -295,6 +248,19 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
         <DialogContent>
           {selectedQrData && (
             <Box sx={{ p: 2, textAlign: "center" }}>
+              {/* Passenger Photo and Details */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
+                <Avatar 
+                  src={selectedQrData.profilePhoto} 
+                  sx={{ width: 80, height: 80 }}
+                />
+                <Box textAlign="left">
+                  <Typography variant="h6">{selectedQrData.passengerName}</Typography>
+                  <Typography variant="body2">Flight: {selectedQrData.flightNumber}</Typography>
+                  <Typography variant="body2">Seat: {selectedQrData.seatNumber}</Typography>
+                </Box>
+              </Box>
+
               {/* QR Code Display */}
               <Box
                 sx={{

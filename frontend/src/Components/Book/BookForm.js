@@ -49,6 +49,9 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
+  // ✅ Today’s real date
+  const today = new Date().toISOString().split("T")[0];
+
   const showAlert = (message, severity = "success") => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
@@ -87,10 +90,24 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
   // ✅ Validation before submit
   const validateForm = () => {
     const newErrors = {};
+
     if (!from) newErrors.from = "Please select a departure country.";
     if (!to) newErrors.to = "Please select a destination country.";
-    if (!departure) newErrors.departure = "Please select a departure date.";
-    if (tripType === "round" && !returnDate) newErrors.returnDate = "Please select a return date.";
+
+    if (!departure) {
+      newErrors.departure = "Please select a departure date.";
+    } else if (departure > today) {
+      newErrors.departure = "Departure date cannot be in the future.";
+    }
+
+    if (tripType === "round") {
+      if (!returnDate) {
+        newErrors.returnDate = "Please select a return date.";
+      } else if (returnDate < departure) {
+        newErrors.returnDate = "Return date cannot be before departure.";
+      }
+    }
+
     if (passengers < 1) newErrors.passengers = "Passengers must be a positive number.";
 
     setErrors(newErrors);
@@ -209,6 +226,7 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
             sx={inputStyle}
             error={!!errors.departure}
             helperText={errors.departure}
+            inputProps={{ max: today }}   // ✅ Departure ≤ today
             InputProps={{ startAdornment: <InputAdornment position="start"><EventIcon /></InputAdornment> }}
           />
         </Grid>
@@ -226,6 +244,7 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
             disabled={tripType === "oneway"}
             error={!!errors.returnDate}
             helperText={errors.returnDate}
+            inputProps={{ min: departure || today }}   // ✅ Return ≥ departure
             InputProps={{ startAdornment: <InputAdornment position="start"><EventIcon /></InputAdornment> }}
           />
         </Grid>

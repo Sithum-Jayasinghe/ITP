@@ -30,7 +30,18 @@ const Checks = () => {
 
   const fetchChecks = () => {
     Axios.get("http://localhost:3001/api/checks")
-      .then((res) => setChecks(res.data?.response || []))
+      .then((res) => {
+        const checksData = res.data?.response || [];
+        // Enhance check data with user profile photos
+        const enhancedChecks = checksData.map(check => {
+          const user = users.find(u => u.name === check.passengerName);
+          return {
+            ...check,
+            profilePhoto: user?.profilePhoto || ""
+          };
+        });
+        setChecks(enhancedChecks);
+      })
       .catch(() =>
         setSnackbar({
           open: true,
@@ -42,7 +53,12 @@ const Checks = () => {
 
   const fetchUsers = () => {
     Axios.get("http://localhost:3001/api/registers")
-      .then((res) => setUsers(res.data?.response || []))
+      .then((res) => {
+        const usersData = res.data?.response || [];
+        setUsers(usersData);
+        // After fetching users, also refresh checks to include profile photos
+        fetchChecks();
+      })
       .catch(() =>
         setSnackbar({
           open: true,
@@ -54,7 +70,15 @@ const Checks = () => {
 
   const addCheck = (data) => {
     setSubmitted(true);
-    Axios.post("http://localhost:3001/api/createcheck", data)
+    
+    // Find user profile photo based on passenger name
+    const user = users.find(u => u.name === data.passengerName);
+    const checkDataWithPhoto = {
+      ...data,
+      profilePhoto: user?.profilePhoto || ""
+    };
+
+    Axios.post("http://localhost:3001/api/createcheck", checkDataWithPhoto)
       .then(() => {
         fetchChecks();
         setSubmitted(false);
@@ -76,7 +100,15 @@ const Checks = () => {
 
   const updateCheck = (data) => {
     setSubmitted(true);
-    Axios.post("http://localhost:3001/api/updatecheck", data)
+    
+    // Find user profile photo based on passenger name
+    const user = users.find(u => u.name === data.passengerName);
+    const checkDataWithPhoto = {
+      ...data,
+      profilePhoto: user?.profilePhoto || ""
+    };
+
+    Axios.post("http://localhost:3001/api/updatecheck", checkDataWithPhoto)
       .then(() => {
         fetchChecks();
         setSubmitted(false);
@@ -120,11 +152,11 @@ const Checks = () => {
     if (checks.length === 0) return;
 
     const headers =
-      "Check ID,Passenger Name,Passport Number,Nationality,Flight Number,Seat Number,Status\n";
+      "Check ID,Passenger Name,Passport Number,Nationality,Flight Number,Seat Number,Status,Profile Photo\n";
     const csvContent = checks.reduce((acc, check) => {
       return (
         acc +
-        `${check.checkId},${check.passengerName},${check.passportNumber},${check.nationality},${check.flightNumber},${check.seatNumber},${check.status}\n`
+        `${check.checkId},${check.passengerName},${check.passportNumber},${check.nationality},${check.flightNumber},${check.seatNumber},${check.status},${check.profilePhoto || "No Photo"}\n`
       );
     }, headers);
 
@@ -199,6 +231,7 @@ const Checks = () => {
           submitted={submitted}
           data={selectedCheck}
           isEdit={isEdit}
+          users={users} // Pass users data to CheckForm
         />
 
         {/* Checks Table */}
