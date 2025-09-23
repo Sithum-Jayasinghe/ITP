@@ -15,13 +15,12 @@ const checkrouter = require('./Routers/Check/router');
 
 
 //password = Y1fr8XmCK9uPAhps
-
+//mongodb+srv://sithum:<db_password>@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum
 
 app.use(cors());
 app.use(express.json());
-
-//mongodb+srv://sithum:<db_password>@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum
 const uri = 'mongodb+srv://sithum:Y1fr8XmCK9uPAhps@sithum.nufzmzp.mongodb.net/?retryWrites=true&w=majority&appName=sithum'
+
 const connect = async () => {
     try{
         await mongoose.connect(uri);
