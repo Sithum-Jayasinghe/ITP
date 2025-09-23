@@ -60,7 +60,7 @@ const Checks = () => {
       .catch(console.error);
   };
 
-  // Download all checks as CSV
+  // Download  all checks as CSV
   const downloadAllChecks = () => {
     const headers =
       "Check ID,Passenger Name,Passport Number,Nationality,Flight Number,Seat Number,Status\n";
@@ -117,7 +117,8 @@ const Checks = () => {
           </Button>
         </Box>
 
-        {/* Check Form */}
+        {/* Check Form   */}
+        
         <CheckForm
           addCheck={addCheck}
           updateCheck={updateCheck}
@@ -129,6 +130,7 @@ const Checks = () => {
         />
 
         {/* Checks Table */}
+
         <ChecksTable
           rows={filteredChecks}
           users={users}
