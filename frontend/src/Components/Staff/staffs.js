@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useMemo } from "react";
 import {
   Box,
@@ -7,6 +6,8 @@ import {
   Button,
   IconButton,
   CssBaseline,
+  Snackbar,
+  Alert as MuiAlert,
 } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
@@ -27,6 +28,13 @@ const Staffs = () => {
   const [isEdit, setIsEdit] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [darkMode, setDarkMode] = useState(false);
+
+  // ✅ Snackbar state
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
 
   // ✅ Custom theme
   const theme = useMemo(
@@ -56,7 +64,13 @@ const Staffs = () => {
         setStaffs(res.data?.response || []);
         setFilteredStaffs(res.data?.response || []);
       })
-      .catch((err) => console.error(err));
+      .catch(() =>
+        setSnackbar({
+          open: true,
+          message: "❌ Failed to fetch staff list",
+          severity: "error",
+        })
+      );
   };
 
   const addStaff = (data) => {
@@ -66,8 +80,20 @@ const Staffs = () => {
         getStaffs();
         setSubmitted(false);
         setIsEdit(false);
+        // ✅ Show toast
+        setSnackbar({
+          open: true,
+          message: "✅ Staff added successfully!",
+          severity: "success",
+        });
       })
-      .catch((err) => console.error(err));
+      .catch(() =>
+        setSnackbar({
+          open: true,
+          message: "❌ Failed to add staff",
+          severity: "error",
+        })
+      );
   };
 
   const updateStaff = (data) => {
@@ -77,15 +103,41 @@ const Staffs = () => {
         getStaffs();
         setSubmitted(false);
         setIsEdit(false);
+        // ✅ Show toast
+        setSnackbar({
+          open: true,
+          message: "✏️ Staff updated successfully!",
+          severity: "info",
+        });
       })
-      .catch((err) => console.error(err));
+      .catch(() =>
+        setSnackbar({
+          open: true,
+          message: "❌ Failed to update staff",
+          severity: "error",
+        })
+      );
   };
 
   const deleteStaff = (data) => {
     if (window.confirm("Are you sure you want to delete this staff member?")) {
       Axios.post("http://localhost:3001/api/deletestaff", data)
-        .then(() => getStaffs())
-        .catch((err) => console.error(err));
+        .then(() => {
+          getStaffs();
+          // ✅ Show toast
+          setSnackbar({
+            open: true,
+            message: "🗑️ Staff deleted successfully!",
+            severity: "error",
+          });
+        })
+        .catch(() =>
+          setSnackbar({
+            open: true,
+            message: "❌ Failed to delete staff",
+            severity: "error",
+          })
+        );
     }
   };
 
@@ -96,7 +148,7 @@ const Staffs = () => {
     } else {
       const filtered = staffs.filter(
         (s) =>
-          s.id.toString().toLowerCase().includes(term.toLowerCase()) || // ✅ convert number to string
+          s.id.toString().toLowerCase().includes(term.toLowerCase()) ||
           s.name.toLowerCase().includes(term.toLowerCase()) ||
           s.role.toLowerCase().includes(term.toLowerCase()) ||
           s.email.toLowerCase().includes(term.toLowerCase())
@@ -114,7 +166,15 @@ const Staffs = () => {
     doc.setFontSize(11);
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
 
-    const tableColumn = ["ID", "Name", "Role", "Email","Certificate","Schedule","Status"];
+    const tableColumn = [
+      "ID",
+      "Name",
+      "Role",
+      "Email",
+      "Certificate",
+      "Schedule",
+      "Status",
+    ];
     const tableRows = filteredStaffs.map((row) => [
       row.id,
       row.name,
@@ -142,6 +202,13 @@ const Staffs = () => {
       doc.internal.pageSize.height - 10
     );
     doc.save("Staff_List.pdf");
+
+    // ✅ Show toast
+    setSnackbar({
+      open: true,
+      message: "📄 PDF exported successfully!",
+      severity: "success",
+    });
   };
 
   return (
@@ -173,7 +240,7 @@ const Staffs = () => {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "brightness(0.6)", // darke video for text contrast
+            filter: "brightness(0.6)",
           }}
         />
 
@@ -197,7 +264,7 @@ const Staffs = () => {
           </Typography>
         </Typography>
 
-        {/* Dark mode toggle on banner */}
+        {/* Dark mode toggle */}
         <IconButton
           onClick={() => setDarkMode(!darkMode)}
           sx={{
@@ -262,8 +329,25 @@ const Staffs = () => {
           deleteStaff={deleteStaff}
         />
       </Box>
+
+      {/* Modern Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <MuiAlert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ fontWeight: "bold", borderRadius: 2 }}
+        >
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </ThemeProvider>
   );
-}; 
+};
 
 export default Staffs;

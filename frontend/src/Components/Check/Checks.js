@@ -1,4 +1,5 @@
-import { Box, Typography, TextField, Button } from "@mui/material";
+import { Box, Typography, TextField, Button, Snackbar } from "@mui/material";
+import MuiAlert from "@mui/material/Alert";
 import CheckForm from "./CheckForm";
 import ChecksTable from "./ChecksTable";
 import RegistersTable from "../Register/RegistersTable";
@@ -15,6 +16,13 @@ const Checks = () => {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
 
+  // ✅ Snackbar state
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   useEffect(() => {
     fetchChecks();
     fetchUsers();
@@ -23,13 +31,25 @@ const Checks = () => {
   const fetchChecks = () => {
     Axios.get("http://localhost:3001/api/checks")
       .then((res) => setChecks(res.data?.response || []))
-      .catch(console.error);
+      .catch(() =>
+        setSnackbar({
+          open: true,
+          message: "❌ Failed to fetch check-ins",
+          severity: "error",
+        })
+      );
   };
 
   const fetchUsers = () => {
     Axios.get("http://localhost:3001/api/registers")
       .then((res) => setUsers(res.data?.response || []))
-      .catch(console.error);
+      .catch(() =>
+        setSnackbar({
+          open: true,
+          message: "❌ Failed to fetch registered users",
+          severity: "error",
+        })
+      );
   };
 
   const addCheck = (data) => {
@@ -39,8 +59,19 @@ const Checks = () => {
         fetchChecks();
         setSubmitted(false);
         setIsEdit(false);
+        setSnackbar({
+          open: true,
+          message: "✅ Check-in added successfully!",
+          severity: "success",
+        });
       })
-      .catch(console.error);
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "❌ Failed to add check-in",
+          severity: "error",
+        });
+      });
   };
 
   const updateCheck = (data) => {
@@ -50,30 +81,68 @@ const Checks = () => {
         fetchChecks();
         setSubmitted(false);
         setIsEdit(false);
+        setSnackbar({
+          open: true,
+          message: "✏️ Check-in updated successfully!",
+          severity: "info",
+        });
       })
-      .catch(console.error);
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "❌ Failed to update check-in",
+          severity: "error",
+        });
+      });
   };
 
   const deleteCheck = (data) => {
     Axios.post("http://localhost:3001/api/deletecheck", data)
-      .then(() => fetchChecks())
-      .catch(console.error);
+      .then(() => {
+        fetchChecks();
+        setSnackbar({
+          open: true,
+          message: "🗑️ Check-in deleted successfully!",
+          severity: "error",
+        });
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "❌ Failed to delete check-in",
+          severity: "error",
+        });
+      });
   };
 
   // Download all checks as CSV
   const downloadAllChecks = () => {
-    const headers = "Check ID,Passenger Name,Passport Number,Nationality,Flight Number,Seat Number,Status\n";
+    if (checks.length === 0) return;
+
+    const headers =
+      "Check ID,Passenger Name,Passport Number,Nationality,Flight Number,Seat Number,Status\n";
     const csvContent = checks.reduce((acc, check) => {
-      return acc + `${check.checkId},${check.passengerName},${check.passportNumber},${check.nationality},${check.flightNumber},${check.seatNumber},${check.status}\n`;
+      return (
+        acc +
+        `${check.checkId},${check.passengerName},${check.passportNumber},${check.nationality},${check.flightNumber},${check.seatNumber},${check.status}\n`
+      );
     }, headers);
-    
+
     const element = document.createElement("a");
-    const file = new Blob([csvContent], { type: 'text/csv' });
+    const file = new Blob([csvContent], { type: "text/csv" });
     element.href = URL.createObjectURL(file);
-    element.download = `all_checks_${new Date().toISOString().split('T')[0]}.csv`;
+    element.download = `all_checks_${new Date()
+      .toISOString()
+      .split("T")[0]}.csv`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+
+    setSnackbar({
+      open: true,
+      message: "📄 All check-ins exported successfully!",
+      severity: "success",
+    });
   };
 
   // Filter checks based on search
@@ -98,7 +167,14 @@ const Checks = () => {
         <RegistersTable />
 
         {/* Search and Download section */}
-        <Box sx={{ my: 3, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <Box
+          sx={{
+            my: 3,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <TextField
             label="🔍 Search Check-Ins"
             variant="outlined"
@@ -138,6 +214,23 @@ const Checks = () => {
           }
         />
       </Box>
+
+      {/* Modern Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <MuiAlert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ fontWeight: "bold", borderRadius: 2 }}
+        >
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 };
