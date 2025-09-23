@@ -21,7 +21,7 @@ app.use(cors());
 app.use(express.json());
 
 //mongodb+srv://Gima:<db_password>@gima.1hqsqsa.mongodb.net/?retryWrites=true&w=majority&appName=Gima
-const uri = 'mongodb+srv://Gima:6p8hJ1F9yO7f3ekB@gima.1hqsqsa.mongodb.net/?retryWrites=true&w=majority&appName=Gima'
+const uri = 'mongodb+srv://p04waptC2duu0v3K:p04waptC2duu0v3K@cluster0.yzqehug.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 const connect = async () => {
     try{
         await mongoose.connect(uri);
