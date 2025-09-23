@@ -352,7 +352,7 @@ const Schedules = () => {
   const generatePDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(18);
-    doc.text("✈️ Airline Flight Schedules", 14, 20);
+    doc.text("Airline Flight Schedules", 14, 20);
 
     doc.setFontSize(11);
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
