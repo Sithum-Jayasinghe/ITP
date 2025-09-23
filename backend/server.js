@@ -20,7 +20,6 @@ const checkrouter = require('./Routers/Check/router');
 app.use(cors());
 app.use(express.json());
 
-//mongodb+srv://ayeshsenadheera7:<db_password>@cluster0.f0azxqz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 //mongodb+srv://Gima:<db_password>@gima.1hqsqsa.mongodb.net/?retryWrites=true&w=majority&appName=Gima
 const uri = 'mongodb+srv://Gima:6p8hJ1F9yO7f3ekB@gima.1hqsqsa.mongodb.net/?retryWrites=true&w=majority&appName=Gima'
 const connect = async () => {
