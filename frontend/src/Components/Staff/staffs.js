@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useMemo } from "react";
 import {
   Box,
@@ -113,12 +114,15 @@ const Staffs = () => {
     doc.setFontSize(11);
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
 
-    const tableColumn = ["ID", "Name", "Role", "Email"];
+    const tableColumn = ["ID", "Name", "Role", "Email","Certificate","Schedule","Status"];
     const tableRows = filteredStaffs.map((row) => [
       row.id,
       row.name,
       row.role,
       row.email,
+      row.certificate,
+      row.schedule,
+      row.status,
     ]);
 
     autoTable(doc, {
