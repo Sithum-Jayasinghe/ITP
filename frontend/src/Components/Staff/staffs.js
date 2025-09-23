@@ -169,7 +169,7 @@ const Staffs = () => {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "brightness(0.6)", // darken video for text contrast
+            filter: "brightness(0.6)", // darke video for text contrast
           }}
         />
 
@@ -260,6 +260,6 @@ const Staffs = () => {
       </Box>
     </ThemeProvider>
   );
-};
+}; 
 
 export default Staffs;
