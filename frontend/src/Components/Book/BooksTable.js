@@ -18,6 +18,10 @@ import {
   Chip,
   Tooltip,
   Box,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Grid,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -32,8 +36,10 @@ import RepeatIcon from "@mui/icons-material/Repeat";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import InsightsIcon from "@mui/icons-material/Insights";
 import QrCodeIcon from "@mui/icons-material/QrCode";
+import SearchIcon from "@mui/icons-material/Search";
+import ClearIcon from "@mui/icons-material/Clear";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
@@ -59,6 +65,32 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredRows, setFilteredRows] = useState(rows);
+
+  // Filter rows based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredRows(rows);
+      return;
+    }
+
+    const term = searchTerm.toLowerCase().trim();
+    const filtered = rows.filter((row) => {
+      return (
+        row.id?.toString().toLowerCase().includes(term) ||
+        row.from?.toLowerCase().includes(term) ||
+        row.to?.toLowerCase().includes(term) ||
+        row.departure?.toLowerCase().includes(term) ||
+        row.returnDate?.toLowerCase().includes(term) ||
+        row.passengers?.toString().includes(term) ||
+        row.travelClass?.toLowerCase().includes(term) ||
+        row.tripType?.toLowerCase().includes(term) ||
+        (row.flexibleDates ? "yes" : "no").includes(term)
+      );
+    });
+    setFilteredRows(filtered);
+  }, [searchTerm, rows]);
 
   const showAlert = (message, severity = "success") => {
     setSnackbarMessage(message);
@@ -85,9 +117,20 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
     showAlert(`Booking #${booking.id} ready to update!`, "info");
   };
 
-  if (addedBooking) {
-    showAlert(`Booking #${addedBooking.id} added successfully!`, "success");
-  }
+  // Reset addedBooking after showing alert to prevent infinite loops
+  useEffect(() => {
+    if (addedBooking) {
+      showAlert(`Booking #${addedBooking.id} added successfully!`, "success");
+    }
+  }, [addedBooking]);
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
 
   // Modern PDF generation
   const generatePDF = (booking) => {
@@ -194,6 +237,67 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
 
   return (
     <>
+      {/* Search Bar */}
+      <Box sx={{ mb: 3 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Search bookings by ID, destination, date, class, etc..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              sx={{
+                borderRadius: 3,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 3,
+                  backgroundColor: darkMode ? "#2a2a2a" : "#fff",
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: searchTerm && (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="clear search"
+                      onClick={clearSearch}
+                      edge="end"
+                      size="small"
+                    >
+                      <ClearIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+              <Chip 
+                label={`${filteredRows.length} booking${filteredRows.length !== 1 ? 's' : ''} found`}
+                variant="outlined"
+                color={searchTerm ? "primary" : "default"}
+                sx={{ mr: 2 }}
+              />
+              {searchTerm && (
+                <Button 
+                  startIcon={<ClearIcon />}
+                  onClick={clearSearch}
+                  variant="outlined"
+                  size="small"
+                >
+                  Clear Search
+                </Button>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
+      </Box>
+
       <TableContainer
         component={Paper}
         sx={{
@@ -227,8 +331,8 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
           </TableHead>
 
           <TableBody>
-            {rows.length > 0 ? (
-              rows.map((row) => {
+            {filteredRows.length > 0 ? (
+              filteredRows.map((row) => {
                 const insight = generateInsight(row);
                 return (
                   <TableRow key={row.id} hover sx={{ backgroundColor: darkMode ? "#2a2a2a" : "#fff" }}>
@@ -245,7 +349,7 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
                       <EventIcon fontSize="small" /> {row.departure}
                     </TableCell>
                     <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
-                      <EventIcon fontSize="small" /> {row.returnDate}
+                      <EventIcon fontSize="small" /> {row.returnDate || "N/A"}
                     </TableCell>
                     <TableCell sx={{ color: darkMode ? "#fff" : "#000" }}>
                       <PeopleIcon fontSize="small" /> {row.passengers}
@@ -316,8 +420,27 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={11} align="center" sx={{ color: darkMode ? "#fff" : "#000" }}>
-                  No Bookings Available
+                <TableCell colSpan={11} align="center" sx={{ color: darkMode ? "#fff" : "#000", py: 4 }}>
+                  {searchTerm ? (
+                    <Box sx={{ textAlign: 'center' }}>
+                      <SearchIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                      <Typography variant="h6" gutterBottom>
+                        No bookings found
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        No results for "{searchTerm}". Try different keywords or clear the search.
+                      </Typography>
+                      <Button 
+                        variant="contained" 
+                        onClick={clearSearch}
+                        sx={{ mt: 2 }}
+                      >
+                        Clear Search
+                      </Button>
+                    </Box>
+                  ) : (
+                    "No Bookings Available"
+                  )}
                 </TableCell>
               </TableRow>
             )}
