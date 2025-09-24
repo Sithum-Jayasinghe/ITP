@@ -150,7 +150,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
     // Seats validation
     if (!seats) newErrors.seats = "Seats are required.";
     else if (!/^\d+$/.test(seats)) newErrors.seats = "Seats must be a number.";
-    else if (Number(seats) <= 0) newErrors.seats = "Seats must be greater than 0.";
+    else if (Number(seats) > 300) newErrors.seats = "Seats must be less than 300.";
 
     // Status validation
     if (!status.trim()) newErrors.status = "Select flight status.";

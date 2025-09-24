@@ -55,8 +55,8 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
     const tableRows = [
       ["ID", row.id],
       ["Name", row.name],
-      ["Age", row.age || "N/A"],
-      ["Passport", row.passport || "N/A"],
+      ["Age", row.age || 22],
+      ["Passport", row.passport || "123E"],
       ["Baggage", row.baggage || "N/A"],
       ["Baggage Price", `LKR ${row.baggagePrice || 0}`],
       ["Meal", row.meal || "N/A"],

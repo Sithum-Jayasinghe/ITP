@@ -76,11 +76,17 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
     // ID validation
     if (!id.trim()) {
       newErrors.id = "User NIC is required";
-    } else if (!/^\d+$/.test(id)) {
-      newErrors.id = "User NIC must contain only numbers";
-    } else if (id.length < 9) {
-      newErrors.id = "User NIC must be at least 9 digits";
-    } else if (existingUsers.some(user => user.id === id && (!isEdit || user.id !== data.id))) {
+    }
+    // Check for minus numbers
+    else if (id.startsWith("-")) {
+      newErrors.id = "NIC cannot contain negative numbers";
+    }
+    // Check old NIC (9 digits + V/X) or new NIC (12 digits)
+    else if (!/^(\d{9}[vVxX]|\d{12})$/.test(id)) {
+      newErrors.id = "NIC must be 9 digits followed by V/X or 12 digits";
+    }
+    // Duplicate check (except when editing the same user)
+    else if (existingUsers.some(user => user.id === id && (!isEdit || user.id !== data.id))) {
       newErrors.id = "This NIC is already registered";
     }
 
@@ -114,11 +120,17 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
     // Phone validation
     if (!phone.trim()) {
       newErrors.phone = "Phone number is required";
-    } else if (!/^\d+$/.test(phone)) {
-      newErrors.phone = "Phone number must contain only numbers";
-    } else if (phone.length < 10) {
-      newErrors.phone = "Phone number must be at least 10 digits";
-    } else if (existingUsers.some(user => user.phone === phone && (!isEdit || user.phone !== data.phone))) {
+    }
+    // Check for minus numbers
+    else if (phone.startsWith("-")) {
+      newErrors.phone = "Phone number cannot be negative";
+    }
+    // Allow only 10 digits, must start with 0
+    else if (!/^0\d{9}$/.test(phone)) {
+      newErrors.phone = "Phone number must be exactly 10 digits and start with 0";
+    }
+    // Duplicate check (except when editing the same user)
+    else if (existingUsers.some(user => user.phone === phone && (!isEdit || user.phone !== data.phone))) {
       newErrors.phone = "This phone number is already registered";
     }
 
@@ -162,7 +174,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
         setPreview(reader.result);
       };
       reader.readAsDataURL(file);
-      
+
       // Clear profile photo error if any
       if (errors.profilePhoto) {
         setErrors({ ...errors, profilePhoto: "" });
@@ -240,7 +252,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
   // ✅ Password strength indicator
   const getPasswordStrength = () => {
     if (!password) return { strength: 0, color: "grey", text: "" };
-    
+
     let strength = 0;
     if (password.length >= 8) strength += 25;
     if (/[a-z]/.test(password)) strength += 25;
@@ -278,23 +290,23 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
         {/* Profile Photo Section */}
         <Box sx={{ textAlign: "center" }}>
           {preview ? (
-            <Avatar 
-              src={preview} 
-              alt="Profile Preview" 
-              sx={{ 
-                width: 120, 
+            <Avatar
+              src={preview}
+              alt="Profile Preview"
+              sx={{
+                width: 120,
                 height: 120,
                 boxShadow: "0 4px 20px rgba(0, 198, 230, 0.3)"
-              }} 
+              }}
             />
           ) : (
-            <Avatar 
-              sx={{ 
-                width: 120, 
-                height: 120, 
+            <Avatar
+              sx={{
+                width: 120,
+                height: 120,
                 bgcolor: "#ccc",
                 boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)"
-              }} 
+              }}
             >
               <PersonIcon sx={{ fontSize: 50 }} />
             </Avatar>
@@ -305,21 +317,21 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
             component="label"
             variant="outlined"
             startIcon={<UploadIcon />}
-            sx={{ 
+            sx={{
               mt: 2,
               borderRadius: 2,
               borderColor: errors.profilePhoto ? "error.main" : "primary.main"
             }}
           >
             Upload Photo
-            <input 
-              type="file" 
-              accept="image/*" 
-              hidden 
-              onChange={handleImageUpload} 
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleImageUpload}
             />
           </Button>
-          
+
           {errors.profilePhoto && (
             <FormHelperText error sx={{ mt: 1 }}>
               {errors.profilePhoto}
@@ -328,9 +340,9 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
         </Box>
 
         {/* Title */}
-        <Typography 
-          variant="h4" 
-          sx={{ 
+        <Typography
+          variant="h4"
+          sx={{
             fontWeight: "bold",
             background: "linear-gradient(45deg, #1976d2, #00c6e6)",
             backgroundClip: "text",
@@ -447,31 +459,31 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
             }}
           />
           {errors.password && <FormHelperText>{errors.password}</FormHelperText>}
-          
+
           {/* Password Strength Indicator */}
           {password && (
             <Box sx={{ mt: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Box 
-                  sx={{ 
-                    flexGrow: 1, 
-                    height: 4, 
+                <Box
+                  sx={{
+                    flexGrow: 1,
+                    height: 4,
                     backgroundColor: "grey.300",
                     borderRadius: 2,
                     overflow: "hidden"
                   }}
                 >
-                  <Box 
-                    sx={{ 
-                      width: `${passwordStrength.strength}%`, 
-                      height: "100%", 
+                  <Box
+                    sx={{
+                      width: `${passwordStrength.strength}%`,
+                      height: "100%",
                       backgroundColor: `${passwordStrength.color}.main`,
                       transition: "all 0.3s ease"
-                    }} 
+                    }}
                   />
                 </Box>
-                <Typography 
-                  variant="caption" 
+                <Typography
+                  variant="caption"
                   color={`${passwordStrength.color}.main`}
                   fontWeight="bold"
                 >
@@ -509,10 +521,10 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
         {/* Submit Button */}
         <Button
           variant="contained"
-          sx={{ 
-            backgroundColor: "#00c6e6", 
-            color: "#000", 
-            width: "100%", 
+          sx={{
+            backgroundColor: "#00c6e6",
+            color: "#000",
+            width: "100%",
             py: 1.5,
             borderRadius: 2,
             fontWeight: "bold",
@@ -543,11 +555,11 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
           {isEdit ? "Want to change account? " : "Already have an account? "}
           <Button
             variant="text"
-            sx={{ 
-              color: "#00c6e6", 
+            sx={{
+              color: "#00c6e6",
               fontWeight: "bold",
               textTransform: "none",
-              "&:hover": { 
+              "&:hover": {
                 backgroundColor: "rgba(0, 198, 230, 0.1)",
                 transform: "scale(1.05)"
               }

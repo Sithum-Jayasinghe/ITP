@@ -46,7 +46,12 @@ const Registers = () => {
   const getRegisters = () => {
     Axios.get("http://localhost:3001/api/registers")
       .then((response) => {
-        setRegisters(response.data?.response || []);
+        // ensure IDs are strings
+        const users = (response.data?.response || []).map((u) => ({
+          ...u,
+          id: String(u.id),
+        }));
+        setRegisters(users);
       })
       .catch((error) => console.error("Axios error:", error));
   };
@@ -191,7 +196,9 @@ const Registers = () => {
               AirGo Registration
             </Typography>
             <Typography variant="subtitle1" sx={{ color: "#ddd" }}>
-              {showLogin ? "Login to your account" : "Create your account to book and manage flights"}
+              {showLogin
+                ? "Login to your account"
+                : "Create your account to book and manage flights"}
             </Typography>
           </Box>
 
@@ -211,7 +218,10 @@ const Registers = () => {
               addRegister={addRegister}
               updateRegister={updateRegister}
               submitted={submitted}
-              data={selectedRegister}
+              data={{
+                ...selectedRegister,
+                id: selectedRegister?.id ? String(selectedRegister.id) : "",
+              }}
               isEdit={isEdit}
               onLoginClick={() => {
                 setShowLogin(true);
@@ -225,20 +235,20 @@ const Registers = () => {
           {/* Registered users list - Only show when not in login mode and not editing */}
           {!showLogin && !isEdit && registers.length > 0 && (
             <>
-              <Typography 
-                variant="h5" 
-                sx={{ 
-                  mt: 5, 
-                  color: "#fff", 
+              <Typography
+                variant="h5"
+                sx={{
+                  mt: 5,
+                  color: "#fff",
                   textAlign: "center",
-                  textShadow: "1px 1px 3px rgba(0,0,0,0.5)"
+                  textShadow: "1px 1px 3px rgba(0,0,0,0.5)",
                 }}
               >
                 Registered Users
               </Typography>
               <Grid container spacing={3} sx={{ mt: 2 }}>
                 {registers.map((row) => (
-                  <Grid item xs={12} sm={6} md={4} key={row.id}>
+                  <Grid item xs={12} sm={6} md={4} key={String(row.id)}>
                     <Paper
                       elevation={4}
                       sx={{
@@ -265,7 +275,14 @@ const Registers = () => {
                       <Typography variant="body2" color="text.secondary">
                         {row.phone}
                       </Typography>
-                      <Box sx={{ display: "flex", justifyContent: "center", mt: 2, gap: 1 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          mt: 2,
+                          gap: 1,
+                        }}
+                      >
                         <Button
                           variant="outlined"
                           size="small"
@@ -296,12 +313,16 @@ const Registers = () => {
         </Paper>
 
         {/* Delete Confirmation Dialog */}
-        <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+        <Dialog
+          open={openDeleteDialog}
+          onClose={() => setOpenDeleteDialog(false)}
+        >
           <DialogTitle>Delete User</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to delete <strong>{registerToDelete?.name}</strong>?
-              This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <strong>{registerToDelete?.name}</strong>? This action cannot be
+              undone.
             </DialogContentText>
           </DialogContent>
           <DialogActions>
