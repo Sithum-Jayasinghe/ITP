@@ -718,6 +718,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
   const validatePhone = (phone) => /^(\+?\d{10,15})$/.test(phone);
   const validateName = (name) => /^[A-Za-z\s]+$/.test(name);
 
+  //OTP
   const generateOtp = () => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedOtp(otp);
@@ -809,6 +810,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
     }, 2500);
   };
 
+  //VERIFY
   const verifyOtpAndSubmit = () => {
     if (otp === generatedOtp) {
       addPayment(paymentData);
