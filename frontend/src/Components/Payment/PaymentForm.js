@@ -619,7 +619,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
 
   // Additional price states
   const [selectedMeals, setSelectedMeals] = useState([]);
-  const [baggagePrice, setBaggagePrice] = useState(750);
+  const [baggagePrice, setBaggagePrice] = useState(2500);
 
   // OTP states
   const [otp, setOtp] = useState("");
