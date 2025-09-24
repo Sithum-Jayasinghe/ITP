@@ -1035,16 +1035,44 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           value={passenger}
                           onChange={(e) => {
                             const value = e.target.value;
-                            // Only update if the input matches letters and spaces, or is empty
+
+                            // ✅ Allow only letters (A-Z, a-z) and spaces
                             if (value === "" || /^[A-Za-z\s]*$/.test(value)) {
                               setPassenger(value);
+
+                              // ✅ Live validation while typing
+                              if (value.trim() === "") {
+                                setFormErrors((prev) => ({
+                                  ...prev,
+                                  passenger: "❌ Passenger name is required",
+                                }));
+                              } else if (value.trim().length < 3) {
+                                setFormErrors((prev) => ({
+                                  ...prev,
+                                  passenger: "❌ Name must be at least 3 characters",
+                                }));
+                              } else {
+                                setFormErrors((prev) => ({ ...prev, passenger: "" }));
+                              }
+                            } else {
+                              // ❌ Invalid characters entered
+                              setFormErrors((prev) => ({
+                                ...prev,
+                                passenger: "❌ Only uppercase and lowercase letters are allowed",
+                              }));
                             }
                           }}
                           fullWidth
                           required
                           disabled={processing}
                           error={!!formErrors.passenger}
-                          helperText={formErrors.passenger}
+                          helperText={
+                            formErrors.passenger ? (
+                              <span style={{ color: "red" }}>{formErrors.passenger}</span>
+                            ) : (
+                              ""
+                            )
+                          }
                           InputProps={{
                             startAdornment: (
                               <InputAdornment position="start">
@@ -1053,12 +1081,14 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                             ),
                           }}
                           sx={{
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: '12px'
-                            }
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "12px",
+                            },
                           }}
                         />
                       </Grid>
+
+
 
                       {/* Seat */}
                       <Grid item xs={12} sm={6}>
@@ -1107,7 +1137,24 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           label="Phone Number"
                           placeholder="e.g. +94 71 234 5678"
                           value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+
+                            // ✅ Allow only digits, spaces, +, -
+                            if (/^[0-9+\s-]*$/.test(val)) {
+                              setPhone(val);
+
+                              // ✅ Validation for Sri Lankan numbers (+94XXXXXXXXX or 0XXXXXXXXX)
+                              if (!/^(?:\+94|0)[1-9][0-9]{8}$/.test(val.replace(/\s|-/g, ""))) {
+                                setFormErrors((prev) => ({
+                                  ...prev,
+                                  phone: "❌ Enter a valid Sri Lankan phone number (10 digits)",
+                                }));
+                              } else {
+                                setFormErrors((prev) => ({ ...prev, phone: "" }));
+                              }
+                            }
+                          }}
                           fullWidth
                           required
                           disabled={processing}
@@ -1122,12 +1169,13 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                             inputMode: "tel",
                           }}
                           sx={{
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: '12px'
-                            }
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "12px",
+                            },
                           }}
                         />
                       </Grid>
+
 
                       {/* Status */}
                       <Grid item xs={12} sm={6}>
