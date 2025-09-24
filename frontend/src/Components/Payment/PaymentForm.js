@@ -975,33 +975,32 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                         </Typography>
                       </Grid>
 
-                      {/* Payment ID */}
+                      {/* Payment ID (NIC) */}
                       <Grid item xs={12} sm={6}>
                         <TextField
                           label="Payment ID (NIC)"
-                          placeholder="Enter unique payment ID"
+                          placeholder="Enter NIC (e.g. 123456789V or 200012345678)"
                           value={id}
                           onChange={(e) => {
-                            const val = e.target.value;
+                            const val = e.target.value.toUpperCase(); // auto uppercase V/X
+                            setId(val);
 
-                            // ✅ Allow only letters and numbers
-                            if (/^[a-zA-Z0-9]*$/.test(val)) {
-                              setId(val);
+                            // ✅ Regex patterns for NIC
+                            const oldNIC = /^[0-9]{9}[VX]$/;   // 9 digits + V/X
+                            const newNIC = /^[0-9]{12}$/;      // 12 digits only
 
-                              // ✅ Validation: must not start with 0 if numeric
-                              if (/^\d+$/.test(val) && Number(val) < 1) {
-                                setFormErrors((prev) => ({
-                                  ...prev,
-                                  id: "❌ Payment ID must be a positive number",
-                                }));
-                              } else {
-                                setFormErrors((prev) => ({ ...prev, id: "" }));
-                              }
-                            } else {
+                            if (!val) {
                               setFormErrors((prev) => ({
                                 ...prev,
-                                id: "❌ Only letters and positive numbers are allowed",
+                                id: "❌ NIC is required",
                               }));
+                            } else if (!(oldNIC.test(val) || newNIC.test(val))) {
+                              setFormErrors((prev) => ({
+                                ...prev,
+                                id: "❌ Invalid NIC format. Use 9 digits + V/X OR 12 digits (e.g. 123456789V / 200012345678)",
+                              }));
+                            } else {
+                              setFormErrors((prev) => ({ ...prev, id: "" }));
                             }
                           }}
                           disabled={isEdit}
@@ -1023,6 +1022,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           }}
                         />
                       </Grid>
+
 
 
                       {/* Passenger */}
@@ -1078,12 +1078,26 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                             ),
                           }}
                           sx={{
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: '12px'
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "12px",
+                            },
+                          }}
+                          onBlur={() => {
+                            const seatPattern = /^[1-9][0-9]*[A-Za-z]+$/;
+                            if (!seat) {
+                              setFormErrors((prev) => ({ ...prev, seat: "Seat number is required" }));
+                            } else if (!seatPattern.test(seat)) {
+                              setFormErrors((prev) => ({
+                                ...prev,
+                                seat: "Seat must be positive numbers followed by letters (e.g. 12A)",
+                              }));
+                            } else {
+                              setFormErrors((prev) => ({ ...prev, seat: "" }));
                             }
                           }}
                         />
                       </Grid>
+
 
                       {/* Phone */}
                       <Grid item xs={12} sm={6}>
