@@ -18,7 +18,7 @@ import Axios from "axios";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import Header from "../Main/Header";
-import StaffVideo from "../Images/st1.mp4"; // ✅ video file
+import StaffVideo from "../Images/st1.mp4";
 
 const Staffs = () => {
   const [staffs, setStaffs] = useState([]);
@@ -29,14 +29,13 @@ const Staffs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [darkMode, setDarkMode] = useState(false);
 
-  // ✅ Snackbar state
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
 
-  // ✅ Custom theme
+  // ✅ Dark/Light theme
   const theme = useMemo(
     () =>
       createTheme({
@@ -48,12 +47,16 @@ const Staffs = () => {
             default: darkMode ? "#121212" : "#f5f5f5",
             paper: darkMode ? "#1e1e1e" : "#fff",
           },
+          text: {
+            primary: darkMode ? "#fff" : "#000",
+            secondary: darkMode ? "#ccc" : "#555",
+          },
         },
       }),
     [darkMode]
   );
 
-  // ✅ Fetch staff
+  // Fetch staff data on mount
   useEffect(() => {
     getStaffs();
   }, []);
@@ -61,8 +64,9 @@ const Staffs = () => {
   const getStaffs = () => {
     Axios.get("http://localhost:3001/api/staffs")
       .then((res) => {
-        setStaffs(res.data?.response || []);
-        setFilteredStaffs(res.data?.response || []);
+        const data = res.data?.response || [];
+        setStaffs(data);
+        setFilteredStaffs(data);
       })
       .catch(() =>
         setSnackbar({
@@ -73,14 +77,15 @@ const Staffs = () => {
       );
   };
 
+  // Add new staff
   const addStaff = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/createstaff", data)
       .then(() => {
         getStaffs();
         setSubmitted(false);
+        setSelectedStaff({});
         setIsEdit(false);
-        // ✅ Show toast
         setSnackbar({
           open: true,
           message: "✅ Staff added successfully!",
@@ -96,14 +101,15 @@ const Staffs = () => {
       );
   };
 
+  // Update existing staff
   const updateStaff = (data) => {
     setSubmitted(true);
     Axios.post("http://localhost:3001/api/updatestaff", data)
       .then(() => {
         getStaffs();
         setSubmitted(false);
+        setSelectedStaff({});
         setIsEdit(false);
-        // ✅ Show toast
         setSnackbar({
           open: true,
           message: "✏️ Staff updated successfully!",
@@ -119,16 +125,16 @@ const Staffs = () => {
       );
   };
 
-  const deleteStaff = (data) => {
+  // Delete staff
+  const deleteStaff = (staff) => {
     if (window.confirm("Are you sure you want to delete this staff member?")) {
-      Axios.post("http://localhost:3001/api/deletestaff", data)
+      Axios.post("http://localhost:3001/api/deletestaff", { id: staff.id })
         .then(() => {
           getStaffs();
-          // ✅ Show toast
           setSnackbar({
             open: true,
             message: "🗑️ Staff deleted successfully!",
-            severity: "error",
+            severity: "success",
           });
         })
         .catch(() =>
@@ -141,9 +147,10 @@ const Staffs = () => {
     }
   };
 
+  // Search staff
   const handleSearch = (term) => {
     setSearchTerm(term);
-    if (term === "") {
+    if (!term) {
       setFilteredStaffs(staffs);
     } else {
       const filtered = staffs.filter(
@@ -157,12 +164,11 @@ const Staffs = () => {
     }
   };
 
-  // ✅ PDF Generator
+  // Export PDF
   const generatePDF = () => {
     const doc = new jsPDF();
     doc.setFontSize(18);
     doc.text("Airline Staff List", 14, 20);
-
     doc.setFontSize(11);
     doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 28);
 
@@ -174,7 +180,12 @@ const Staffs = () => {
       "Certificate",
       "Schedule",
       "Status",
+      "Shift Start Date",
+      "Shift Start Time",
+      "Shift End Date",
+      "Shift End Time",
     ];
+
     const tableRows = filteredStaffs.map((row) => [
       row.id,
       row.name,
@@ -183,6 +194,10 @@ const Staffs = () => {
       row.certificate,
       row.schedule,
       row.status,
+      row.shiftStartDate || "-",
+      row.shiftStartTime || "-",
+      row.shiftEndDate || "-",
+      row.shiftEndTime || "-",
     ]);
 
     autoTable(doc, {
@@ -191,7 +206,7 @@ const Staffs = () => {
       startY: 35,
       styles: { fontSize: 10 },
       headStyles: { fillColor: [22, 160, 133], textColor: [255, 255, 255] },
-      alternateRowStyles: { fillColor: [240, 248, 255] },
+      alternateRowStyles: { fillColor: darkMode ? [40, 40, 40] : [240, 248, 255] },
       theme: "striped",
     });
 
@@ -203,7 +218,6 @@ const Staffs = () => {
     );
     doc.save("Staff_List.pdf");
 
-    // ✅ Show toast
     setSnackbar({
       open: true,
       message: "📄 PDF exported successfully!",
@@ -216,7 +230,7 @@ const Staffs = () => {
       <CssBaseline />
       <Header />
 
-      {/* ✅ Full Page Video Banner Section */}
+      {/* Banner */}
       <Box
         sx={{
           position: "relative",
@@ -229,7 +243,6 @@ const Staffs = () => {
           mb: 5,
         }}
       >
-        {/* Background Video */}
         <video
           src={StaffVideo}
           autoPlay
@@ -240,11 +253,9 @@ const Staffs = () => {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "brightness(0.6)",
+            filter: darkMode ? "brightness(0.5)" : "brightness(0.6)",
           }}
         />
-
-        {/* Overlay Text */}
         <Typography
           variant="h3"
           sx={{
@@ -256,15 +267,11 @@ const Staffs = () => {
           }}
         >
           Staff Management System
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 400, mt: 1, opacity: 0.9 }}
-          >
+          <Typography variant="h6" sx={{ fontWeight: 400, mt: 1, opacity: 0.9 }}>
             Manage your airline workforce with ease
           </Typography>
         </Typography>
 
-        {/* Dark mode toggle */}
         <IconButton
           onClick={() => setDarkMode(!darkMode)}
           sx={{
@@ -282,17 +289,9 @@ const Staffs = () => {
         </IconButton>
       </Box>
 
-      {/* ✅ Main Content */}
+      {/* Main Content */}
       <Box sx={{ width: "90%", margin: "auto" }}>
-        {/* Search + PDF Export */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            mb: 3,
-            gap: 2,
-          }}
-        >
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, gap: 2 }}>
           <TextField
             label="Search Staff"
             variant="outlined"
@@ -300,17 +299,11 @@ const Staffs = () => {
             onChange={(e) => handleSearch(e.target.value)}
             fullWidth
           />
-          <Button
-            variant="contained"
-            color="secondary"
-            onClick={generatePDF}
-            sx={{ whiteSpace: "nowrap" }}
-          >
+          <Button variant="contained" color="secondary" onClick={generatePDF} sx={{ whiteSpace: "nowrap" }}>
             Export PDF
           </Button>
         </Box>
 
-        {/* Staff Form */}
         <StaffForm
           addStaff={addStaff}
           updateStaff={updateStaff}
@@ -319,7 +312,6 @@ const Staffs = () => {
           isEdit={isEdit}
         />
 
-        {/* Staff Table */}
         <StaffsTable
           rows={filteredStaffs}
           selectedStaff={(data) => {
@@ -330,7 +322,6 @@ const Staffs = () => {
         />
       </Box>
 
-      {/* Modern Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}

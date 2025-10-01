@@ -19,6 +19,10 @@ const addStaff = (req, res, next) => {
     role: req.body.role,
     num: req.body.num,
     email: req.body.email,
+    shiftStartDate: req.body.shiftStartDate,
+    shiftEndDate: req.body.shiftEndDate,
+    shiftStartTime: req.body.shiftStartTime,
+    shiftEndTime: req.body.shiftEndTime,
     certificate: req.body.certificate,
     schedule: req.body.schedule,
     status: req.body.status,
@@ -35,7 +39,7 @@ const addStaff = (req, res, next) => {
 
 // Update a staff member
 const updateStaff = (req, res, next) => {
-  const { id, name, role, num, email, certificate, schedule, status } = req.body;
+  const { id, name, role, num, email, certificate, schedule,shiftStartDate,shiftStartTime,shiftEndDate,shiftEndTime,status } = req.body;
 
   Staff.updateOne({ id: id }, {
     $set: {
@@ -45,7 +49,12 @@ const updateStaff = (req, res, next) => {
       email,
       certificate,
       schedule,
+      shiftStartDate,
+      shiftStartTime,
+      shiftEndDate,
+      shiftEndTime,
       status
+
     }
   })
     .then(response => {
