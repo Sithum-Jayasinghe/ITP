@@ -7,6 +7,10 @@ const staffSchema = new Schema({
     role: String,
     num: String,
     email: String,
+    shiftStartDate:String,
+    shiftEndDate:String,
+    shiftStartTime:String,
+    shiftEndTime:String,
     certificate: String,
     schedule: String,
     status: String
