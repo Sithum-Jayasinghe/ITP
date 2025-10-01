@@ -1,3 +1,4 @@
+
 import {
   Box,
   Button,
@@ -76,7 +77,7 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
     if (!submitted) resetForm();
   }, [submitted]);
 
-  // Load existing schedule when editing
+  // Load data when editing
   useEffect(() => {
     if (data && data.id) {
       setId(data.id);
@@ -104,101 +105,73 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
     setErrors({});
   };
 
-  // ✅ Enhanced validation with date constraints
+  // ✅ Validation
   const validateForm = () => {
     const newErrors = {};
-    const today = dayjs().startOf('day');
-    
-    // Flight ID validation
+    const today = dayjs().startOf("day");
+
+    // ✅ Flight ID validation
     if (!id) newErrors.id = "Flight ID is required.";
-    else if (!/^\d+$/.test(id)) newErrors.id = "Flight ID must be a number.";
+    else if (!/^[0-9]+$/.test(id)) newErrors.id = "Flight ID must contain only numbers.";
     else if (Number(id) <= 0) newErrors.id = "Flight ID must be greater than 0.";
 
-    // Flight Name validation
+    // ✅ Flight Name validation
     if (!flightName.trim()) newErrors.flightName = "Flight Name is required.";
-    else if (!/^[A-Za-z0-9\s-]+$/.test(flightName))
-      newErrors.flightName =
-        "Flight Name can only contain letters, numbers, spaces, or dashes.";
+    else if (!/^[A-Za-z0-9]+$/.test(flightName))
+      newErrors.flightName = "Flight Name can only contain letters and numbers (no spaces or symbols).";
 
-    // Airport validation
+    // Airports validation
     if (!departure.trim()) newErrors.departure = "Select a departure airport.";
     if (!arrival.trim()) newErrors.arrival = "Select an arrival airport.";
     if (departure && arrival && departure === arrival)
       newErrors.arrival = "Arrival cannot be the same as departure.";
 
-    // ✅ Departure date validation - Only today or past dates allowed
-    if (!dtime) {
-      newErrors.dtime = "Select departure date & time.";
-    } else {
-      const departureDate = dtime.startOf('day');
-      // Check if departure date is in the future
-      if (departureDate.isAfter(today)) {
-        newErrors.dtime = "Departure date cannot be in the future. Only today or past dates are allowed.";
-      }
-    }
+    // ✅ Departure validation — today or future only
+    if (!dtime) newErrors.dtime = "Select departure date & time.";
+    else if (dtime.startOf("day").isBefore(today))
+      newErrors.dtime = "Departure date cannot be in the past.";
 
-    // ✅ Arrival date validation - Must be after departure
-    if (!atime) {
-      newErrors.atime = "Select arrival date & time.";
-    } else if (dtime && dayjs(atime).isBefore(dtime)) {
+    // ✅ Arrival validation — must be after departure
+    if (!atime) newErrors.atime = "Select arrival date & time.";
+    else if (dtime && dayjs(atime).isBefore(dtime))
       newErrors.atime = "Arrival time must be after departure time.";
-    }
 
-    // Aircraft validation
+    // ✅ Aircraft
     if (!aircraft.trim()) newErrors.aircraft = "Select an aircraft type.";
 
-    // Seats validation
+    // ✅ Seats validation
     if (!seats) newErrors.seats = "Seats are required.";
-    else if (!/^\d+$/.test(seats)) newErrors.seats = "Seats must be a number.";
-    else if (Number(seats) > 300) newErrors.seats = "Seats must be less than 300.";
+    else if (!/^[0-9]+$/.test(seats)) newErrors.seats = "Seats must be a valid number.";
+    else if (Number(seats) > 300) newErrors.seats = "Seats cannot exceed 300.";
 
-    // Status validation
+    // ✅ Status
     if (!status.trim()) newErrors.status = "Select flight status.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Handle departure date change with validation
   const handleDepartureChange = (newDtime) => {
     setDtime(newDtime);
-    
-    // Clear departure error when user selects a new date
-    if (errors.dtime) {
-      setErrors({ ...errors, dtime: "" });
-    }
-    
-    // If arrival time exists and is before new departure time, clear it
+    if (errors.dtime) setErrors({ ...errors, dtime: "" });
     if (atime && newDtime && dayjs(atime).isBefore(newDtime)) {
       setAtime(null);
-      if (errors.atime) {
-        setErrors({ ...errors, atime: "" });
-      }
     }
   };
 
-  // ✅ Handle arrival date change with validation
   const handleArrivalChange = (newAtime) => {
     setAtime(newAtime);
-    
-    // Clear arrival error when user selects a new date
-    if (errors.atime) {
-      setErrors({ ...errors, atime: "" });
-    }
+    if (errors.atime) setErrors({ ...errors, atime: "" });
   };
 
-  // ✅ Custom validator for DateTimePicker - Disable future dates for departure
-  const shouldDisableDepartureDate = (date) => {
-    return dayjs(date).isAfter(dayjs(), 'day');
-  };
+  const shouldDisableDepartureDate = (date) =>
+    dayjs(date).isBefore(dayjs().startOf("day"));
 
-  // ✅ Custom validator for DateTimePicker - Enable only dates after departure for arrival
   const shouldDisableArrivalDate = (date) => {
-    if (!dtime) return false;
-    return dayjs(date).isBefore(dtime, 'minute');
+    if (!dtime) return dayjs(date).isBefore(dayjs().startOf("day"));
+    return dayjs(date).isBefore(dtime, "minute");
   };
 
-  // Submit
   const handleSubmit = () => {
     if (!validateForm()) return;
     const scheduleData = {
@@ -216,16 +189,13 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
     resetForm();
   };
 
-  // ✅ Clear error when user starts typing in a field
   const clearError = (field) => {
-    if (errors[field]) {
-      setErrors({ ...errors, [field]: "" });
-    }
+    if (errors[field]) setErrors({ ...errors, [field]: "" });
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      {/* Video Banner */}
+      {/* 🎬 Header Video */}
       <Box
         sx={{
           position: "relative",
@@ -260,20 +230,13 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
             color: "#fff",
             fontWeight: "bold",
             textShadow: "3px 3px 12px rgba(0,0,0,0.8)",
-            textAlign: "center",
           }}
         >
           Flight Scheduling
-          <Typography
-            variant="h6"
-            sx={{ fontWeight: 400, mt: 1, opacity: 0.9 }}
-          >
-            Manage and track flights with ease
-          </Typography>
         </Typography>
       </Box>
 
-      {/* Form */}
+      {/* 🧾 Form */}
       <Box
         sx={{
           maxWidth: 700,
@@ -281,17 +244,11 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
           padding: 4,
           borderRadius: 3,
           boxShadow: 4,
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          background: "linear-gradient(90deg, #4a83bbff 0%, #5089b7ff 100%)",
+          background: "linear-gradient(90deg, #ffffffff 0%, #ffffffff 100%)",
           color: "#fff",
         }}
       >
-        <Typography
-          variant="h4"
-          fontWeight="700"
-          gutterBottom
-          sx={{ color: "#fff" }}
-        >
+        <Typography variant="h4" fontWeight="700" gutterBottom>
           Flight Schedule Management
         </Typography>
 
@@ -300,17 +257,15 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
           <Grid item xs={12} sm={6}>
             <TextField
               label="Flight ID"
-              type="text"
               value={id}
               onChange={(e) => {
-                setId(e.target.value);
+                if (/^\d*$/.test(e.target.value)) setId(e.target.value);
                 clearError("id");
               }}
               fullWidth
               required
-              disabled={isEdit}
               error={!!errors.id}
-              helperText={errors.id || "Unique flight identifier"}
+              helperText={errors.id || "Only numbers allowed"}
               InputProps={{ style: { backgroundColor: "#fff" } }}
             />
           </Grid>
@@ -321,34 +276,32 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
               label="Flight Name / Number"
               value={flightName}
               onChange={(e) => {
-                setFlightName(e.target.value);
+                if (/^[A-Za-z0-9]*$/.test(e.target.value)) setFlightName(e.target.value);
                 clearError("flightName");
               }}
               fullWidth
               required
               error={!!errors.flightName}
-              helperText={errors.flightName}
-              placeholder="e.g. UL123"
+              helperText={errors.flightName || "Only letters and numbers"}
               InputProps={{ style: { backgroundColor: "#fff" } }}
             />
           </Grid>
 
-          {/* Departure Airport */}
+          {/* Departure */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Departure Airport"
+              select
               value={departure}
               onChange={(e) => {
                 setDeparture(e.target.value);
                 clearError("departure");
               }}
               fullWidth
-              select
               required
               error={!!errors.departure}
               helperText={errors.departure}
-              InputProps={{
-                style: { backgroundColor: "#fff" },
+              InputProps={{style: { backgroundColor: "#fff" },
                 startAdornment: (
                   <InputAdornment position="start">
                     <FlightTakeoffIcon color="primary" />
@@ -356,25 +309,25 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
                 ),
               }}
             >
-              {airports.map((airport) => (
-                <MenuItem key={airport} value={airport}>
-                  {airport}
+              {airports.map((a) => (
+                <MenuItem key={a} value={a}>
+                  {a}
                 </MenuItem>
               ))}
             </TextField>
           </Grid>
 
-          {/* Arrival Airport */}
+          {/* Arrival */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Arrival Airport"
+              select
               value={arrival}
               onChange={(e) => {
                 setArrival(e.target.value);
                 clearError("arrival");
               }}
               fullWidth
-              select
               required
               error={!!errors.arrival}
               helperText={errors.arrival}
@@ -387,84 +340,73 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
                 ),
               }}
             >
-              {airports.map((airport) => (
-                <MenuItem key={airport} value={airport}>
-                  {airport}
+              {airports.map((a) => (
+                <MenuItem key={a} value={a}>
+                  {a}
                 </MenuItem>
               ))}
             </TextField>
           </Grid>
 
-          {/* Departure DateTime */}
+          {/* Departure Date */}
           <Grid item xs={12} sm={6}>
             <DateTimePicker
               label="Departure Date & Time"
               value={dtime}
               onChange={handleDepartureChange}
               shouldDisableDate={shouldDisableDepartureDate}
-              minDateTime={dayjs().subtract(1, 'year')} // Allow dates up to 1 year back
-              maxDateTime={dayjs()} // Disable future dates
+              minDateTime={dayjs()}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   fullWidth
                   required
                   error={!!errors.dtime}
-                  helperText={errors.dtime || "Only today or past dates allowed"}
+                  helperText={errors.dtime || "Today or future dates only"}
                   InputProps={{
                     ...params.InputProps,
                     style: { backgroundColor: "#fff" },
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <ScheduleIcon color="primary" />
-                      </InputAdornment>
-                    ),
                   }}
                 />
               )}
             />
           </Grid>
 
-          {/* Arrival DateTime */}
+          {/* Arrival date */}
           <Grid item xs={12} sm={6}>
             <DateTimePicker
               label="Arrival Date & Time"
               value={atime}
               onChange={handleArrivalChange}
               shouldDisableDate={shouldDisableArrivalDate}
-              minDateTime={dtime || dayjs().subtract(1, 'year')}
+              minDateTime={dtime || dayjs()}
               renderInput={(params) => (
                 <TextField
                   {...params}
                   fullWidth
                   required
                   error={!!errors.atime}
-                  helperText={errors.atime || "Must be after departure time"}
+                  helperText={errors.atime || "After departure only"}
                   InputProps={{
                     ...params.InputProps,
                     style: { backgroundColor: "#fff" },
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <ScheduleIcon color="primary" />
-                      </InputAdornment>
-                    ),
                   }}
                 />
               )}
             />
           </Grid>
 
-          {/* Aircraft Type */}
+          {/* AirCraft */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Aircraft Type"
+              select
               value={aircraft}
               onChange={(e) => {
                 setAircraft(e.target.value);
                 clearError("aircraft");
               }}
               fullWidth
-              select
               required
               error={!!errors.aircraft}
               helperText={errors.aircraft}
@@ -477,44 +419,48 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
                 ),
               }}
             >
-              {aircraftTypes.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
+              {aircraftTypes.map((t) => (
+                <MenuItem key={t} value={t}>
+                  {t}
                 </MenuItem>
               ))}
             </TextField>
           </Grid>
 
-          {/* Seats */}
+          {/* ✅ Total Seats - RealTime Validation */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Total Seats"
-              type="text"
               value={seats}
               onChange={(e) => {
-                setSeats(e.target.value);
-                clearError("seats");
+                const value = e.target.value;
+                if (/^\d*$/.test(value)) {
+                  const numValue = Number(value);
+                  if (numValue <= 300) {
+                    setSeats(value);
+                    clearError("seats");
+                  }
+                }
               }}
               fullWidth
               required
               error={!!errors.seats}
-              helperText={errors.seats || "Number of passenger seats available"}
-              inputProps={{ min: 1 }}
+              helperText={errors.seats || "Only numbers allowed (max 300)"}
               InputProps={{ style: { backgroundColor: "#fff" } }}
             />
           </Grid>
 
-          {/* Flight Status */}
+          {/* Status */}
           <Grid item xs={12} sm={6}>
             <TextField
               label="Flight Status"
+              select
               value={status}
               onChange={(e) => {
                 setStatus(e.target.value);
                 clearError("status");
               }}
               fullWidth
-              select
               required
               error={!!errors.status}
               helperText={errors.status}
@@ -528,72 +474,22 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
             </TextField>
           </Grid>
 
-          {/* Submit Button */}
-          <Grid item xs={12} sx={{ textAlign: "center", marginTop: 3 }}>
+          {/* Submit */}
+          <Grid item xs={12} sx={{ textAlign: "center", mt: 3 }}>
             <Button
               variant="contained"
-              color="secondary"
               onClick={handleSubmit}
               disabled={submitted}
               sx={{
                 width: 220,
-                fontWeight: "bold",
-                fontSize: "1.1rem",
                 backgroundColor: "#fff",
                 color: "#1976d2",
+                fontWeight: "bold",
                 "&:hover": { backgroundColor: "#e3f2fd" },
               }}
             >
               {isEdit ? "Update Schedule" : "Add Schedule"}
             </Button>
-          </Grid>
-
-          {/* ✅ Validation Summary */}
-          {Object.keys(errors).length > 0 && (
-            <Grid item xs={12}>
-              <Box
-                sx={{
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  padding: 2,
-                  borderRadius: 1,
-                  border: "1px solid rgba(255, 255, 255, 0.3)",
-                  mt: 2,
-                }}
-              >
-                <Typography variant="body2" sx={{ color: "#ffeb3b", fontWeight: "bold" }}>
-                  ⚠️ Please fix the following errors before submitting:
-                </Typography>
-                <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px", color: "#ffeb3b" }}>
-                  {Object.values(errors).map((error, index) => (
-                    <li key={index} style={{ fontSize: "0.9rem" }}>
-                      {error}
-                    </li>
-                  ))}
-                </ul>
-              </Box>
-            </Grid>
-          )}
-
-          {/* ✅ Date Validation Info */}
-          <Grid item xs={12}>
-            <Box
-              sx={{
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                padding: 2,
-                borderRadius: 1,
-                border: "1px solid rgba(255, 255, 255, 0.3)",
-                mt: 1,
-              }}
-            >
-              <Typography variant="body2" sx={{ color: "#e3f2fd", fontWeight: "bold" }}>
-                📋 Date Validation Rules:
-              </Typography>
-              <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px", color: "#e3f2fd" }}>
-                <li style={{ fontSize: "0.9rem" }}>• Departure date must be today or any past date</li>
-                <li style={{ fontSize: "0.9rem" }}>• Arrival date must be after departure date</li>
-                <li style={{ fontSize: "0.9rem" }}>• Future departure dates are not allowed</li>
-              </ul>
-            </Box>
           </Grid>
         </Grid>
       </Box>
@@ -602,3 +498,4 @@ const ScheduleForm = ({ addSchedule, updateSchedule, submitted, data, isEdit }) 
 };
 
 export default ScheduleForm;
+
