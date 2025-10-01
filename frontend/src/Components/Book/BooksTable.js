@@ -42,6 +42,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { useState, useEffect } from "react";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
+import Logo from '../Images/logo.png';
 
 const TransitionUp = (props) => <Slide {...props} direction="down" />;
 
@@ -132,107 +133,231 @@ const BooksTable = ({ rows = [], selectedBooking, deleteBooking, darkMode, added
     setSearchTerm("");
   };
 
-  // Modern PDF generation
-  const generatePDF = (booking) => {
+  // Modern AIRGO Airlines PDF generation with logo
+  const generatePDF = async (booking) => {
     const doc = new jsPDF();
     
-    // Add background color
-    doc.setFillColor(23, 107, 135);
-    doc.rect(0, 0, 220, 50, 'F');
+    // Add premium background
+    doc.setFillColor(0, 90, 156); // AIRGO blue
+    doc.rect(0, 0, 220, 70, 'F');
     
-    // Add logo/header
+    // Add logo (you'll need to handle the image loading properly)
+    try {
+      // For actual implementation, you might need to convert the image to base64
+      // This is a simplified version - in production, you'd handle the image properly
+      doc.addImage(Logo, 'PNG', 20, 15, 30, 30);
+    } catch (error) {
+      console.log('Logo not available, using text fallback');
+      // Fallback if logo doesn't load
+      doc.setFontSize(16);
+      doc.setTextColor(255, 255, 255);
+      doc.text("AIRGO", 35, 30);
+    }
+    
+    // Company header
     doc.setFontSize(28);
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.text("AIRGO", 105, 25, { align: "center" });
+    doc.text("AIRGO AIRLINES", 105, 35, { align: "center" });
     
     doc.setFontSize(12);
-    doc.setTextColor(200, 200, 200);
-    doc.text("Flight Booking Confirmation", 105, 35, { align: "center" });
+    doc.setTextColor(220, 220, 220);
+    doc.text("Flight Booking Confirmation", 105, 45, { align: "center" });
     
-    // Booking ID with styling
-    doc.setFillColor(240, 240, 240);
-    doc.roundedRect(15, 60, 180, 15, 3, 3, 'F');
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "bold");
-    doc.text(`BOOKING REFERENCE: ${booking.id}`, 105, 70, { align: "center" });
+    doc.setFontSize(9);
+    doc.text("Elevate Your Journey", 105, 52, { align: "center" });
     
-    // Flight details section
-    doc.setFontSize(16);
-    doc.setTextColor(23, 107, 135);
-    doc.text("FLIGHT DETAILS", 20, 90);
+    // Booking ID section with premium styling
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(15, 75, 180, 22, 5, 5, 'F');
+    doc.setDrawColor(0, 90, 156);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(15, 75, 180, 22, 5, 5, 'S');
     
-    // Draw line separator
-    doc.setDrawColor(23, 107, 135);
-    doc.line(20, 93, 80, 93);
-    
-    // Flight route visualization
     doc.setFontSize(14);
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(0, 90, 156);
     doc.setFont("helvetica", "bold");
-    doc.text(booking.from, 30, 110);
-    doc.text("➜", 105, 110);
-    doc.text(booking.to, 160, 110);
-    
-    // Date information
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Departure: ${booking.departure}`, 30, 125);
-    if (booking.returnDate) {
-      doc.text(`Return: ${booking.returnDate}`, 140, 125);
-    }
-    
-    // Passenger details
-    doc.setFontSize(16);
-    doc.setTextColor(23, 107, 135);
-    doc.text("PASSENGER INFORMATION", 20, 145);
-    doc.line(20, 148, 95, 148);
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.text(`Passengers: ${booking.passengers}`, 30, 160);
-    doc.text(`Class: ${booking.travelClass}`, 30, 170);
-    doc.text(`Trip Type: ${booking.tripType}`, 30, 180);
-    doc.text(`Flexible Dates: ${booking.flexibleDates ? "Yes" : "No"}`, 30, 190);
-    
-    // Travel tips section
-    doc.setFontSize(16);
-    doc.setTextColor(23, 107, 135);
-    doc.text("TRAVEL TIPS", 20, 210);
-    doc.line(20, 213, 55, 213);
-    
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
-    const insight = generateInsight(booking);
-    doc.text(`• ${insight.msg}`, 30, 225);
-    doc.text("• Check-in online 24 hours before departure", 30, 235);
-    doc.text("• Arrive at airport at least 2 hours before flight", 30, 245);
-    doc.text("• Keep identification documents handy", 30, 255);
-    
-    // Footer with QR code placeholder
-    doc.setFillColor(240, 240, 240);
-    doc.rect(0, 270, 220, 30, 'F');
+    doc.text(`BOOKING REFERENCE: AIRGO-${booking.id}`, 105, 86, { align: "center" });
     
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text("Thank you for choosing AirGo Airlines", 105, 280, { align: "center" });
-    doc.text("For assistance, contact: support@airgo.com | +1 (800) 123-4567", 105, 285, { align: "center" });
+    doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 105, 93, { align: "center" });
     
-    // QR code placeholder
+    // Flight details section
+    doc.setFontSize(16);
+    doc.setTextColor(0, 90, 156);
+    doc.setFont("helvetica", "bold");
+    doc.text("FLIGHT DETAILS", 20, 115);
+    
+    // Decorative line
+    doc.setDrawColor(0, 90, 156);
+    doc.setLineWidth(0.8);
+    doc.line(20, 118, 85, 118);
+    
+    // Flight route with modern styling
+    const flightY = 135;
+    
+    // Departure
+    doc.setFillColor(240, 248, 255);
+    doc.roundedRect(25, flightY - 10, 65, 28, 4, 4, 'F');
+    doc.setTextColor(0, 90, 156);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("DEPARTURE", 30, flightY - 2);
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text(booking.from, 30, flightY + 8);
+    
+    // Arrow with plane icon representation
+    doc.setFontSize(18);
+    doc.setTextColor(0, 90, 156);
+    doc.text("✈", 105, flightY + 2);
+    
+    // Destination
+    doc.setFillColor(240, 248, 255);
+    doc.roundedRect(120, flightY - 10, 65, 28, 4, 4, 'F');
+    doc.setTextColor(0, 90, 156);
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("DESTINATION", 125, flightY - 2);
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text(booking.to, 125, flightY + 8);
+    
+    // Date information
+    const dateY = 175;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 90, 156);
+    doc.setFont("helvetica", "bold");
+    doc.text("DEPARTURE DATE:", 25, dateY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.text(booking.departure, 75, dateY);
+    
+    if (booking.returnDate) {
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(0, 90, 156);
+      doc.text("RETURN DATE:", 125, dateY);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0);
+      doc.text(booking.returnDate, 170, dateY);
+    }
+    
+    // Passenger details section
+    const passengerY = 195;
+    doc.setFontSize(16);
+    doc.setTextColor(0, 90, 156);
+    doc.setFont("helvetica", "bold");
+    doc.text("PASSENGER INFORMATION", 20, passengerY);
+    doc.line(20, passengerY + 3, 120, passengerY + 3);
+    
+    // Passenger details in modern card layout
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(25, passengerY + 10, 160, 50, 4, 4, 'F');
+    doc.setDrawColor(220, 220, 220);
+    doc.roundedRect(25, passengerY + 10, 160, 50, 4, 4, 'S');
+    
+    const infoStartY = passengerY + 22;
+    doc.setFontSize(11);
+    doc.setTextColor(0, 90, 156);
+    doc.setFont("helvetica", "bold");
+    
+    // Left column
+    doc.text("Passengers:", 35, infoStartY);
+    doc.text("Travel Class:", 35, infoStartY + 10);
+    doc.text("Trip Type:", 35, infoStartY + 20);
+    doc.text("Flexible Dates:", 35, infoStartY + 30);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${booking.passengers} ${booking.passengers > 1 ? 'travelers' : 'traveler'}`, 85, infoStartY);
+    doc.text(booking.travelClass, 85, infoStartY + 10);
+    doc.text(booking.tripType, 85, infoStartY + 20);
+    doc.text(booking.flexibleDates ? "Yes ✓" : "No ✗", 85, infoStartY + 30);
+    
+    // Right column - Additional details
+    doc.setTextColor(0, 90, 156);
+    doc.setFont("helvetica", "bold");
+    doc.text("Booking Status:", 120, infoStartY);
+    doc.text("E-Ticket Number:", 120, infoStartY + 10);
+    doc.text("Fare Type:", 120, infoStartY + 20);
+    doc.text("Baggage Allowance:", 120, infoStartY + 30);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "normal");
+    doc.text("Confirmed ✓", 160, infoStartY);
+    doc.text(`AIRGO-${booking.id}-ET`, 160, infoStartY + 10);
+    doc.text("Standard", 160, infoStartY + 20);
+    doc.text("23kg × 1", 160, infoStartY + 30);
+    
+    // Travel insights & recommendations section
+    const tipsY = 260;
+    doc.setFontSize(16);
+    doc.setTextColor(0, 90, 156);
+    doc.setFont("helvetica", "bold");
+    doc.text("TRAVEL INSIGHTS & RECOMMENDATIONS", 20, tipsY);
+    doc.line(20, tipsY + 3, 140, tipsY + 3);
+    
+    doc.setFillColor(255, 253, 231);
+    doc.roundedRect(25, tipsY + 10, 160, 40, 4, 4, 'F');
+    doc.setDrawColor(255, 213, 79);
+    doc.roundedRect(25, tipsY + 10, 160, 40, 4, 4, 'S');
+    
+    const insight = generateInsight(booking);
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    
+    const tipsContent = [
+      `🎯 ${insight.msg}`,
+      "🕒 Online check-in opens 24-48 hours before departure",
+      "⏰ Arrive 3 hours before international flights",
+      "📱 Download AIRGO app for real-time updates",
+      "🎒 Verify baggage allowance for your fare class"
+    ];
+    
+    tipsContent.forEach((tip, index) => {
+      doc.text(tip, 30, tipsY + 22 + (index * 7));
+    });
+    
+    // Footer section
+    doc.setFillColor(0, 90, 156);
+    doc.rect(0, 305, 220, 25, 'F');
+    
     doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text("Thank you for choosing AIRGO Airlines - Elevate Your Journey", 105, 311, { align: "center" });
+    doc.text("Customer Support: support@airgo.com | +1 (800) AIRGO-00 | www.airgo.com", 105, 317, { align: "center" });
+    
+    // Security features
+    doc.setFontSize(6);
     doc.setTextColor(150, 150, 150);
-    doc.rect(180, 265, 30, 30, 'S');
-    doc.text("QR CODE", 195, 280, { align: "center" });
+    doc.text("SECURE E-TICKET | DIGITAL BOARDING PASS | VERIFIED DOCUMENT", 105, 300, { align: "center" });
+    
+    // Boarding pass QR code section
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(170, 255, 35, 35, 4, 4, 'F');
+    doc.setDrawColor(0, 90, 156);
+    doc.setLineWidth(0.8);
+    doc.roundedRect(170, 255, 35, 35, 4, 4, 'S');
+    
+    doc.setFontSize(7);
+    doc.setTextColor(0, 90, 156);
+    doc.text("BOARDING", 187.5, 265, { align: "center" });
+    doc.text("PASS", 187.5, 270, { align: "center" });
+    doc.setFontSize(12);
+    doc.text("✈", 187.5, 280, { align: "center" });
+    doc.setFontSize(6);
+    doc.text("SCAN TO BOARD", 187.5, 287, { align: "center" });
     
     // Page border
     doc.setDrawColor(200, 200, 200);
+    doc.setLineWidth(0.5);
     doc.rect(5, 5, 200, 287);
     
     // Save the PDF
-    doc.save(`AirGo_Booking_${booking.id}.pdf`);
+    doc.save(`AIRGO_Booking_${booking.id}.pdf`);
     
-    showAlert(`PDF for Booking #${booking.id} generated!`, "success");
+    showAlert(`AIRGO Booking #${booking.id} PDF generated!`, "success");
   };
 
   return (

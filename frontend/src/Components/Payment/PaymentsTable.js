@@ -37,11 +37,59 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import * as XLSX from "xlsx";
 import AirplanemodeActiveIcon from "@mui/icons-material/AirplanemodeActive";
+import Logo from '../Images/logo.png';
 
 // Replace this import with your actual 3D airline image
 // For example: import AirlineBanner from "../Images/airline-3d-banner.jpg";
 // Using a placeholder for demonstration
 const AirlineBanner = "https://placehold.co/1200x400/1976d2/white?text=AIRGO+Travel+Airlines";
+
+// Convert the imported logo to base64 for PDF usage
+let logoBase64 = null;
+
+// Function to convert image to base64
+const convertImageToBase64 = (img) => {
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const imgElement = new Image();
+    
+    imgElement.onload = () => {
+      canvas.width = imgElement.width;
+      canvas.height = imgElement.height;
+      ctx.drawImage(imgElement, 0, 0);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    
+    imgElement.src = img;
+  });
+};
+
+// Preload the logo
+const preloadLogo = async () => {
+  try {
+    logoBase64 = await convertImageToBase64(Logo);
+  } catch (error) {
+    console.warn('Could not convert logo to base64, using fallback:', error);
+  }
+};
+
+// Preload the logo on component import
+preloadLogo();
+
+// Fallback logo drawing function
+const drawAIRGOLogo = (doc, x, y, width = 50, height = 20) => {
+  // Draw a blue rectangle as logo background
+  doc.setFillColor(25, 118, 210);
+  doc.rect(x, y, width, height, 'F');
+  
+  // Add white text
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AIRGO', x + width/2, y + height/2 + 2, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+};
 
 // CSS styles for animations
 const styles = `
@@ -194,90 +242,204 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
 
   // === Export All to PDF ===
   const exportAllPDF = async () => {
-    const doc = new jsPDF();
-    doc.setFont("helvetica", "normal");
-    doc.text("All Payments Report", 20, 20);
-    rows.forEach((row, i) => {
-      doc.text(`${i + 1}. ${row.passenger} - LKR ${row.price}`, 20, 40 + i * 10);
-    });
-    doc.save("all_payments.pdf");
+    try {
+      const doc = new jsPDF();
+      doc.setFont("helvetica", "normal");
+      
+      // Add AIRGO Logo
+      if (logoBase64) {
+        try {
+          doc.addImage(logoBase64, "PNG", 20, 15, 40, 15);
+        } catch (logoError) {
+          console.warn('Logo image error, using fallback:', logoError);
+          drawAIRGOLogo(doc, 20, 15, 40, 15);
+        }
+      } else {
+        drawAIRGOLogo(doc, 20, 15, 40, 15);
+      }
+      
+      doc.setFontSize(20);
+      doc.setTextColor(25, 118, 210);
+      doc.text("All Payments Report", 70, 30);
+      
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 70, 40);
+      
+      let yPosition = 60;
+      doc.setFontSize(10);
+      
+      // Table headers
+      doc.setFillColor(25, 118, 210);
+      doc.setTextColor(255, 255, 255);
+      doc.rect(20, yPosition, 160, 8, 'F');
+      doc.text("ID", 25, yPosition + 6);
+      doc.text("Passenger", 40, yPosition + 6);
+      doc.text("Flight", 80, yPosition + 6);
+      doc.text("Price", 120, yPosition + 6);
+      doc.text("Status", 150, yPosition + 6);
+      
+      yPosition += 15;
+      doc.setTextColor(0, 0, 0);
+      
+      rows.forEach((row, i) => {
+        if (yPosition > 270) {
+          doc.addPage();
+          yPosition = 20;
+        }
+        
+        doc.text(row.id.toString(), 25, yPosition);
+        doc.text(row.passenger, 40, yPosition);
+        doc.text(row.flight, 80, yPosition);
+        doc.text(`LKR ${row.price}`, 120, yPosition);
+        doc.text(row.status, 150, yPosition);
+        yPosition += 10;
+      });
+      
+      doc.save("all_payments.pdf");
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF. Please try again.");
+    }
   };
 
   // === Single PDF ===
   const generatePDF = async (row) => {
-    const doc = new jsPDF("landscape");
-    doc.setFont("helvetica", "normal");
+    try {
+      const doc = new jsPDF("landscape");
+      doc.setFont("helvetica", "normal");
 
-    const qrData = JSON.stringify(row);
-    const qrImageUrl = await QRCode.toDataURL(qrData);
+      const qrData = JSON.stringify(row);
+      const qrImageUrl = await QRCode.toDataURL(qrData);
 
-    const baggageCost = 8000;
-    const mealCost = 2500;
-    const taxes = 1500;
-    const total = Number(row.price) + baggageCost + mealCost + taxes;
+      const baggageCost = 8000;
+      const mealCost = 2500;
+      const taxes = 1500;
+      const total = Number(row.price) + baggageCost + mealCost + taxes;
 
-    // Header Banner
-    doc.setFillColor(25, 118, 210);
-    doc.rect(0, 0, 297, 25, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.text("AIRGO Travel Airlines - E-Receipt", 10, 17);
+      // Add AIRGO Logo at the top
+      if (logoBase64) {
+        try {
+          doc.addImage(logoBase64, "PNG", 20, 15, 50, 20);
+        } catch (logoError) {
+          console.warn('Logo image error, using fallback:', logoError);
+          drawAIRGOLogo(doc, 20, 15, 50, 20);
+        }
+      } else {
+        drawAIRGOLogo(doc, 20, 15, 50, 20);
+      }
 
-    // Passenger & Flight Info
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(12);
-    doc.text(`Passenger Name: ${row.passenger}`, 20, 45);
-    doc.text(`Ticket Number: TK-${row.id}`, 20, 60);
-    doc.text(`Flight: ${row.flight}`, 20, 75);
-    doc.text(`Seat: ${row.seat}`, 20, 90);
-    doc.text(`Class: Economy`, 20, 105);
+      // Header Banner
+      doc.setFillColor(25, 118, 210);
+      doc.rect(0, 0, 297, 12, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.text("AIRGO Travel Airlines - E-Ticket & Receipt", 85, 8);
 
-    doc.text(`Departure: Colombo (CMB) - 10:00 AM`, 120, 45);
-    doc.text(`Arrival: Dubai (DXB) - 1:30 PM`, 120, 60);
-    doc.text(`Date: October 15, 2050`, 120, 75);
+      // Company Info
+      doc.setTextColor(25, 118, 210);
+      doc.setFontSize(10);
+      doc.text("AIRGO Travel Airlines Ltd.", 200, 20);
+      doc.text("123 Aviation Avenue, Colombo 03", 200, 26);
+      doc.text("Sri Lanka", 200, 32);
+      doc.text("Tel: +94 11 234 5678", 200, 38);
+      doc.text("Email: info@airgo.com", 200, 44);
 
-    // Payment Section
-    doc.setFontSize(13);
-    doc.setTextColor(25, 118, 210);
-    doc.text("Payment & Extras", 20, 125);
+      // Passenger & Flight Info Section
+      doc.setDrawColor(25, 118, 210);
+      doc.setLineWidth(0.5);
+      doc.line(20, 50, 280, 50);
+      
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont(undefined, 'bold');
+      doc.text("PASSENGER & FLIGHT INFORMATION", 20, 60);
+      doc.setFont(undefined, 'normal');
+      
+      doc.text(`Passenger Name: ${row.passenger}`, 20, 70);
+      doc.text(`Ticket Number: TK-${row.id}`, 20, 78);
+      doc.text(`Flight: ${row.flight}`, 20, 86);
+      doc.text(`Seat: ${row.seat}`, 20, 94);
+      doc.text(`Class: Economy`, 20, 102);
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(12);
-    doc.text(`Ticket Price: LKR ${row.price}`, 20, 140);
-    doc.text(`Payment Method: ${row.method}`, 20, 155);
-    doc.text(`Status: ${row.status}`, 20, 170);
+      doc.text(`Departure: Colombo (CMB) - 10:00 AM`, 120, 70);
+      doc.text(`Arrival: Dubai (DXB) - 1:30 PM`, 120, 78);
+      doc.text(`Date: October 15, 2050`, 120, 86);
+      doc.text(`Gate: B15`, 120, 94);
+      doc.text(`Boarding Time: 09:15 AM`, 120, 102);
 
-    doc.text(`Baggage (30kg): LKR ${baggageCost}`, 120, 140);
-    doc.text(`Meal: LKR ${mealCost}`, 120, 155);
-    doc.text(`Taxes & Fee: LKR ${taxes}`, 120, 170);
+      // Payment Section
+      doc.setFont(undefined, 'bold');
+      doc.text("PAYMENT DETAILS", 20, 120);
+      doc.setFont(undefined, 'normal');
+      
+      doc.text(`Ticket Price: LKR ${row.price}`, 20, 130);
+      doc.text(`Payment Method: ${row.method}`, 20, 138);
+      doc.text(`Payment Date: ${new Date().toLocaleDateString()}`, 20, 146);
+      doc.text(`Transaction ID: TXN-${row.id}${Date.now()}`, 20, 154);
 
-    // Total
-    doc.setFontSize(13);
-    doc.setTextColor(200, 0, 0);
-    doc.text(`TOTAL PAYMENT: LKR ${total}`, 20, 190);
+      doc.text(`Baggage (30kg): LKR ${baggageCost}`, 120, 130);
+      doc.text(`Meal: LKR ${mealCost}`, 120, 138);
+      doc.text(`Taxes & Fee: LKR ${taxes}`, 120, 146);
+      doc.text(`Insurance: LKR 0`, 120, 154);
 
-    // QR Code
-    doc.setFontSize(14);
-    doc.setTextColor(25, 118, 210);
-    doc.text("E-Ticket Copy", 230, 40);
+      // Total
+      doc.setFontSize(13);
+      doc.setFont(undefined, 'bold');
+      doc.setTextColor(200, 0, 0);
+      doc.text(`TOTAL PAYMENT: LKR ${total}`, 20, 170);
 
-    doc.addImage(qrImageUrl, "PNG", 230, 60, 45, 45);
+      // QR Code Section
+      doc.setFontSize(14);
+      doc.setTextColor(25, 118, 210);
+      doc.setFont(undefined, 'bold');
+      doc.text("E-TICKET QR CODE", 200, 120);
+      doc.setFont(undefined, 'normal');
+      
+      doc.setDrawColor(25, 118, 210);
+      doc.setLineWidth(0.5);
+      doc.rect(200, 125, 80, 60);
+      
+      // Add QR code with error handling
+      try {
+        doc.addImage(qrImageUrl, "PNG", 215, 135, 50, 50);
+      } catch (qrError) {
+        console.warn("QR code image error, using text fallback:", qrError);
+        doc.text("QR Code", 220, 150);
+        doc.text("Not Available", 215, 160);
+      }
 
-    // Footer
-    doc.setTextColor(100, 100, 100);
-    doc.setFontSize(10);
-    doc.text(
-      "This e-receipt is generated electronically. Please carry a valid ID with this ticket. Safe Travels!",
-      20,
-      210
-    );
+      // Terms and Conditions
+      doc.setTextColor(100, 100, 100);
+      doc.setFontSize(8);
+      doc.text("Terms & Conditions:", 20, 190);
+      doc.text("1. This e-ticket is non-transferable and must be presented with valid photo ID.", 20, 195);
+      doc.text("2. Baggage allowance: 30kg checked + 7kg cabin baggage.", 20, 200);
+      doc.text("3. Check-in closes 45 minutes before departure.", 20, 205);
+      doc.text("4. No refunds for no-shows or cancellations within 24 hours of departure.", 20, 210);
 
-    doc.save(`ticket_${row.id}.pdf`);
+      // Footer
+      doc.setFontSize(10);
+      doc.setTextColor(25, 118, 210);
+      doc.text("Thank you for choosing AIRGO Travel Airlines!", 20, 220);
+      doc.setTextColor(100, 100, 100);
+      doc.text("Safe travels and we look forward to serving you again!", 20, 225);
+
+      // Page border
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.5);
+      doc.rect(5, 5, 287, 200);
+
+      doc.save(`airgo_ticket_${row.id}_${row.passenger.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF. Please try again.");
+    }
   };
 
   return (
     <>
-      {/* Airline Banner with 3D effect */}
+      {/* Airline Banner with 3D effect - Now using the actual logo */}
       <div className="animated-banner">
         <Box
           sx={{
@@ -315,7 +477,17 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
             }}
           >
             <div className="animated-float">
-              <FlightIcon sx={{ fontSize: 50, mb: 1, color: "white", filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.5))" }} />
+              <Box
+                component="img"
+                src={Logo}
+                alt="AIRGO Logo"
+                sx={{
+                  height: 60,
+                  width: 'auto',
+                  mb: 1,
+                  filter: "drop-shadow(2px 2px 4px rgba(0,0,0,0.5))",
+                }}
+              />
             </div>
             <Typography
               variant="h3"
@@ -608,7 +780,17 @@ const PaymentsTable = ({ rows = [], selectedPayment, deletePayment }) => {
                 <TableCell colSpan={11} align="center">
                   <Box sx={{ py: 3 }}>
                     <div className="animated-float">
-                      <FlightIcon sx={{ fontSize: 40, color: "text.secondary", mb: 1 }} />
+                      <Box
+                        component="img"
+                        src={Logo}
+                        alt="AIRGO Logo"
+                        sx={{
+                          height: 40,
+                          width: 'auto',
+                          mb: 1,
+                          opacity: 0.7,
+                        }}
+                      />
                     </div>
                     <Typography variant="body1" color="text.secondary">
                       No Payments Found.

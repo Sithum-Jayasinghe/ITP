@@ -10,16 +10,18 @@
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.2",
+    "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.16.0",
-    "nodemailer": "^7.0.5",
+    "nodemailer": "^7.0.6",
     "openai": "^5.16.0",
     "otp-generator": "^4.0.1",
     "pdfkit": "^0.17.1",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "twilio": "^5.9.0"
   }
 }
