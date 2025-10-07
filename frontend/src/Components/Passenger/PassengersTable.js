@@ -7,239 +7,316 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PictureAsPdf from "@mui/icons-material/PictureAsPdf";
 import TravelLuggageIcon from "@mui/icons-material/Luggage";
 import PersonIcon from "@mui/icons-material/Person";
-import FlightIcon from "@mui/icons-material/Flight";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import ChairIcon from "@mui/icons-material/Chair";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Logo from '../Images/logo.png';
 
+// Helper: convert image src (bundled or URL) to dataURL for jsPDF
+const loadImageAsDataURL = async (src) => {
+  try {
+    if (!src) return null;
+    if (typeof src === "string" && src.startsWith("data:")) return src;
+    const res = await fetch(src);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+};
+
 const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLuggageStatus }) => {
   const totalBaggage = rows.reduce((sum, r) => sum + (r.baggagePrice || 0), 0);
   const totalMeal = rows.reduce((sum, r) => sum + (r.mealPrice || 0), 0);
 
-  // ✅ Fixed: Handle seat data correctly
+  // Seat class by first seat number (customize if needed)
   const getSeatClass = (seats) => {
     if (!seats || !Array.isArray(seats) || seats.length === 0) return "Unknown";
-    
-    // Get class from first seat (you can modify this logic as needed)
     const firstSeat = seats[0];
-    if (firstSeat <= 16) return "First Class";
-    if (firstSeat <= 40) return "Business";
+    if (Number(firstSeat) <= 16) return "First Class";
+    if (Number(firstSeat) <= 40) return "Business";
     return "Economy";
   };
 
   const formatSeats = (seats) => {
     if (!seats || !Array.isArray(seats)) return "No seats";
-    return seats.sort((a, b) => a - b).join(", ");
+    return [...seats].sort((a, b) => Number(a) - Number(b)).join(", ");
   };
 
-  // ✅ Generate Modern PDF for one passenger
-  const generatePassengerPDF = (row) => {
-    const doc = new jsPDF();
-    
-    // Add premium header with gradient effect
-    doc.setFillColor(0, 90, 156);
-    doc.rect(0, 0, 220, 70, 'F');
-    
-    // Add AIRGO logo
+  // A4-aligned PDF for one passenger (no extra button)
+  const generatePassengerPDF = async (row) => {
+    const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
+
+    const pageW = doc.internal.pageSize.getWidth();   // 210
+    const pageH = doc.internal.pageSize.getHeight();  // 297
+    const margin = 15;
+
+    // Theme
+    const primary = [0, 90, 156];   // #005a9c
+    const darkGray = [51, 51, 51];
+    const lightGray = [245, 245, 245];
+
+    // Safe data
+    const safe = {
+      id: String(row.id ?? ""),
+      name: String(row.name ?? "N/A"),
+      age: String(row.age ?? "N/A"),
+      passport: String(row.passport ?? "N/A"),
+      baggage: String(row.baggage ?? "N/A"),
+      baggagePrice: Number(row.baggagePrice || 0),
+      meal: String(row.meal ?? "N/A"),
+      mealPrice: Number(row.mealPrice || 0),
+      seats: Array.isArray(row.seats) ? row.seats : [],
+      luggageStatus: String(row.luggageStatus ?? "Unknown")
+    };
+
+    const seatClass = getSeatClass(safe.seats);
+    const seatsText = formatSeats(safe.seats);
+
+    // Header band (full width)
+    const headerH = 28;
+    doc.setFillColor(primary[0], primary[1], primary[2]);
+    doc.rect(0, 0, pageW, headerH, "F");
+
+    // Logo (left)
+    const logoSize = 16;
+    const logoX = margin;
+    const logoY = (headerH - logoSize) / 2;
     try {
-      doc.addImage(Logo, 'PNG', 20, 15, 30, 30);
-    } catch (error) {
-      console.log('Logo not available, using text fallback');
-      doc.setFontSize(16);
+      const logoData = await loadImageAsDataURL(Logo);
+      if (logoData) {
+        doc.addImage(logoData, "PNG", logoX, logoY, logoSize, logoSize);
+      } else {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+        doc.setTextColor(255, 255, 255);
+        doc.text("AIRGO", logoX, logoY + 10);
+      }
+    } catch {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
       doc.setTextColor(255, 255, 255);
-      doc.text("AIRGO", 35, 30);
+      doc.text("AIRGO", logoX, logoY + 10);
     }
-    
-    // Company header
-    doc.setFontSize(24);
+
+    // Header text (centered)
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
     doc.setTextColor(255, 255, 255);
-    doc.setFont("helvetica", "bold");
-    doc.text("AIRGO AIRLINES", 105, 35, { align: "center" });
-    
-    doc.setFontSize(12);
-    doc.setTextColor(220, 220, 220);
-    doc.text("Passenger Details & Travel Information", 105, 45, { align: "center" });
-    
+    doc.text("AIRGO AIRLINES", pageW / 2, logoY + 7, { align: "center" });
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text("Passenger Details & Travel Information", pageW / 2, logoY + 14, { align: "center" });
+
+    // Meta right
     doc.setFontSize(9);
-    doc.text("Elevate Your Journey", 105, 52, { align: "center" });
-    
-    // Passenger ID section
-    doc.setFillColor(245, 245, 245);
-    doc.roundedRect(15, 75, 180, 20, 5, 5, 'F');
-    doc.setDrawColor(0, 90, 156);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(15, 75, 180, 20, 5, 5, 'S');
-    
+    doc.text(`Generated: ${new Date().toLocaleString()}`, pageW - margin, headerH - 6, { align: "right" });
+    doc.text(`Passenger ID: ${safe.id}`, pageW - margin, headerH - 2, { align: "right" });
+
+    // Title card
+    const titleY = headerH + 8;
+    const titleH = 16;
+    const titleW = pageW - 2 * margin;
+    doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.roundedRect(margin, titleY, titleW, titleH, 3, 3, "F");
+    doc.setDrawColor(primary[0], primary[1], primary[2]);
+    doc.setLineWidth(0.6);
+    doc.roundedRect(margin, titleY, titleW, titleH, 3, 3, "S");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text(`PASSENGER PROFILE: ${safe.name.toUpperCase()}`, pageW / 2, titleY + titleH / 2 + 4, { align: "center" });
+
+    // Personal Information
+    const personalTitleY = titleY + titleH + 10;
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.setTextColor(0, 90, 156);
-    doc.setFont("helvetica", "bold");
-    doc.text(`PASSENGER PROFILE: ${row.name.toUpperCase()}`, 105, 85, { align: "center" });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 105, 92, { align: "center" });
-    
-    // Personal Information section
-    doc.setFontSize(16);
-    doc.setTextColor(0, 90, 156);
-    doc.setFont("helvetica", "bold");
-    doc.text("PERSONAL INFORMATION", 20, 112);
-    
-    // Decorative line
-    doc.setDrawColor(0, 90, 156);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("PERSONAL INFORMATION", margin, personalTitleY);
+    doc.setDrawColor(primary[0], primary[1], primary[2]);
     doc.setLineWidth(0.8);
-    doc.line(20, 115, 100, 115);
-    
-    // Personal info card
+    doc.line(margin, personalTitleY + 2, margin + 82, personalTitleY + 2);
+
+    const personalY = personalTitleY + 6;
+    const personalH = 38;
+    const contentW = pageW - 2 * margin;
     doc.setFillColor(250, 250, 250);
-    doc.roundedRect(25, 120, 160, 35, 4, 4, 'F');
+    doc.roundedRect(margin, personalY, contentW, personalH, 4, 4, "F");
     doc.setDrawColor(220, 220, 220);
-    doc.roundedRect(25, 120, 160, 35, 4, 4, 'S');
-    
-    const personalY = 130;
-    doc.setFontSize(11);
-    doc.setTextColor(0, 90, 156);
+    doc.roundedRect(margin, personalY, contentW, personalH, 4, 4, "S");
+
+    // Left labels
+    const leftX = margin + 8;
+    const leftValX = margin + 58;
+    let y = personalY + 10;
+
     doc.setFont("helvetica", "bold");
-    
-    doc.text("Passenger ID:", 35, personalY);
-    doc.text("Full Name:", 35, personalY + 10);
-    doc.text("Age:", 35, personalY + 20);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "normal");
-    doc.text(row.id.toString(), 85, personalY);
-    doc.text(row.name, 85, personalY + 10);
-    doc.text((row.age || "N/A").toString(), 85, personalY + 20);
-    
-    doc.setTextColor(0, 90, 156);
-    doc.setFont("helvetica", "bold");
-    doc.text("Passport No:", 120, personalY);
-    doc.text("Seat Class:", 120, personalY + 10);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "normal");
-    doc.text(row.passport || "N/A", 155, personalY);
-    doc.text(getSeatClass(row.seats), 155, personalY + 10);
-    
-    // Travel Details section
-    const travelY = 170;
-    doc.setFontSize(16);
-    doc.setTextColor(0, 90, 156);
-    doc.setFont("helvetica", "bold");
-    doc.text("TRAVEL DETAILS", 20, travelY);
-    doc.line(20, travelY + 3, 80, travelY + 3);
-    
-    // Travel details card
-    doc.setFillColor(250, 250, 250);
-    doc.roundedRect(25, travelY + 10, 160, 45, 4, 4, 'F');
-    doc.setDrawColor(220, 220, 220);
-    doc.roundedRect(25, travelY + 10, 160, 45, 4, 4, 'S');
-    
-    const travelStartY = travelY + 20;
-    doc.setFontSize(11);
-    doc.setTextColor(0, 90, 156);
-    doc.setFont("helvetica", "bold");
-    
-    // Left column
-    doc.text("Assigned Seats:", 35, travelStartY);
-    doc.text("Baggage Info:", 35, travelStartY + 10);
-    doc.text("Meal Preference:", 35, travelStartY + 20);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "normal");
-    doc.text(formatSeats(row.seats), 85, travelStartY);
-    doc.text(row.baggage || "N/A", 85, travelStartY + 10);
-    doc.text(row.meal || "N/A", 85, travelStartY + 20);
-    
-    // Right column
-    doc.setTextColor(0, 90, 156);
-    doc.setFont("helvetica", "bold");
-    doc.text("Luggage Status:", 120, travelStartY);
-    doc.text("Baggage Price:", 120, travelStartY + 10);
-    doc.text("Meal Price:", 120, travelStartY + 20);
-    
-    doc.setTextColor(0, 0, 0);
-    doc.setFont("helvetica", "normal");
-    
-    // Luggage status with color coding
-    const status = row.luggageStatus || "Unknown";
-    if (status === "Checked In") doc.setTextColor(0, 128, 0);
-    else if (status === "In Transit") doc.setTextColor(255, 165, 0);
-    else if (status === "Loaded") doc.setTextColor(0, 90, 156);
-    else if (status === "Arrived") doc.setTextColor(0, 100, 0);
-    else doc.setTextColor(255, 0, 0);
-    
-    doc.text(status, 155, travelStartY);
-    doc.setTextColor(0, 0, 0);
-    
-    doc.text(`LKR ${row.baggagePrice || 0}`, 155, travelStartY + 10);
-    doc.text(`LKR ${row.mealPrice || 0}`, 155, travelStartY + 20);
-    
-    // Additional Information section
-    const infoY = 235;
-    doc.setFontSize(16);
-    doc.setTextColor(0, 90, 156);
-    doc.setFont("helvetica", "bold");
-    doc.text("TRAVEL INFORMATION", 20, infoY);
-    doc.line(20, infoY + 3, 105, infoY + 3);
-    
-    doc.setFillColor(255, 253, 231);
-    doc.roundedRect(25, infoY + 10, 160, 35, 4, 4, 'F');
-    doc.setDrawColor(255, 213, 79);
-    doc.roundedRect(25, infoY + 10, 160, 35, 4, 4, 'S');
-    
     doc.setFontSize(10);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("Passenger ID:", leftX, y);
+    doc.text("Full Name:", leftX, y + 10);
+    doc.text("Age:", leftX, y + 20);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text(safe.id || "-", leftValX, y);
+    doc.text(safe.name || "-", leftValX, y + 10);
+    doc.text(safe.age || "-", leftValX, y + 20);
+
+    // Right labels
+    const rightLblX = margin + contentW - 70;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("Passport No:", rightLblX, y);
+    doc.text("Seat Class:", rightLblX, y + 10);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text(safe.passport || "-", rightLblX + 30, y);
+    doc.text(seatClass || "-", rightLblX + 30, y + 10);
+
+    // Travel details
+    const travelTitleY = personalY + personalH + 12;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("TRAVEL DETAILS", margin, travelTitleY);
+    doc.setDrawColor(primary[0], primary[1], primary[2]);
+    doc.setLineWidth(0.8);
+    doc.line(margin, travelTitleY + 2, margin + 60, travelTitleY + 2);
+
+    const travelY = travelTitleY + 6;
+    const travelH = 46;
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(margin, travelY, contentW, travelH, 4, 4, "F");
+    doc.setDrawColor(220, 220, 220);
+    doc.roundedRect(margin, travelY, contentW, travelH, 4, 4, "S");
+
+    // Left column: seats/baggage/meal
+    const tLeftX = margin + 8;
+    const tLeftValX = margin + 58;
+    let ty = travelY + 10;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("Assigned Seats:", tLeftX, ty);
+    doc.text("Baggage Info:", tLeftX, ty + 10);
+    doc.text("Meal Preference:", tLeftX, ty + 20);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text(seatsText || "-", tLeftValX, ty);
+    doc.text(safe.baggage || "-", tLeftValX, ty + 10);
+    doc.text(safe.meal || "-", tLeftValX, ty + 20);
+
+    // Right column: luggage status + prices
+    const tRightLblX = margin + contentW - 70;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("Luggage Status:", tRightLblX, ty);
+    doc.text("Baggage Price:", tRightLblX, ty + 10);
+    doc.text("Meal Price:", tRightLblX, ty + 20);
+
+    // Luggage status color coding
+    const status = safe.luggageStatus;
+    let statusColor = [255, 0, 0];
+    if (status === "Checked In") statusColor = [0, 128, 0];
+    else if (status === "In Transit") statusColor = [255, 165, 0];
+    else if (status === "Loaded") statusColor = primary;
+    else if (status === "Arrived") statusColor = [0, 100, 0];
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(...statusColor);
+    doc.text(status || "-", tRightLblX + 32, ty);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.text(`LKR ${safe.baggagePrice}`, tRightLblX + 32, ty + 10);
+    doc.text(`LKR ${safe.mealPrice}`, tRightLblX + 32, ty + 20);
+
+    // Travel Information box (tips)
+    const infoTitleY = travelY + travelH + 12;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("TRAVEL INFORMATION", margin, infoTitleY);
+    doc.setDrawColor(primary[0], primary[1], primary[2]);
+    doc.setLineWidth(0.8);
+    doc.line(margin, infoTitleY + 2, margin + 85, infoTitleY + 2);
+
+    const infoY = infoTitleY + 6;
+    const infoH = 32;
+    doc.setFillColor(255, 253, 231);
+    doc.roundedRect(margin, infoY, contentW, infoH, 4, 4, "F");
+    doc.setDrawColor(255, 213, 79);
+    doc.roundedRect(margin, infoY, contentW, infoH, 4, 4, "S");
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
     doc.setTextColor(0, 0, 0);
-    
-    const travelTips = [
+    const tips = [
       "• Check-in opens 3 hours before departure",
       "• Have passport and boarding pass ready for security",
       "• Baggage drop closes 45 minutes before departure",
       "• Special meals served 30 minutes after takeoff"
     ];
-    
-    travelTips.forEach((tip, index) => {
-      doc.text(tip, 30, infoY + 22 + (index * 7));
-    });
-    
+    tips.forEach((t, i) => doc.text(t, margin + 6, infoY + 10 + i * 7));
+
     // Total cost summary
-    const totalY = 285;
+    const total = safe.baggagePrice + safe.mealPrice;
+    const totalY = infoY + infoH + 10;
+    const totalH = 14;
     doc.setFillColor(240, 248, 255);
-    doc.roundedRect(25, totalY, 160, 15, 3, 3, 'F');
-    doc.setDrawColor(0, 90, 156);
-    doc.roundedRect(25, totalY, 160, 15, 3, 3, 'S');
-    
-    doc.setFontSize(12);
-    doc.setTextColor(0, 90, 156);
+    doc.roundedRect(margin, totalY, contentW, totalH, 3, 3, "F");
+    doc.setDrawColor(primary[0], primary[1], primary[2]);
+    doc.roundedRect(margin, totalY, contentW, totalH, 3, 3, "S");
+
     doc.setFont("helvetica", "bold");
-    const totalCost = (row.baggagePrice || 0) + (row.mealPrice || 0);
-    doc.text(`TOTAL ADDITIONAL COST: LKR ${totalCost}`, 105, totalY + 10, { align: "center" });
-    
-    // Footer section
-    doc.setFillColor(0, 90, 156);
-    doc.rect(0, 305, 220, 15, 'F');
-    
+    doc.setFontSize(12);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text(`TOTAL ADDITIONAL COST: LKR ${total}`, pageW / 2, totalY + 9, { align: "center" });
+
+    // Footer band (full width)
+    const footerH = 14;
+    const footerY = pageH - footerH;
+    doc.setFillColor(primary[0], primary[1], primary[2]);
+    doc.rect(0, footerY, pageW, footerH, "F");
+
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(255, 255, 255);
-    doc.text("AIRGO Airlines - Elevate Your Journey | support@airgo.com | +1 (800) AIRGO-00", 105, 311, { align: "center" });
-    
-    // Security badge
-    doc.setFontSize(6);
+    doc.text("AIRGO Airlines - Elevate Your Journey | support@airgo.com | +1 (800) AIRGO-00", pageW / 2, footerY + 9, { align: "center" });
+
+    // Security badge line
+    doc.setFontSize(7);
     doc.setTextColor(150, 150, 150);
-    doc.text("CONFIDENTIAL PASSENGER DOCUMENT | FOR OFFICIAL USE ONLY", 105, 300, { align: "center" });
-    
-    // Page border
+    doc.text("CONFIDENTIAL PASSENGER DOCUMENT | FOR OFFICIAL USE ONLY", pageW / 2, footerY - 2, { align: "center" });
+
+    // Page border (inset 5mm)
     doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.5);
-    doc.rect(5, 5, 200, 287);
-    
-    // Save the PDF
-    doc.save(`AIRGO_Passenger_${row.name}_${row.id}.pdf`);
+    doc.setLineWidth(0.4);
+    doc.rect(5, 5, pageW - 10, pageH - 10);
+
+    // Save
+    doc.save(`AIRGO_Passenger_${safe.name.replace(/\s+/g, "_")}_${safe.id}.pdf`);
   };
 
-  // Function to get color for luggage status chip
   const getLuggageStatusColor = (status) => {
     switch (status) {
       case "Checked In": return "default";
@@ -250,7 +327,6 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
     }
   };
 
-  // Function to get seat class color
   const getSeatClassColor = (seats) => {
     const seatClass = getSeatClass(seats);
     switch (seatClass) {
@@ -305,12 +381,8 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
                   key={row.id} 
                   hover
                   sx={{
-                    '&:nth-of-type(odd)': {
-                      backgroundColor: '#fafafa'
-                    },
-                    '&:hover': {
-                      backgroundColor: '#f0f7ff'
-                    }
+                    '&:nth-of-type(odd)': { backgroundColor: '#fafafa' },
+                    '&:hover': { backgroundColor: '#f0f7ff' }
                   }}
                 >
                   <TableCell sx={{ fontWeight: 'bold', fontFamily: 'monospace' }}>
@@ -371,12 +443,7 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
                         <IconButton
                           color="primary"
                           size="small"
-                          sx={{ 
-                            "&:hover": { 
-                              backgroundColor: "primary.light",
-                              color: "white"
-                            } 
-                          }}
+                          sx={{ "&:hover": { backgroundColor: "primary.light", color: "white" } }}
                           onClick={() => selectedPassenger(row)}
                         >
                           <EditIcon fontSize="small" />
@@ -386,12 +453,7 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
                         <IconButton
                           color="error"
                           size="small"
-                          sx={{ 
-                            "&:hover": { 
-                              backgroundColor: "error.light",
-                              color: "white"
-                            } 
-                          }}
+                          sx={{ "&:hover": { backgroundColor: "error.light", color: "white" } }}
                           onClick={() => deletePassenger(row)}
                         >
                           <DeleteIcon fontSize="small" />
@@ -401,12 +463,7 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
                         <IconButton
                           color="secondary"
                           size="small"
-                          sx={{ 
-                            "&:hover": { 
-                              backgroundColor: "secondary.light",
-                              color: "white"
-                            } 
-                          }}
+                          sx={{ "&:hover": { backgroundColor: "secondary.light", color: "white" } }}
                           onClick={() => generatePassengerPDF(row)}
                         >
                           <PictureAsPdf fontSize="small" />
@@ -416,12 +473,7 @@ const PassengersTable = ({ rows = [], selectedPassenger, deletePassenger, viewLu
                         <IconButton
                           color="info"
                           size="small"
-                          sx={{ 
-                            "&:hover": { 
-                              backgroundColor: "info.light",
-                              color: "white"
-                            } 
-                          }}
+                          sx={{ "&:hover": { backgroundColor: "info.light", color: "white" } }}
                           onClick={() => viewLuggageStatus(row)}
                         >
                           <TravelLuggageIcon fontSize="small" />
