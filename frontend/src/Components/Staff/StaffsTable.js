@@ -15,6 +15,7 @@ import {
   IconButton,
   Box,
   Typography,
+  InputAdornment,
 } from "@mui/material";
 import { useState } from "react";
 import { jsPDF } from "jspdf";
@@ -152,55 +153,13 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
         doc.text(pageNumberText, pageWidth - 10, pageHeight - 7.5, { align: "right" });
       };
 
-      // Draw header for the first page before any content
       header();
 
-      // MARGINS
+      // Layout setup
       const marginTop = 40;
       const marginBottom = 16;
 
-      // TITLE CARD (fixed height, Generated date INSIDE the box)
-      const titleTop = marginTop - 2; // 38
-      const titleHeight = 18; // taller than before
-
-      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-      doc.roundedRect(10, titleTop, pageWidth - 20, titleHeight, 2, 2, "F");
-      doc.setDrawColor(primary[0], primary[1], primary[2]);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(10, titleTop, pageWidth - 20, titleHeight, 2, 2, "S");
-
-      // Title
-      doc.setTextColor(primary[0], primary[1], primary[2]);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(
-        `STAFF PROFILE: ${sanitizeText(staff.name).toUpperCase()}`,
-        pageWidth / 2,
-        titleTop + 7, // inside the box
-        { align: "center" }
-      );
-
-      // Generated date inside the box (no clipping)
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 100, 100);
-      doc.setFontSize(8);
-      doc.text(
-        `Generated: ${new Date().toLocaleString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`,
-        pageWidth / 2,
-        titleTop + 13, // inside the box
-        { align: "center" }
-      );
-
-      // Start content AFTER the title box with some gap
-      let y = titleTop + titleHeight + 6;
-
-      // Helpers
+      // Section helper
       const sectionHeader = (label) => [
         {
           content: label,
@@ -212,6 +171,8 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
           },
         },
       ];
+
+      let y = marginTop;
 
       // PERSONAL INFORMATION
       autoTable(doc, {
