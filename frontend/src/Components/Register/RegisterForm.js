@@ -25,7 +25,19 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 
-const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, onLoginClick, existingUsers = [] }) => {
+// Helpers
+const digitsOnly = (v) => v.replace(/\D/g, "");
+const lettersOnlyWithSpaces = (v) => v.replace(/[^A-Za-z\s]/g, "");
+
+const RegisterForm = ({
+  addRegister,
+  updateRegister,
+  submitted,
+  data,
+  isEdit,
+  onLoginClick,
+  existingUsers = [],
+}) => {
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -59,7 +71,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
   // Load existing data into form if editing
   useEffect(() => {
     if (data && data.id) {
-      setId(data.id);
+      setId(String(data.id));
       setName(data.name || "");
       setEmail(data.email || "");
       setPassword(data.password || "");
@@ -69,81 +81,79 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
     }
   }, [data]);
 
-  // ✅ Enhanced validation rules
+  // Validation rules
   const validateForm = () => {
     const newErrors = {};
 
-    // ID validation
+    // NIC: exactly 12 digits (positive numbers only)
     if (!id.trim()) {
       newErrors.id = "User NIC is required";
-    }
-    // Check for minus numbers
-    else if (id.startsWith("-")) {
-      newErrors.id = "NIC cannot contain negative numbers";
-    }
-    // Check old NIC (9 digits + V/X) or new NIC (12 digits)
-    else if (!/^(\d{9}[vVxX]|\d{12})$/.test(id)) {
-      newErrors.id = "NIC must be 9 digits followed by V/X or 12 digits";
-    }
-    // Duplicate check (except when editing the same user)
-    else if (existingUsers.some(user => user.id === id && (!isEdit || user.id !== data.id))) {
+    } else if (!/^\d{12}$/.test(id)) {
+      newErrors.id = "NIC must be exactly 12 digits";
+    } else if (
+      existingUsers.some(
+        (user) => user.id === id && (!isEdit || user.id !== data.id)
+      )
+    ) {
       newErrors.id = "This NIC is already registered";
     }
 
-    // Name validation
+    // Name: letters and spaces only
     if (!name.trim()) {
       newErrors.name = "Full name is required";
-    } else if (name.length < 2) {
+    } else if (name.trim().length < 2) {
       newErrors.name = "Name must be at least 2 characters";
     } else if (!/^[A-Za-z\s]+$/.test(name)) {
       newErrors.name = "Name can only contain letters and spaces";
     }
 
-    // Email validation
+    // Email
     if (!email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = "Please enter a valid email address";
-    } else if (existingUsers.some(user => user.email === email && (!isEdit || user.email !== data.email))) {
+    } else if (
+      existingUsers.some(
+        (user) => user.email === email && (!isEdit || user.email !== data.email)
+      )
+    ) {
       newErrors.email = "This email is already registered";
     }
 
-    // Password validation
+    // Password
     if (!password) {
       newErrors.password = "Password is required";
     } else if (password.length < 8) {
       newErrors.password = "Password must be at least 8 characters";
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
-      newErrors.password = "Password must contain uppercase, lowercase, and numbers";
+      newErrors.password =
+        "Password must contain uppercase, lowercase, and numbers";
     }
 
-    // Phone validation
+    // Phone: exactly 10 digits
     if (!phone.trim()) {
       newErrors.phone = "Phone number is required";
-    }
-    // Check for minus numbers
-    else if (phone.startsWith("-")) {
-      newErrors.phone = "Phone number cannot be negative";
-    }
-    // Allow only 10 digits, must start with 0
-    else if (!/^0\d{9}$/.test(phone)) {
-      newErrors.phone = "Phone number must be exactly 10 digits and start with 0";
-    }
-    // Duplicate check (except when editing the same user)
-    else if (existingUsers.some(user => user.phone === phone && (!isEdit || user.phone !== data.phone))) {
+    } else if (!/^\d{10}$/.test(phone)) {
+      newErrors.phone = "Phone number must be exactly 10 digits";
+    } else if (
+      existingUsers.some(
+        (user) =>
+          user.phone === phone && (!isEdit || user.phone !== data.phone)
+      )
+    ) {
       newErrors.phone = "This phone number is already registered";
     }
 
-    // Profile photo validation (optional but recommended)
+    // Profile photo: required when registering
     if (!preview && !isEdit) {
-      newErrors.profilePhoto = "Profile photo is recommended";
+      newErrors.profilePhoto = "Profile photo is required";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Show snackbar message
+  // Snackbar helper
   const showMessage = (message, severity = "success") => {
     setSnackbar({
       open: true,
@@ -152,22 +162,18 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
     });
   };
 
-  // ✅ Handle image upload
+  // Image upload
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         showMessage("Please select a valid image file", "error");
         return;
       }
-
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         showMessage("Image size should be less than 5MB", "error");
         return;
       }
-
       setProfilePhoto(file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -175,39 +181,34 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
       };
       reader.readAsDataURL(file);
 
-      // Clear profile photo error if any
       if (errors.profilePhoto) {
         setErrors({ ...errors, profilePhoto: "" });
       }
     }
   };
 
-  // ✅ Toggle password visibility
+  // Toggle password visibility
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
-  // ✅ Clear errors when user starts typing
+  // Clear field error
   const clearError = (field) => {
     if (errors[field]) {
       setErrors({ ...errors, [field]: "" });
     }
   };
 
-  // ✅ Handle form submission
+  // Submit
   const handleSubmit = async () => {
-    // Clear previous errors
     setErrors({});
 
-    // Validate form
     if (!validateForm()) {
       showMessage("Please fix the errors above", "error");
       return;
     }
 
     setLoading(true);
-
-    // Simulate API call delay
     setTimeout(() => {
       const formData = {
         id,
@@ -234,22 +235,20 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
     }, 1500);
   };
 
-  // ✅ Handle Enter key press
+  // Enter key
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleSubmit();
     }
   };
 
-  // ✅ Close snackbar
+  // Close snackbar
   const handleCloseSnackbar = (event, reason) => {
-    if (reason === "clickaway") {
-      return;
-    }
+    if (reason === "clickaway") return;
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // ✅ Password strength indicator
+  // Password strength
   const getPasswordStrength = () => {
     if (!password) return { strength: 0, color: "grey", text: "" };
 
@@ -296,7 +295,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
               sx={{
                 width: 120,
                 height: 120,
-                boxShadow: "0 4px 20px rgba(0, 198, 230, 0.3)"
+                boxShadow: "0 4px 20px rgba(0, 198, 230, 0.3)",
               }}
             />
           ) : (
@@ -305,7 +304,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
                 width: 120,
                 height: 120,
                 bgcolor: "#ccc",
-                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)"
+                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
               }}
             >
               <PersonIcon sx={{ fontSize: 50 }} />
@@ -320,16 +319,11 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
             sx={{
               mt: 2,
               borderRadius: 2,
-              borderColor: errors.profilePhoto ? "error.main" : "primary.main"
+              borderColor: errors.profilePhoto ? "error.main" : "primary.main",
             }}
           >
             Upload Photo
-            <input
-              type="file"
-              accept="image/*"
-              hidden
-              onChange={handleImageUpload}
-            />
+            <input type="file" accept="image/*" hidden onChange={handleImageUpload} />
           </Button>
 
           {errors.profilePhoto && (
@@ -353,14 +347,15 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
           {isEdit ? "Update Profile" : "Create Account"}
         </Typography>
 
-        {/* Form Inputs */}
+        {/* NIC */}
         <FormControl fullWidth error={!!errors.id}>
           <Input
-            type="number"
-            placeholder="User NIC"
+            type="tel"
+            placeholder="User NIC (12 digits)"
             value={id}
             onChange={(e) => {
-              setId(e.target.value);
+              const clean = digitsOnly(e.target.value).slice(0, 12);
+              setId(clean);
               clearError("id");
             }}
             onKeyPress={handleKeyPress}
@@ -369,6 +364,11 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
                 <BadgeIcon color={errors.id ? "error" : "action"} />
               </InputAdornment>
             }
+            inputProps={{
+              inputMode: "numeric",
+              pattern: "\\d*",
+              maxLength: 12,
+            }}
             fullWidth
             sx={{
               "&:before": { borderBottom: errors.id ? "2px solid #f44336" : "" },
@@ -378,13 +378,15 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
           {errors.id && <FormHelperText>{errors.id}</FormHelperText>}
         </FormControl>
 
+        {/* Name */}
         <FormControl fullWidth error={!!errors.name}>
           <Input
             type="text"
             placeholder="Full Name"
             value={name}
             onChange={(e) => {
-              setName(e.target.value);
+              const val = lettersOnlyWithSpaces(e.target.value);
+              setName(val);
               clearError("name");
             }}
             onKeyPress={handleKeyPress}
@@ -402,6 +404,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
           {errors.name && <FormHelperText>{errors.name}</FormHelperText>}
         </FormControl>
 
+        {/* Email */}
         <FormControl fullWidth error={!!errors.email}>
           <Input
             type="email"
@@ -426,6 +429,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
           {errors.email && <FormHelperText>{errors.email}</FormHelperText>}
         </FormControl>
 
+        {/* Password */}
         <FormControl fullWidth error={!!errors.password}>
           <Input
             type={showPassword ? "text" : "password"}
@@ -443,11 +447,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
             }
             endAdornment={
               <InputAdornment position="end">
-                <IconButton
-                  aria-label="toggle password visibility"
-                  onClick={handleClickShowPassword}
-                  edge="end"
-                >
+                <IconButton aria-label="toggle password visibility" onClick={handleClickShowPassword} edge="end">
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </InputAdornment>
@@ -470,7 +470,7 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
                     height: 4,
                     backgroundColor: "grey.300",
                     borderRadius: 2,
-                    overflow: "hidden"
+                    overflow: "hidden",
                   }}
                 >
                   <Box
@@ -478,15 +478,11 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
                       width: `${passwordStrength.strength}%`,
                       height: "100%",
                       backgroundColor: `${passwordStrength.color}.main`,
-                      transition: "all 0.3s ease"
+                      transition: "all 0.3s ease",
                     }}
                   />
                 </Box>
-                <Typography
-                  variant="caption"
-                  color={`${passwordStrength.color}.main`}
-                  fontWeight="bold"
-                >
+                <Typography variant="caption" color={`${passwordStrength.color}.main`} fontWeight="bold">
                   {passwordStrength.text}
                 </Typography>
               </Box>
@@ -494,13 +490,15 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
           )}
         </FormControl>
 
+        {/* Phone */}
         <FormControl fullWidth error={!!errors.phone}>
           <Input
             type="tel"
-            placeholder="Phone Number"
+            placeholder="Phone Number (10 digits)"
             value={phone}
             onChange={(e) => {
-              setPhone(e.target.value);
+              const clean = digitsOnly(e.target.value).slice(0, 10); // enforce max 10 digits
+              setPhone(clean);
               clearError("phone");
             }}
             onKeyPress={handleKeyPress}
@@ -509,6 +507,11 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
                 <PhoneIcon color={errors.phone ? "error" : "action"} />
               </InputAdornment>
             }
+            inputProps={{
+              inputMode: "numeric",
+              pattern: "\\d*",
+              maxLength: 10,
+            }}
             fullWidth
             sx={{
               "&:before": { borderBottom: errors.phone ? "2px solid #f44336" : "" },
@@ -561,8 +564,8 @@ const RegisterForm = ({ addRegister, updateRegister, submitted, data, isEdit, on
               textTransform: "none",
               "&:hover": {
                 backgroundColor: "rgba(0, 198, 230, 0.1)",
-                transform: "scale(1.05)"
-              }
+                transform: "scale(1.05)",
+              },
             }}
             onClick={onLoginClick}
           >
