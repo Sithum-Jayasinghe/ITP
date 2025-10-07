@@ -42,20 +42,19 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
   const [selectedUser, setSelectedUser] = useState(null);
   const [userProfilePhoto, setUserProfilePhoto] = useState("");
 
-  // Validation errors
   const [errors, setErrors] = useState({});
-
-  // Snackbar
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertSeverity, setAlertSeverity] = useState("success");
 
-  // Reset form
+  const NAME_INVALID_ERROR = "Passenger Name cannot contain numbers or special characters";
+
+  // Reset form when submitted
   useEffect(() => {
     if (!submitted) resetForm();
   }, [submitted]);
 
-  // Populate when editing
+  // Populate form when editing
   useEffect(() => {
     if (data && data.checkId) {
       setCheckId(data.checkId);
@@ -67,16 +66,13 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
       setStatus(data.status);
       setFaceScanSuccess(data.faceScanSuccess || false);
       setUserProfilePhoto(data.profilePhoto || "");
-      
-      // Find and set the selected user
-      const user = users.find(u => u.name === data.passengerName);
-      if (user) {
-        setSelectedUser(user);
-      }
+
+      const user = users.find((u) => u.name === data.passengerName);
+      if (user) setSelectedUser(user);
     }
   }, [data, users]);
 
-  // Auto-fill form when user is selected
+  // Auto-fill selected user
   useEffect(() => {
     if (selectedUser) {
       setPassengerName(selectedUser.name);
@@ -101,6 +97,41 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
     setErrors({});
   };
 
+  // ✅ Block invalid characters — Check ID (positive numbers only)
+  const handleCheckIdChange = (e) => {
+    const value = e.target.value;
+    if (/^\d*$/.test(value)) {
+      // Allow only digits
+      if (value === "" || Number(value) > 0) {
+        setCheckId(value);
+      }
+    }
+  };
+
+  // ✅ Block invalid characters — Passport Number (letters + numbers only)
+  const handlePassportChange = (e) => {
+    const value = e.target.value;
+    if (/^[A-Za-z0-9]*$/.test(value)) {
+      setPassportNumber(value);
+    }
+  };
+
+  // Passenger name validation (letters + spaces)
+  const handlePassengerNameInput = (event, value) => {
+    const trimmed = (value || "").trim();
+    const hasInvalid = trimmed.length > 0 && /[^A-Za-z\s]/.test(trimmed);
+    setPassengerName(trimmed);
+    setErrors((prev) => {
+      const next = { ...prev };
+      if (hasInvalid) {
+        next.passengerName = NAME_INVALID_ERROR;
+      } else {
+        delete next.passengerName;
+      }
+      return next;
+    });
+  };
+
   // Face scan simulation
   const handleFaceScan = () => {
     setScanning(true);
@@ -116,41 +147,38 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
     }, 2000);
   };
 
-  // ✅ Validation logic
+  // ✅ Submit-time validation
   const validateForm = () => {
     const newErrors = {};
 
-    if (!checkId || Number(checkId) <= 0) {
+    // Check ID
+    if (!checkId) {
+      newErrors.checkId = "Check ID is required";
+    } else if (!/^\d+$/.test(checkId) || Number(checkId) <= 0) {
       newErrors.checkId = "Check ID must be a positive number";
     }
 
+    // Passenger Name
     if (!passengerName.trim()) {
       newErrors.passengerName = "Passenger Name is required";
+    } else if (/[^A-Za-z\s]/.test(passengerName)) {
+      newErrors.passengerName = NAME_INVALID_ERROR;
     }
 
+    // Passport Number
     if (!passportNumber.trim()) {
       newErrors.passportNumber = "Passport Number is required";
+    } else if (!/^[A-Za-z0-9]+$/.test(passportNumber)) {
+      newErrors.passportNumber = "Passport Number must contain only letters and numbers";
+    } else if (/\d/.test(passportNumber) && parseInt(passportNumber.replace(/\D/g, ""), 10) <= 0) {
+      newErrors.passportNumber = "Passport Number must contain a positive number";
     }
 
-    if (!nationality) {
-      newErrors.nationality = "Select a nationality";
-    }
-
-    if (!flightNumber) {
-      newErrors.flightNumber = "Select a flight number";
-    }
-
-    if (!seatNumber) {
-      newErrors.seatNumber = "Select a seat number";
-    }
-
-    if (!status) {
-      newErrors.status = "Select a status";
-    }
-
-    if (!faceScanSuccess) {
-      newErrors.faceScan = "Face scan must be verified";
-    }
+    if (!nationality) newErrors.nationality = "Select a nationality";
+    if (!flightNumber) newErrors.flightNumber = "Select a flight number";
+    if (!seatNumber) newErrors.seatNumber = "Select a seat number";
+    if (!status) newErrors.status = "Select a status";
+    if (!faceScanSuccess) newErrors.faceScan = "Face scan must be verified";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -168,43 +196,33 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
       seatNumber,
       status,
       faceScanSuccess,
-      profilePhoto: userProfilePhoto // Include profile photo
+      profilePhoto: userProfilePhoto
     };
 
-    if (isEdit) {
-      updateCheck(checkData);
-    } else {
-      addCheck(checkData);
-    }
+    if (isEdit) updateCheck(checkData);
+    else addCheck(checkData);
+
     resetForm();
   };
 
-  // Filter unique users for autocomplete
-  const uniqueUsers = users.filter((user, index, self) => 
-    index === self.findIndex(u => u.name === user.name)
+  const uniqueUsers = users.filter(
+    (user, index, self) => index === self.findIndex((u) => u.name === user.name)
   );
 
   return (
-    <Box
-      sx={{
-        p: 3,
-        mb: 4,
-        borderRadius: 3,
-        backgroundColor: "#f9f9f9",
-        boxShadow: 3
-      }}
-    >
-      <Typography variant="h5" mb={2}>✈ Airline Check-In Form</Typography>
+    <Box sx={{ p: 3, mb: 4, borderRadius: 3, backgroundColor: "#f9f9f9", boxShadow: 3 }}>
+      <Typography variant="h5" mb={2}>
+        ✈ Airline Check-In Form
+      </Typography>
 
       <Grid container spacing={2}>
         {/* Check ID */}
         <Grid item xs={12} sm={6}>
           <TextField
             label="Check ID"
-            type="number"
             fullWidth
             value={checkId}
-            onChange={(e) => setCheckId(e.target.value)}
+            onChange={handleCheckIdChange}
             error={!!errors.checkId}
             helperText={errors.checkId}
             InputProps={{
@@ -217,15 +235,14 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
           />
         </Grid>
 
-        {/* Passenger Name with Autocomplete */}
+        {/* Passenger Name */}
         <Grid item xs={12} sm={6}>
           <Autocomplete
             options={uniqueUsers}
             getOptionLabel={(option) => option.name}
             value={selectedUser}
-            onChange={(event, newValue) => {
-              setSelectedUser(newValue);
-            }}
+            onChange={(event, newValue) => setSelectedUser(newValue)}
+            onInputChange={handlePassengerNameInput}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -245,25 +262,13 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
                 }}
               />
             )}
-            renderOption={(props, option) => (
-              <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar 
-                  src={option.profilePhoto} 
-                  sx={{ width: 24, height: 24 }}
-                />
-                {option.name} ({option.passportNumber})
-              </Box>
-            )}
           />
         </Grid>
 
-        {/* User Profile Photo Preview */}
+        {/* Profile Photo */}
         {userProfilePhoto && (
-          <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar 
-              src={userProfilePhoto} 
-              sx={{ width: 60, height: 60 }}
-            />
+          <Grid item xs={12} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Avatar src={userProfilePhoto} sx={{ width: 60, height: 60 }} />
             <Typography variant="body2" color="text.secondary">
               Profile photo loaded from registration
             </Typography>
@@ -276,7 +281,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
             label="Passport Number"
             fullWidth
             value={passportNumber}
-            onChange={(e) => setPassportNumber(e.target.value)}
+            onChange={handlePassportChange}
             error={!!errors.passportNumber}
             helperText={errors.passportNumber}
           />
@@ -294,7 +299,9 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
             helperText={errors.nationality}
           >
             {nationalities.map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
             ))}
           </TextField>
         </Grid>
@@ -318,7 +325,9 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
             }}
           >
             {flights.map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
             ))}
           </TextField>
         </Grid>
@@ -342,7 +351,9 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
             }}
           >
             {seats.map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
             ))}
           </TextField>
         </Grid>
@@ -359,7 +370,9 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
             helperText={errors.status}
           >
             {statuses.map((option) => (
-              <MenuItem key={option} value={option}>{option}</MenuItem>
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
             ))}
           </TextField>
         </Grid>
@@ -398,11 +411,7 @@ const CheckForm = ({ addCheck, updateCheck, submitted, data, isEdit, users = [] 
       </Grid>
 
       {/* Snackbar */}
-      <Snackbar
-        open={alertOpen}
-        autoHideDuration={3000}
-        onClose={() => setAlertOpen(false)}
-      >
+      <Snackbar open={alertOpen} autoHideDuration={3000} onClose={() => setAlertOpen(false)}>
         <Alert severity={alertSeverity} sx={{ width: "100%" }}>
           {alertMessage}
         </Alert>
