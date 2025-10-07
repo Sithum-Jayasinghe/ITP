@@ -1,6 +1,6 @@
-import { 
-  Box, Grid, Typography, TextField, Select, MenuItem, FormControl, 
-  RadioGroup, FormControlLabel, Radio, Checkbox, Button, InputLabel, 
+import {
+  Box, Grid, Typography, TextField, Select, MenuItem, FormControl,
+  RadioGroup, FormControlLabel, Radio, Checkbox, Button, InputLabel,
   InputAdornment, Snackbar, Alert, Slide, Avatar, FormHelperText
 } from "@mui/material";
 import FlightTakeoffIcon from "@mui/icons-material/FlightTakeoff";
@@ -12,9 +12,9 @@ import { useEffect, useState, useMemo } from "react";
 
 // Countries
 const countries = [
-  "United States","Canada","United Kingdom","Germany","France","Australia",
-  "Japan","India","Brazil","South Africa","China","Italy","Spain",
-  "Netherlands","Sweden"
+  "United States", "Canada", "United Kingdom", "Germany", "France", "Australia",
+  "Japan", "India", "Brazil", "South Africa", "China", "Italy", "Spain",
+  "Netherlands", "Sweden"
 ];
 
 // Slide transition for Snackbar
@@ -148,7 +148,7 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
     <Box sx={{ p: 4, mb: 5, borderRadius: 3, backgroundColor: darkMode ? "#1e1e1e" : "#fefefe", boxShadow: darkMode ? 5 : 3 }}>
       <Typography variant="h5" sx={{ mb: 4, color: darkMode ? "#00e5ff" : "#007acc", fontWeight: 600 }}>✈️ AirGo Booking</Typography>
       <Grid container spacing={3}>
-        
+
         {/* From */}
         <Grid item xs={12} sm={6}>
           <FormControl fullWidth sx={inputStyle} error={!!errors.from}>
@@ -159,9 +159,9 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
               renderValue={(selected) => (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   {selected ? (
-                    <Avatar 
-                      src={`https://flagcdn.com/w40/${getCountryCode(selected)}.png`} 
-                      alt={selected} 
+                    <Avatar
+                      src={`https://flagcdn.com/w40/${getCountryCode(selected)}.png`}
+                      alt={selected}
                       sx={{ width: 28, height: 28 }}
                     />
                   ) : <FlightTakeoffIcon />}
@@ -192,9 +192,9 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
               renderValue={(selected) => (
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   {selected ? (
-                    <Avatar 
-                      src={`https://flagcdn.com/w40/${getCountryCode(selected)}.png`} 
-                      alt={selected} 
+                    <Avatar
+                      src={`https://flagcdn.com/w40/${getCountryCode(selected)}.png`}
+                      alt={selected}
                       sx={{ width: 28, height: 28 }}
                     />
                   ) : <FlightLandIcon />}
@@ -226,10 +226,20 @@ const BookForm = ({ addBooking, updateBooking, submitted, data, isEdit, darkMode
             sx={inputStyle}
             error={!!errors.departure}
             helperText={errors.departure}
-            inputProps={{ max: today }}   // ✅ Departure ≤ today
-            InputProps={{ startAdornment: <InputAdornment position="start"><EventIcon /></InputAdornment> }}
+            inputProps={{
+              min: new Date().toISOString().split("T")[0], // ✅ current or future date only
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <EventIcon />
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
+
+
 
         {/* Return */}
         <Grid item xs={12} sm={6}>

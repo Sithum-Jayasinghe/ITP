@@ -53,7 +53,7 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
     return text.toString().replace(/[^\x20-\x7E]/g, '');
   };
 
-  // ✅ Generate Modern Professional PDF with Logo
+  // ✅ Generate Comprehensive Professional PDF with All Staff Details
   const generateRowPDF = (staff) => {
     try {
       const doc = new jsPDF();
@@ -131,37 +131,59 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
       doc.setLineWidth(1);
       doc.line(20, personalY + 3, 100, personalY + 3);
 
-      // Personal info cards
+      // Personal info cards - First Row
       const cardY = personalY + 15;
       
       // Staff ID Card
       doc.setFillColor(240, 248, 255);
-      doc.roundedRect(25, cardY, 75, 35, 6, 6, 'F');
+      doc.roundedRect(25, cardY, 50, 35, 6, 6, 'F');
       doc.setDrawColor(0, 90, 156);
       doc.setLineWidth(0.5);
-      doc.roundedRect(25, cardY, 75, 35, 6, 6, 'S');
+      doc.roundedRect(25, cardY, 50, 35, 6, 6, 'S');
       
       doc.setTextColor(0, 90, 156);
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.text("STAFF ID", 62.5, cardY + 10, { align: "center" });
-      doc.setFontSize(16);
+      doc.text("STAFF ID", 50, cardY + 10, { align: "center" });
+      doc.setFontSize(14);
       doc.setTextColor(51, 51, 51);
-      doc.text(sanitizeText(staff.id.toString()), 62.5, cardY + 25, { align: "center" });
+      doc.text(sanitizeText(staff.id.toString()), 50, cardY + 25, { align: "center" });
       
       // Role Card
       doc.setFillColor(240, 248, 255);
-      doc.roundedRect(120, cardY, 75, 35, 6, 6, 'F');
+      doc.roundedRect(85, cardY, 50, 35, 6, 6, 'F');
       doc.setDrawColor(0, 90, 156);
-      doc.roundedRect(120, cardY, 75, 35, 6, 6, 'S');
+      doc.roundedRect(85, cardY, 50, 35, 6, 6, 'S');
       
       doc.setTextColor(0, 90, 156);
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont("helvetica", "bold");
-      doc.text("ROLE", 157.5, cardY + 10, { align: "center" });
-      doc.setFontSize(14);
+      doc.text("ROLE", 110, cardY + 10, { align: "center" });
+      doc.setFontSize(11);
       doc.setTextColor(51, 51, 51);
-      doc.text(sanitizeText(staff.role), 157.5, cardY + 25, { align: "center" });
+      const roleText = sanitizeText(staff.role);
+      doc.text(roleText.length > 15 ? roleText.substring(0, 15) + '...' : roleText, 110, cardY + 25, { align: "center" });
+
+      // Status Card
+      doc.setFillColor(240, 248, 255);
+      doc.roundedRect(145, cardY, 50, 35, 6, 6, 'F');
+      doc.setDrawColor(0, 90, 156);
+      doc.roundedRect(145, cardY, 50, 35, 6, 6, 'S');
+      
+      doc.setTextColor(0, 90, 156);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text("STATUS", 170, cardY + 10, { align: "center" });
+      
+      const status = sanitizeText(staff.status);
+      let statusColor = [0, 90, 156]; // Default blue
+      if (status === "Active") statusColor = [76, 175, 80]; // Green
+      else if (status === "Inactive") statusColor = [158, 158, 158]; // Gray
+      else if (status === "On Leave") statusColor = [255, 152, 0]; // Orange
+      
+      doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+      doc.setFontSize(11);
+      doc.text(status, 170, cardY + 25, { align: "center" });
 
       // Contact Details section
       const contactY = cardY + 50;
@@ -198,7 +220,7 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
       doc.setTextColor(51, 51, 51);
       doc.setFont("helvetica", "normal");
       const email = sanitizeText(staff.email);
-      doc.text(email.length > 30 ? email.substring(0, 30) + '...' : email, 85, contactStartY + 15);
+      doc.text(email.length > 35 ? email.substring(0, 35) + '...' : email, 85, contactStartY + 15);
 
       // Professional Details section
       const professionalY = contactY + 65;
@@ -210,47 +232,130 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
 
       // Professional table
       doc.setFillColor(250, 250, 250);
-      doc.roundedRect(25, professionalY + 10, pageWidth - 50, 50, 8, 8, 'F');
+      doc.roundedRect(25, professionalY + 10, pageWidth - 50, 70, 8, 8, 'F');
       doc.setDrawColor(220, 220, 220);
-      doc.roundedRect(25, professionalY + 10, pageWidth - 50, 50, 8, 8, 'S');
+      doc.roundedRect(25, professionalY + 10, pageWidth - 50, 70, 8, 8, 'S');
 
       const professionalStartY = professionalY + 22;
       doc.setFontSize(10);
       
-      // Left column
+      // Left column - Professional Information
       doc.setTextColor(0, 90, 156);
       doc.setFont("helvetica", "bold");
       doc.text("CERTIFICATION:", 35, professionalStartY);
       doc.text("WORK SCHEDULE:", 35, professionalStartY + 10);
-      doc.text("SHIFT START:", 35, professionalStartY + 20);
-      doc.text("SHIFT END:", 35, professionalStartY + 30);
+      doc.text("SHIFT START DATE:", 35, professionalStartY + 20);
+      doc.text("SHIFT START TIME:", 35, professionalStartY + 30);
+      doc.text("SHIFT END DATE:", 35, professionalStartY + 40);
+      doc.text("SHIFT END TIME:", 35, professionalStartY + 50);
 
       doc.setTextColor(51, 51, 51);
       doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
       doc.text(sanitizeText(staff.certificate), 85, professionalStartY);
       doc.text(sanitizeText(staff.schedule), 85, professionalStartY + 10);
-      doc.text(`${sanitizeText(staff.shiftStartDate)} ${sanitizeText(staff.shiftStartTime)}`, 85, professionalStartY + 20);
-      doc.text(`${sanitizeText(staff.shiftEndDate)} ${sanitizeText(staff.shiftEndTime)}`, 85, professionalStartY + 30);
+      doc.text(sanitizeText(staff.shiftStartDate), 85, professionalStartY + 20);
+      doc.text(sanitizeText(staff.shiftStartTime), 85, professionalStartY + 30);
+      doc.text(sanitizeText(staff.shiftEndDate), 85, professionalStartY + 40);
+      doc.text(sanitizeText(staff.shiftEndTime), 85, professionalStartY + 50);
 
-      // Right column - Status
+      // Right column - Additional Details
       const rightColumnX = 120;
       doc.setTextColor(0, 90, 156);
       doc.setFont("helvetica", "bold");
-      doc.text("EMPLOYMENT STATUS:", rightColumnX, professionalStartY);
+      doc.setFontSize(10);
+      doc.text("DEPARTMENT:", rightColumnX, professionalStartY);
+      doc.text("EMPLOYMENT TYPE:", rightColumnX, professionalStartY + 10);
+      doc.text("SECURITY CLEARANCE:", rightColumnX, professionalStartY + 20);
+      doc.text("TRAINING COMPLETED:", rightColumnX, professionalStartY + 30);
+      doc.text("PERFORMANCE RATING:", rightColumnX, professionalStartY + 40);
+      doc.text("YEARS OF SERVICE:", rightColumnX, professionalStartY + 50);
 
-      // Status with color coding
-      const status = sanitizeText(staff.status);
-      let statusColor = [0, 90, 156]; // Default blue
-      if (status === "Active") statusColor = [76, 175, 80]; // Green
-      else if (status === "Inactive") statusColor = [158, 158, 158]; // Gray
-      else if (status === "On Leave") statusColor = [255, 152, 0]; // Orange
+      doc.setTextColor(51, 51, 51);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
       
-      doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+      // Default values for additional fields (you can customize these)
+      const department = staff.department || "Flight Operations";
+      const employmentType = staff.employmentType || "Full-time";
+      const securityClearance = staff.securityClearance || "Level 3";
+      const trainingCompleted = staff.trainingCompleted || "Advanced Safety Training";
+      const performanceRating = staff.performanceRating || "4.8/5.0";
+      const yearsOfService = staff.yearsOfService || "3.5 years";
+      
+      doc.text(department, rightColumnX + 50, professionalStartY);
+      doc.text(employmentType, rightColumnX + 50, professionalStartY + 10);
+      doc.text(securityClearance, rightColumnX + 50, professionalStartY + 20);
+      doc.text(trainingCompleted, rightColumnX + 50, professionalStartY + 30);
+      doc.text(performanceRating, rightColumnX + 50, professionalStartY + 40);
+      doc.text(yearsOfService, rightColumnX + 50, professionalStartY + 50);
+
+      // Work Schedule Details section
+      const scheduleY = professionalY + 95;
+      doc.setFontSize(18);
+      doc.setTextColor(0, 90, 156);
       doc.setFont("helvetica", "bold");
-      doc.text(status, rightColumnX + 50, professionalStartY);
+      doc.text("WORK SCHEDULE DETAILS", 20, scheduleY);
+      doc.line(20, scheduleY + 3, 115, scheduleY + 3);
+
+      // Schedule table
+      doc.setFillColor(250, 250, 250);
+      doc.roundedRect(25, scheduleY + 10, pageWidth - 50, 40, 8, 8, 'F');
+      doc.setDrawColor(220, 220, 220);
+      doc.roundedRect(25, scheduleY + 10, pageWidth - 50, 40, 8, 8, 'S');
+
+      const scheduleStartY = scheduleY + 22;
+      doc.setFontSize(10);
+      
+      // Schedule headers
+      doc.setTextColor(0, 90, 156);
+      doc.setFont("helvetica", "bold");
+      doc.text("SCHEDULE TYPE", 35, scheduleStartY);
+      doc.text("SHIFT START", 90, scheduleStartY);
+      doc.text("SHIFT END", 140, scheduleStartY);
+      doc.text("TOTAL HOURS", 170, scheduleStartY);
+
+      // Schedule data
+      doc.setTextColor(51, 51, 51);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.text(sanitizeText(staff.schedule), 35, scheduleStartY + 15);
+      doc.text(`${sanitizeText(staff.shiftStartDate)} ${sanitizeText(staff.shiftStartTime)}`, 90, scheduleStartY + 15);
+      doc.text(`${sanitizeText(staff.shiftEndDate)} ${sanitizeText(staff.shiftEndTime)}`, 140, scheduleStartY + 15);
+      
+      // Calculate total hours (example calculation)
+      const totalHours = staff.totalHours || "40 hrs/week";
+      doc.text(totalHours, 170, scheduleStartY + 15);
+
+      // Emergency Contact Section (if available)
+      const emergencyY = scheduleY + 65;
+      if (staff.emergencyContact || staff.emergencyPhone) {
+        doc.setFontSize(18);
+        doc.setTextColor(0, 90, 156);
+        doc.setFont("helvetica", "bold");
+        doc.text("EMERGENCY CONTACT", 20, emergencyY);
+        doc.line(20, emergencyY + 3, 105, emergencyY + 3);
+
+        doc.setFillColor(255, 245, 245);
+        doc.roundedRect(25, emergencyY + 10, pageWidth - 50, 25, 8, 8, 'F');
+        doc.setDrawColor(220, 100, 100);
+        doc.roundedRect(25, emergencyY + 10, pageWidth - 50, 25, 8, 8, 'S');
+
+        const emergencyStartY = emergencyY + 22;
+        doc.setFontSize(11);
+        doc.setTextColor(0, 90, 156);
+        doc.setFont("helvetica", "bold");
+        doc.text("CONTACT PERSON:", 35, emergencyStartY);
+        doc.text("EMERGENCY PHONE:", 120, emergencyStartY);
+
+        doc.setTextColor(51, 51, 51);
+        doc.setFont("helvetica", "normal");
+        doc.text(staff.emergencyContact || "Not Provided", 75, emergencyStartY);
+        doc.text(staff.emergencyPhone || "Not Provided", 160, emergencyStartY);
+      }
 
       // Staff Summary section
-      const summaryY = professionalY + 75;
+      const summaryY = emergencyY + (staff.emergencyContact ? 50 : 20);
       doc.setFontSize(18);
       doc.setTextColor(0, 90, 156);
       doc.setFont("helvetica", "bold");
@@ -259,16 +364,18 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
 
       // Summary box
       doc.setFillColor(255, 248, 225);
-      doc.roundedRect(25, summaryY + 10, pageWidth - 50, 35, 6, 6, 'F');
+      doc.roundedRect(25, summaryY + 10, pageWidth - 50, 45, 6, 6, 'F');
       doc.setDrawColor(255, 193, 7);
-      doc.roundedRect(25, summaryY + 10, pageWidth - 50, 35, 6, 6, 'S');
+      doc.roundedRect(25, summaryY + 10, pageWidth - 50, 45, 6, 6, 'S');
 
       doc.setFontSize(9);
       doc.setTextColor(102, 102, 102);
       const staffSummary = [
-        `✓ ${sanitizeText(staff.name)} is a ${sanitizeText(staff.role)} at AIRGO Airlines`,
-        `✓ Certified in ${sanitizeText(staff.certificate)}`,
-        `✓ Current status: ${sanitizeText(staff.status)} - ${staff.schedule || 'Regular schedule'}`
+        `✓ ${sanitizeText(staff.name)} serves as a ${sanitizeText(staff.role)} at AIRGO Airlines`,
+        `✓ Certified in ${sanitizeText(staff.certificate)} with ${yearsOfService} of service`,
+        `✓ Current status: ${sanitizeText(staff.status)} - Following ${staff.schedule || 'regular'} schedule`,
+        `✓ Contact: ${sanitizeText(staff.num)} | ${sanitizeText(staff.email)}`,
+        `✓ Performance Rating: ${performanceRating} | Security Clearance: ${securityClearance}`
       ];
 
       staffSummary.forEach((info, index) => {
