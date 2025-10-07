@@ -12,7 +12,6 @@ import {
   Avatar,
   Card,
   CardContent,
-  IconButton,
   Tooltip,
   Fade,
   InputAdornment,
@@ -25,10 +24,8 @@ import {
   Luggage,
   Restaurant,
   EventSeat,
-  FlightClass,
   Add,
   Edit,
-  Delete,
   CheckCircle,
   Info
 } from "@mui/icons-material";
@@ -57,6 +54,10 @@ const seatClasses = [
   { type: "Business", rows: 6, seatsPerRow: 6, color: "#90CAF9", icon: "💼" },
   { type: "Economy", rows: 15, seatsPerRow: 6, color: "#A5D6A7", icon: "💺" }
 ];
+
+// Helpers to sanitize input
+const onlyLetters = (v) => v.replace(/[^A-Za-z\s]/g, "");
+const digitsOnly = (v) => v.replace(/\D/g, "");
 
 const PassengerForm = ({
   addPassenger,
@@ -98,7 +99,7 @@ const PassengerForm = ({
         }
         layout.push(rowSeats);
       }
-      // Add aisle
+      // Add aisle (empty array as spacer/aisle between classes)
       if (classInfo.type !== "First Class") {
         layout.push([]);
       }
@@ -121,10 +122,10 @@ const PassengerForm = ({
 
   useEffect(() => {
     if (data && data.id) {
-      setId(data.id);
-      setName(data.name);
-      setAge(data.age || "");
-      setPassport(data.passport || "");
+      setId(String(data.id));
+      setName(data.name || "");
+      setAge(data.age ? String(data.age) : "");
+      setPassport(data.passport ? String(data.passport) : "");
       setBaggage(data.baggage || "");
       setMeal(data.meal || "");
       setSelectedSeats(data.seats || []);
@@ -165,36 +166,33 @@ const PassengerForm = ({
   const calculateTotal = () => {
     const baggageObj = baggageOptions.find(b => b.value === baggage);
     const mealObj = mealOptions.find(m => m.value === meal);
-    
     return (baggageObj?.price || 0) + (mealObj?.price || 0);
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!id || isNaN(id) || Number(id) <= 0) {
-      newErrors.id = "ID must be a positive number.";
+    // ID: exactly 10 digits
+    if (!id || !/^\d{10}$/.test(id)) {
+      newErrors.id = "Passenger ID must be exactly 10 digits.";
     }
+    // Name: letters and spaces, min 3 chars
     if (!name || name.trim().length < 3) {
       newErrors.name = "Name must be at least 3 characters.";
     } else if (!/^[A-Za-z\s]+$/.test(name)) {
       newErrors.name = "Name can only contain letters and spaces.";
     }
-    if (!age || isNaN(age) || Number(age) < 1 || Number(age) > 120) {
-      newErrors.age = "Please enter a valid age (1-120).";
+    // Age: 1–99
+    if (!age || !/^\d+$/.test(age) || Number(age) < 1 || Number(age) >= 100) {
+      newErrors.age = "Please enter a valid age (1-99).";
     }
-    if (!passport || passport.trim().length < 5) {
-      newErrors.passport = "Passport number must be at least 5 characters.";
+    // Passport: exactly 12 digits
+    if (!passport || !/^\d{12}$/.test(passport)) {
+      newErrors.passport = "Passport number must be exactly 12 digits.";
     }
-    if (!baggage) {
-      newErrors.baggage = "Please select baggage option.";
-    }
-    if (!meal) {
-      newErrors.meal = "Please select meal option.";
-    }
-    if (selectedSeats.length === 0) {
-      newErrors.seats = "Please select at least one seat.";
-    }
+    if (!baggage) newErrors.baggage = "Please select baggage option.";
+    if (!meal) newErrors.meal = "Please select meal option.";
+    if (selectedSeats.length === 0) newErrors.seats = "Please select at least one seat.";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -298,13 +296,16 @@ const PassengerForm = ({
         <Grid item xs={12} sm={6} md={4}>
           <TextField
             label="Passenger ID"
-            type="number"
             fullWidth
             value={id}
-            onChange={(e) => setId(e.target.value)}
+            onChange={(e) => {
+              const val = digitsOnly(e.target.value).slice(0, 10); // exactly 10 digits
+              setId(val);
+              setErrors((prev) => ({ ...prev, id: "" }));
+            }}
             error={!!errors.id}
-            helperText={errors.id}
-            sx={inputStyle}
+            helperText={errors.id || "Enter exactly 10 digits"}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 10 }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -312,6 +313,7 @@ const PassengerForm = ({
                 </InputAdornment>
               ),
             }}
+            sx={inputStyle}
           />
         </Grid>
 
@@ -321,7 +323,11 @@ const PassengerForm = ({
             label="Full Name"
             fullWidth
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => {
+              const val = onlyLetters(e.target.value);
+              setName(val);
+              setErrors((prev) => ({ ...prev, name: "" }));
+            }}
             error={!!errors.name}
             helperText={errors.name}
             sx={inputStyle}
@@ -332,12 +338,16 @@ const PassengerForm = ({
         <Grid item xs={12} sm={6} md={4}>
           <TextField
             label="Age"
-            type="number"
             fullWidth
             value={age}
-            onChange={(e) => setAge(e.target.value)}
+            onChange={(e) => {
+              const val = digitsOnly(e.target.value).slice(0, 2); // up to 2 digits
+              setAge(val);
+              setErrors((prev) => ({ ...prev, age: "" }));
+            }}
             error={!!errors.age}
-            helperText={errors.age}
+            helperText={errors.age || "Enter 1–99"}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 2 }}
             sx={inputStyle}
           />
         </Grid>
@@ -348,9 +358,14 @@ const PassengerForm = ({
             label="Passport Number"
             fullWidth
             value={passport}
-            onChange={(e) => setPassport(e.target.value)}
+            onChange={(e) => {
+              const val = digitsOnly(e.target.value).slice(0, 12); // exactly 12 digits
+              setPassport(val);
+              setErrors((prev) => ({ ...prev, passport: "" }));
+            }}
             error={!!errors.passport}
-            helperText={errors.passport}
+            helperText={errors.passport || "Enter exactly 12 digits"}
+            inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 12 }}
             sx={inputStyle}
           />
         </Grid>
@@ -362,7 +377,10 @@ const PassengerForm = ({
             label="Baggage"
             fullWidth
             value={baggage}
-            onChange={(e) => setBaggage(e.target.value)}
+            onChange={(e) => {
+              setBaggage(e.target.value);
+              setErrors((prev) => ({ ...prev, baggage: "" }));
+            }}
             error={!!errors.baggage}
             helperText={errors.baggage}
             sx={inputStyle}
@@ -393,7 +411,10 @@ const PassengerForm = ({
             label="Meal Preference"
             fullWidth
             value={meal}
-            onChange={(e) => setMeal(e.target.value)}
+            onChange={(e) => {
+              setMeal(e.target.value);
+              setErrors((prev) => ({ ...prev, meal: "" }));
+            }}
             error={!!errors.meal}
             helperText={errors.meal}
             sx={inputStyle}
@@ -451,93 +472,78 @@ const PassengerForm = ({
                 ))}
               </Box>
 
-              {/* Seat Layout */}
+              {/* Horizontal Seat Layout */}
               <Box sx={{ 
                 p: 2, 
                 borderRadius: 2, 
                 backgroundColor: darkMode ? "#2a2a2a" : "#f0f8ff",
                 border: `1px solid ${darkMode ? "#444" : "#e0e0e0"}`
               }}>
-                <Box sx={{ 
-                  display: "flex", 
-                  flexDirection: "column", 
-                  gap: 1,
-                  alignItems: "center",
-                  maxWidth: 600,
-                  mx: "auto"
-                }}>
-                  {/* Cockpit representation */}
-                  <Box sx={{ 
-                    width: "100%", 
-                    height: 40, 
-                    backgroundColor: "#666", 
-                    borderRadius: "10px 10px 0 0",
+                {/* Cockpit label for horizontal orientation */}
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <Typography variant="caption" sx={{ color: darkMode ? "#bbb" : "#666" }}>
+                    Cockpit ➡️
+                  </Typography>
+                </Box>
+
+                <Box
+                  sx={{
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "white",
-                    fontWeight: "bold",
-                    mb: 2
-                  }}>
-                    ✈️ Cockpit
-                  </Box>
-                  
+                    flexDirection: "row",
+                    gap: 1,
+                    alignItems: "flex-start",
+                    overflowX: "auto",
+                    pb: 1
+                  }}
+                >
                   {seatLayout.map((row, rowIndex) => (
-                    <Box key={rowIndex} sx={{ display: "flex", gap: 1 }}>
+                    <Box
+                      key={rowIndex}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                        alignItems: "center",
+                        minWidth: row.length > 0 ? "auto" : 16 // small spacer for aisle
+                      }}
+                    >
                       {row.length > 0 ? (
-                        <>
-                          {/* Aisle left */}
-                          {rowIndex > 4 && (
-                            <Box sx={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              {rowIndex === 5 && <Typography variant="caption">Aisle</Typography>}
-                            </Box>
-                          )}
-                          
-                          {/* Seats */}
-                          {row.map((seat) => (
-                            <Tooltip 
-                              key={seat.number} 
-                              title={seat.class}
-                              TransitionComponent={Fade}
-                              TransitionProps={{ timeout: 600 }}
-                            >
-                              <Button
-                                variant="contained"
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  minWidth: 40,
-                                  borderRadius: "8px",
+                        row.map((seat) => (
+                          <Tooltip 
+                            key={seat.number} 
+                            title={seat.class}
+                            TransitionComponent={Fade}
+                            TransitionProps={{ timeout: 600 }}
+                          >
+                            <Button
+                              variant="contained"
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                minWidth: 40,
+                                borderRadius: "8px",
+                                backgroundColor: selectedSeats.includes(seat.number) 
+                                  ? "#00c6e6" 
+                                  : seat.color,
+                                color: selectedSeats.includes(seat.number) ? "#fff" : "#000",
+                                fontWeight: 600,
+                                "&:hover": { 
+                                  transform: "scale(1.1)",
                                   backgroundColor: selectedSeats.includes(seat.number) 
-                                    ? "#00c6e6" 
-                                    : seat.color,
-                                  color: selectedSeats.includes(seat.number) ? "#fff" : "#000",
-                                  fontWeight: 600,
-                                  "&:hover": { 
-                                    transform: "scale(1.1)",
-                                    backgroundColor: selectedSeats.includes(seat.number) 
-                                      ? "#00b0d9" 
-                                      : seat.color
-                                  },
-                                  transition: "all 0.2s ease"
-                                }}
-                                onClick={() => handleSeatClick(seat.number)}
-                              >
-                                {seat.number}
-                              </Button>
-                            </Tooltip>
-                          ))}
-                          
-                          {/* Aisle right */}
-                          {rowIndex > 4 && (
-                            <Box sx={{ width: 30, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                              {rowIndex === 5 && <Typography variant="caption">Aisle</Typography>}
-                            </Box>
-                          )}
-                        </>
+                                    ? "#00b0d9" 
+                                    : seat.color
+                                },
+                                transition: "all 0.2s ease"
+                              }}
+                              onClick={() => handleSeatClick(seat.number)}
+                            >
+                              {seat.number}
+                            </Button>
+                          </Tooltip>
+                        ))
                       ) : (
-                        // Empty space for aisle
-                        <Box sx={{ width: "100%", height: 40 }} />
+                        // Empty column for aisle
+                        <Box sx={{ width: 16 }} />
                       )}
                     </Box>
                   ))}
