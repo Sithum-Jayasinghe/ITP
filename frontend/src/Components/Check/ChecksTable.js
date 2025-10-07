@@ -29,175 +29,472 @@ import QRCode from "qrcode";
 import { useState, useRef, useEffect } from "react";
 import Logo from '../Images/logo.png';
 
-// MODERN PDF GENERATOR FUNCTION
-const generateCheckPDF = (row) => {
+// MODERN PDF GENERATOR FUNCTION WITH PROPER ALIGNMENT
+const generateCheckPDF = async (row) => {
   const doc = new jsPDF();
 
-  // Premium Header with gradient effect
-  doc.setFillColor(0, 90, 156);
-  doc.rect(0, 0, 220, 70, "F");
+  // Create a modern color scheme
+  const primaryColor = [0, 90, 156]; // #005a9c
+  const secondaryColor = [3, 136, 209]; // #0388d1
+  const lightGray = [245, 245, 245];
+  const darkGray = [51, 51, 51];
+
+  // Ensure all data is converted to strings
+  const safeRow = {
+    passengerName: String(row.passengerName || ''),
+    passportNumber: String(row.passportNumber || ''),
+    nationality: String(row.nationality || ''),
+    flightNumber: String(row.flightNumber || ''),
+    seatNumber: String(row.seatNumber || ''),
+    status: String(row.status || ''),
+    checkId: String(row.checkId || '')
+  };
+
+  // Premium Header with modern gradient
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 0, 220, 80, "F");
   
-  // Add AIRGO logo
+  // Add AIRGO logo - with better error handling
   try {
-    doc.addImage(Logo, 'PNG', 20, 15, 30, 30);
+    if (Logo) {
+      doc.addImage(Logo, 'PNG', 20, 20, 35, 35);
+    }
   } catch (error) {
-    doc.setFontSize(16);
+    console.log('Logo not available, using text fallback');
+    // Fallback elegant text logo
+    doc.setFontSize(24);
     doc.setTextColor(255, 255, 255);
-    doc.text("AIRGO", 35, 30);
+    doc.setFont("helvetica", "bold");
+    doc.text("✈ AIRGO", 30, 40);
   }
   
-  // Company header
-  doc.setFontSize(24);
+  // Modern header text - PROPERLY ALIGNED
+  doc.setFontSize(28);
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.text("AIRGO AIRLINES", 105, 35, { align: "center" });
+  doc.text("AIRGO AIRLINES", 110, 35, { align: "center" });
   
   doc.setFontSize(12);
-  doc.setTextColor(220, 220, 220);
-  doc.text("Boarding Pass & Passenger Details", 105, 45, { align: "center" });
+  doc.setTextColor(255, 255, 255, 0.9);
+  doc.setFont("helvetica", "normal");
+  doc.text("Digital Boarding Pass", 110, 48, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setTextColor(255, 255, 255, 0.8);
+  doc.text("Elevate Your Journey", 110, 58, { align: "center" });
+
+  // Passenger ID section with modern card design
+  doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+  doc.roundedRect(15, 90, 190, 25, 8, 8, 'F');
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(0.8);
+  doc.roundedRect(15, 90, 190, 25, 8, 8, 'S');
+  
+  doc.setFontSize(16);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text(`BOARDING PASS: ${safeRow.passengerName.toUpperCase()}`, 110, 102, { align: "center" });
   
   doc.setFontSize(9);
-  doc.text("Elevate Your Journey", 105, 52, { align: "center" });
-
-  // Passenger ID section
-  doc.setFillColor(245, 245, 245);
-  doc.roundedRect(15, 75, 180, 20, 5, 5, 'F');
-  doc.setDrawColor(0, 90, 156);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(15, 75, 180, 20, 5, 5, 'S');
-  
-  doc.setFontSize(14);
-  doc.setTextColor(0, 90, 156);
-  doc.setFont("helvetica", "bold");
-  doc.text(`BOARDING PASS: ${row.passengerName.toUpperCase()}`, 105, 85, { align: "center" });
-  
-  doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 105, 92, { align: "center" });
+  doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })}`, 110, 110, { align: "center" });
 
-  // Flight Information section
-  doc.setFontSize(16);
-  doc.setTextColor(0, 90, 156);
-  doc.setFont("helvetica", "bold");
-  doc.text("FLIGHT INFORMATION", 20, 112);
-  doc.setDrawColor(0, 90, 156);
-  doc.setLineWidth(0.8);
-  doc.line(20, 115, 95, 115);
-
-  // Flight route
-  const flightY = 132;
+  // Flight Information section with modern layout
+  const flightY = 130;
   doc.setFontSize(18);
-  doc.setTextColor(0, 0, 0);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.setFont("helvetica", "bold");
+  doc.text("FLIGHT DETAILS", 20, flightY);
   
-  // Departure
+  // Modern divider
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(1);
+  doc.line(20, flightY + 3, 80, flightY + 3);
+
+  // Flight info cards - PROPERLY SPACED
+  const cardY = flightY + 15;
+  
+  // Flight Number Card
   doc.setFillColor(240, 248, 255);
-  doc.roundedRect(25, flightY - 8, 60, 25, 3, 3, 'F');
-  doc.setTextColor(0, 90, 156);
-  doc.setFontSize(12);
-  doc.text("FLIGHT", 30, flightY);
-  doc.setFontSize(14);
-  doc.setTextColor(0, 0, 0);
-  doc.text(row.flightNumber, 30, flightY + 8);
+  doc.roundedRect(25, cardY, 75, 35, 6, 6, 'F');
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(25, cardY, 75, 35, 6, 6, 'S');
   
-  // Seat
-  doc.setFillColor(240, 248, 255);
-  doc.roundedRect(125, flightY - 8, 60, 25, 3, 3, 'F');
-  doc.setTextColor(0, 90, 156);
-  doc.setFontSize(12);
-  doc.text("SEAT", 130, flightY);
-  doc.setFontSize(14);
-  doc.setTextColor(0, 0, 0);
-  doc.text(row.seatNumber, 130, flightY + 8);
-
-  // Passenger Details section
-  const passengerY = 170;
-  doc.setFontSize(16);
-  doc.setTextColor(0, 90, 156);
-  doc.setFont("helvetica", "bold");
-  doc.text("PASSENGER DETAILS", 20, passengerY);
-  doc.line(20, passengerY + 3, 95, passengerY + 3);
-
-  // Details card
-  doc.setFillColor(250, 250, 250);
-  doc.roundedRect(25, passengerY + 10, 160, 45, 4, 4, 'F');
-  doc.setDrawColor(220, 220, 220);
-  doc.roundedRect(25, passengerY + 10, 160, 45, 4, 4, 'S');
-
-  const detailsStartY = passengerY + 20;
-  doc.setFontSize(11);
-  doc.setTextColor(0, 90, 156);
-  doc.setFont("helvetica", "bold");
-
-  // Left column
-  doc.text("Passenger Name:", 35, detailsStartY);
-  doc.text("Passport Number:", 35, detailsStartY + 10);
-  doc.text("Nationality:", 35, detailsStartY + 20);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "normal");
-  doc.text(row.passengerName, 85, detailsStartY);
-  doc.text(row.passportNumber, 85, detailsStartY + 10);
-  doc.text(row.nationality, 85, detailsStartY + 20);
-
-  // Right column
-  doc.setTextColor(0, 90, 156);
-  doc.setFont("helvetica", "bold");
-  doc.text("Check-in ID:", 120, detailsStartY);
-  doc.text("Status:", 120, detailsStartY + 10);
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFont("helvetica", "normal");
-  doc.text(row.checkId, 155, detailsStartY);
-  
-  // Status with color
-  if (row.status === "Business") doc.setTextColor(0, 90, 156);
-  else if (row.status === "First Class") doc.setTextColor(156, 39, 176);
-  else doc.setTextColor(46, 125, 50);
-  doc.text(row.status, 155, detailsStartY + 10);
-
-  // Boarding Information
-  const boardingY = 235;
-  doc.setFontSize(16);
-  doc.setTextColor(0, 90, 156);
-  doc.setFont("helvetica", "bold");
-  doc.text("BOARDING INFORMATION", 20, boardingY);
-  doc.line(20, boardingY + 3, 110, boardingY + 3);
-
-  doc.setFillColor(255, 253, 231);
-  doc.roundedRect(25, boardingY + 10, 160, 25, 4, 4, 'F');
-  doc.setDrawColor(255, 213, 79);
-  doc.roundedRect(25, boardingY + 10, 160, 25, 4, 4, 'S');
-
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
+  doc.setFont("helvetica", "bold");
+  doc.text("FLIGHT NUMBER", 62.5, cardY + 10, { align: "center" });
+  doc.setFontSize(16);
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text(safeRow.flightNumber, 62.5, cardY + 25, { align: "center" });
+  
+  // Seat Number Card
+  doc.setFillColor(240, 248, 255);
+  doc.roundedRect(120, cardY, 75, 35, 6, 6, 'F');
+  doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.roundedRect(120, cardY, 75, 35, 6, 6, 'S');
+  
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.text("SEAT NUMBER", 157.5, cardY + 10, { align: "center" });
+  doc.setFontSize(16);
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.text(safeRow.seatNumber, 157.5, cardY + 25, { align: "center" });
+
+  // Passenger Details section - PROPERLY ALIGNED
+  const passengerY = cardY + 50;
+  doc.setFontSize(18);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text("PASSENGER INFORMATION", 20, passengerY);
+  doc.line(20, passengerY + 3, 110, passengerY + 3);
+
+  // Modern details card
+  doc.setFillColor(250, 250, 250);
+  doc.roundedRect(25, passengerY + 10, 170, 50, 8, 8, 'F');
+  doc.setDrawColor(220, 220, 220);
+  doc.roundedRect(25, passengerY + 10, 170, 50, 8, 8, 'S');
+
+  const detailsStartY = passengerY + 22;
+  
+  // Left column - PROPERLY ALIGNED
+  doc.setFontSize(10);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text("FULL NAME:", 35, detailsStartY);
+  doc.text("PASSPORT NO:", 35, detailsStartY + 10);
+  doc.text("NATIONALITY:", 35, detailsStartY + 20);
+  doc.text("CHECK-IN ID:", 35, detailsStartY + 30);
+
+  doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+  doc.setFont("helvetica", "normal");
+  doc.text(safeRow.passengerName, 85, detailsStartY);
+  doc.text(safeRow.passportNumber, 85, detailsStartY + 10);
+  doc.text(safeRow.nationality, 85, detailsStartY + 20);
+  doc.text(safeRow.checkId, 85, detailsStartY + 30);
+
+  // Right column - Status with colored badge - PROPERLY ALIGNED
+  const statusX = 120;
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text("CLASS:", statusX, detailsStartY);
+  doc.text("STATUS:", statusX, detailsStartY + 10);
+
+  // Status with color coding
+  let statusColor = primaryColor;
+  if (safeRow.status === "First Class") statusColor = [156, 39, 176]; // Purple
+  else if (safeRow.status === "Economy") statusColor = [46, 125, 50]; // Green
+  else if (safeRow.status === "Business") statusColor = [0, 90, 156]; // Blue
+  
+  doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text(safeRow.status, statusX + 25, detailsStartY);
+  doc.setTextColor(76, 175, 80);
+  doc.text("CONFIRMED", statusX + 25, detailsStartY + 10);
+
+  // QR Code Section - PROPERLY POSITIONED
+  const qrY = passengerY + 75;
+  doc.setFontSize(16);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text("DIGITAL BOARDING PASS", 20, qrY);
+  doc.line(20, qrY + 3, 95, qrY + 3);
+
+  try {
+    // Generate QR code for PDF
+    const qrData = {
+      checkId: safeRow.checkId,
+      passengerName: safeRow.passengerName,
+      passportNumber: safeRow.passportNumber,
+      flightNumber: safeRow.flightNumber,
+      seatNumber: safeRow.seatNumber,
+      status: safeRow.status,
+      timestamp: new Date().toISOString(),
+      airline: "AIRGO Airlines"
+    };
+
+    const qrDataString = JSON.stringify(qrData);
+    const qrCodeDataURL = await QRCode.toDataURL(qrDataString, {
+      width: 120,
+      margin: 1,
+      color: {
+        dark: "#005a9c",
+        light: "#FFFFFF"
+      },
+    });
+
+    // Add QR code to PDF - PROPERLY CENTERED
+    doc.addImage(qrCodeDataURL, 'PNG', 150, qrY - 5, 40, 40);
+    
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text("Scan at boarding", 170, qrY + 40, { align: "center" });
+  } catch (error) {
+    console.log('QR code generation failed for PDF');
+  }
+
+  // Boarding Information with modern design
+  const boardingY = qrY + 50;
+  doc.setFontSize(16);
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text("BOARDING INSTRUCTIONS", 20, boardingY);
+  doc.line(20, boardingY + 3, 105, boardingY + 3);
+
+  // Modern info box
+  doc.setFillColor(255, 248, 225);
+  doc.roundedRect(25, boardingY + 10, 170, 35, 6, 6, 'F');
+  doc.setDrawColor(255, 193, 7);
+  doc.roundedRect(25, boardingY + 10, 170, 35, 6, 6, 'S');
+
+  doc.setFontSize(9);
+  doc.setTextColor(102, 102, 102);
   const boardingInfo = [
-    "• Boarding starts 45 minutes before departure",
-    "• Have passport and boarding pass ready",
-    "• Proceed to Gate 15 for security check"
+    "✓ Boarding starts 45 minutes before departure",
+    "✓ Have passport and boarding pass ready",
+    "✓ Proceed to security check with QR code"
   ];
 
   boardingInfo.forEach((info, index) => {
-    doc.text(info, 30, boardingY + 20 + (index * 7));
+    doc.text(info, 30, boardingY + 22 + (index * 8));
   });
 
-  // Footer
-  doc.setFillColor(0, 90, 156);
-  doc.rect(0, 275, 220, 15, 'F');
+  // Footer with modern design
+  doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.rect(0, 275, 220, 20, 'F');
   
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setTextColor(255, 255, 255);
-  doc.text("AIRGO Airlines - Elevate Your Journey | support@airgo.com | +1 (800) AIRGO-00", 105, 281, { align: "center" });
+  doc.text("AIRGO Airlines - Elevate Your Journey", 110, 281, { align: "center" });
+  doc.text("support@airgo.com | +1 (800) AIRGO-00 | www.airgo.com", 110, 287, { align: "center" });
 
-  // Page border
+  // Security features
+  doc.setFontSize(6);
+  doc.setTextColor(150, 150, 150);
+  const securityCode = `${safeRow.checkId}${safeRow.passportNumber.slice(-4)}`;
+  doc.text(`Security Code: ${securityCode}`, 110, 293, { align: "center" });
+
+  // Modern page border
   doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.5);
+  doc.setLineWidth(0.3);
   doc.rect(5, 5, 200, 287);
 
-  doc.save(`AIRGO_BoardingPass_${row.passengerName}_${row.checkId}.pdf`);
+  // Save with modern filename
+  const fileName = `AIRGO_BP_${safeRow.passengerName.replace(/\s+/g, '_')}_${safeRow.flightNumber}_${safeRow.seatNumber}.pdf`;
+  doc.save(fileName);
 };
 
-// MAIN COMPONENT
+// DOWNLOAD BOARDING PASS AS QR CODE
+const downloadBoardingPassQR = async (row) => {
+  try {
+    // Ensure all data is converted to strings
+    const safeRow = {
+      passengerName: String(row.passengerName || ''),
+      passportNumber: String(row.passportNumber || ''),
+      nationality: String(row.nationality || ''),
+      flightNumber: String(row.flightNumber || ''),
+      seatNumber: String(row.seatNumber || ''),
+      status: String(row.status || ''),
+      checkId: String(row.checkId || '')
+    };
+
+    // Create QR data
+    const qrData = {
+      checkId: safeRow.checkId,
+      passengerName: safeRow.passengerName,
+      passportNumber: safeRow.passportNumber,
+      nationality: safeRow.nationality,
+      flightNumber: safeRow.flightNumber,
+      seatNumber: safeRow.seatNumber,
+      status: safeRow.status,
+      timestamp: new Date().toISOString(),
+      airline: "AIRGO Airlines",
+      type: "BoardingPass"
+    };
+
+    const qrDataString = JSON.stringify(qrData);
+
+    // Create canvas for QR code
+    const canvas = document.createElement('canvas');
+    await QRCode.toCanvas(canvas, qrDataString, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: "#005a9c",
+        light: "#ffffff",
+      },
+    });
+
+    // Create a new canvas for the boarding pass with QR
+    const boardingPassCanvas = document.createElement('canvas');
+    const ctx = boardingPassCanvas.getContext('2d');
+    
+    // Set canvas size for mobile-friendly boarding pass
+    boardingPassCanvas.width = 600;
+    boardingPassCanvas.height = 800;
+    
+    // Background
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, boardingPassCanvas.width, boardingPassCanvas.height);
+    
+    // Header with gradient
+    const gradient = ctx.createLinearGradient(0, 0, boardingPassCanvas.width, 0);
+    gradient.addColorStop(0, '#005a9c');
+    gradient.addColorStop(1, '#0288d1');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, boardingPassCanvas.width, 120);
+    
+    // Airline title - CENTERED
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('AIRGO AIRLINES', boardingPassCanvas.width / 2, 45);
+    ctx.font = 'bold 20px Arial';
+    ctx.fillText('BOARDING PASS', boardingPassCanvas.width / 2, 75);
+    ctx.font = '14px Arial';
+    ctx.fillText('Elevate Your Journey', boardingPassCanvas.width / 2, 95);
+    
+    // Passenger info section
+    ctx.fillStyle = '#005a9c';
+    ctx.font = 'bold 22px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('PASSENGER INFORMATION', 40, 150);
+    
+    // Divider line
+    ctx.strokeStyle = '#005a9c';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(40, 160);
+    ctx.lineTo(300, 160);
+    ctx.stroke();
+    
+    ctx.fillStyle = '#333333';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText(safeRow.passengerName, 40, 190);
+    
+    ctx.font = '14px Arial';
+    ctx.fillText(`Passport: ${safeRow.passportNumber}`, 40, 220);
+    ctx.fillText(`Nationality: ${safeRow.nationality}`, 40, 245);
+    
+    // Flight info section
+    ctx.fillStyle = '#005a9c';
+    ctx.font = 'bold 22px Arial';
+    ctx.fillText('FLIGHT INFORMATION', 40, 290);
+    
+    // Divider line
+    ctx.beginPath();
+    ctx.moveTo(40, 300);
+    ctx.lineTo(300, 300);
+    ctx.stroke();
+    
+    ctx.fillStyle = '#333333';
+    ctx.font = 'bold 18px Arial';
+    ctx.fillText(safeRow.flightNumber, 40, 330);
+    
+    ctx.font = '16px Arial';
+    ctx.fillText(`Seat: ${safeRow.seatNumber}`, 40, 360);
+    ctx.fillText(`Class: ${safeRow.status}`, 40, 385);
+    
+    // QR Code section
+    ctx.fillStyle = '#005a9c';
+    ctx.font = 'bold 22px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('SCAN BOARDING PASS', boardingPassCanvas.width / 2, 450);
+    
+    // Draw QR code (centered)
+    const qrSize = 300;
+    const qrX = (boardingPassCanvas.width - qrSize) / 2;
+    ctx.drawImage(canvas, qrX, 470, qrSize, qrSize);
+    
+    // Boarding information
+    ctx.fillStyle = '#005a9c';
+    ctx.font = 'bold 18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('BOARDING INFORMATION', 40, 800 - 120);
+    
+    ctx.fillStyle = '#666666';
+    ctx.font = '12px Arial';
+    const boardingInfo = [
+      '• Boarding starts 45 minutes before departure',
+      '• Have passport and boarding pass ready',
+      '• Proceed to security check with this QR code'
+    ];
+    
+    boardingInfo.forEach((info, index) => {
+      ctx.fillText(info, 40, 800 - 90 + (index * 20));
+    });
+    
+    // Footer
+    ctx.fillStyle = '#005a9c';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Check-in ID: ${safeRow.checkId} | Generated: ${new Date().toLocaleString()}`, boardingPassCanvas.width / 2, 800 - 30);
+    ctx.fillText('AIRGO Airlines - Elevate Your Journey', boardingPassCanvas.width / 2, 800 - 15);
+    
+    // Border
+    ctx.strokeStyle = '#005a9c';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(10, 10, boardingPassCanvas.width - 20, boardingPassCanvas.height - 20);
+    
+    // Download the image
+    const link = document.createElement('a');
+    link.download = `AIRGO_BoardingPass_${safeRow.passengerName}_${safeRow.flightNumber}.png`;
+    link.href = boardingPassCanvas.toDataURL('image/png');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+  } catch (error) {
+    console.error('Error generating QR boarding pass:', error);
+    // Fallback: download simple QR code
+    try {
+      const safeRow = {
+        passengerName: String(row.passengerName || ''),
+        flightNumber: String(row.flightNumber || ''),
+        seatNumber: String(row.seatNumber || ''),
+        checkId: String(row.checkId || '')
+      };
+
+      const qrData = {
+        checkId: safeRow.checkId,
+        passengerName: safeRow.passengerName,
+        flightNumber: safeRow.flightNumber,
+        seatNumber: safeRow.seatNumber,
+        timestamp: new Date().toISOString()
+      };
+      
+      const qrDataString = JSON.stringify(qrData);
+      const url = await QRCode.toDataURL(qrDataString, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: "#005a9c",
+          light: "#ffffff",
+        },
+      });
+      
+      const link = document.createElement('a');
+      link.download = `AIRGO_QR_${safeRow.passengerName}_${safeRow.flightNumber}.png`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (fallbackError) {
+      console.error('Fallback QR generation failed:', fallbackError);
+      alert('Error generating boarding pass. Please try again.');
+    }
+  }
+};
+
+// MAIN COMPONENT (Keep the same as before)
 const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [selectedQrData, setSelectedQrData] = useState(null);
@@ -221,7 +518,22 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
   const generateQRCode = async () => {
     setIsGeneratingQR(true);
     try {
-      const qrDataString = JSON.stringify(selectedQrData);
+      // Ensure all data is converted to strings for QR generation
+      const safeQrData = {
+        checkId: String(selectedQrData.checkId || ''),
+        passengerName: String(selectedQrData.passengerName || ''),
+        passportNumber: String(selectedQrData.passportNumber || ''),
+        nationality: String(selectedQrData.nationality || ''),
+        flightNumber: String(selectedQrData.flightNumber || ''),
+        seatNumber: String(selectedQrData.seatNumber || ''),
+        status: String(selectedQrData.status || ''),
+        profilePhoto: selectedQrData.profilePhoto || '',
+        timestamp: selectedQrData.timestamp || new Date().toISOString(),
+        airline: "AIRGO Airlines",
+        type: "BoardingPass"
+      };
+
+      const qrDataString = JSON.stringify(safeQrData);
 
       // Generate for display
       const url = await QRCode.toDataURL(qrDataString, {
@@ -256,7 +568,7 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
   const downloadQRCode = () => {
     if (qrCanvasRef.current) {
       const link = document.createElement("a");
-      link.download = `AIRGO_BoardingPass_${selectedQrData.passengerName}_${selectedQrData.seatNumber}.png`;
+      link.download = `AIRGO_BoardingPass_${String(selectedQrData.passengerName)}_${String(selectedQrData.seatNumber)}.png`;
       link.href = qrCanvasRef.current.toDataURL("image/png");
       document.body.appendChild(link);
       link.click();
@@ -270,7 +582,7 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>AIRGO Boarding Pass - ${selectedQrData.passengerName}</title>
+          <title>AIRGO Boarding Pass - ${String(selectedQrData.passengerName)}</title>
           <style>
             body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
             .boarding-pass { max-width: 400px; margin: 0 auto; border: 2px solid #005a9c; padding: 20px; border-radius: 10px; }
@@ -286,16 +598,16 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
               <h3>Boarding Pass</h3>
             </div>
             <div class="passenger-info">
-              <h3>${selectedQrData.passengerName}</h3>
-              <p><strong>Flight:</strong> ${selectedQrData.flightNumber} | <strong>Seat:</strong> ${selectedQrData.seatNumber}</p>
+              <h3>${String(selectedQrData.passengerName)}</h3>
+              <p><strong>Flight:</strong> ${String(selectedQrData.flightNumber)} | <strong>Seat:</strong> ${String(selectedQrData.seatNumber)}</p>
             </div>
             <div class="qr-code">
               <img src="${qrCodeImage}" alt="QR Code" style="width: 250px; height: 250px;" />
             </div>
             <div class="details">
-              <p><strong>Passport:</strong> ${selectedQrData.passportNumber}</p>
-              <p><strong>Nationality:</strong> ${selectedQrData.nationality}</p>
-              <p><strong>Class:</strong> ${selectedQrData.status}</p>
+              <p><strong>Passport:</strong> ${String(selectedQrData.passportNumber)}</p>
+              <p><strong>Nationality:</strong> ${String(selectedQrData.nationality)}</p>
+              <p><strong>Class:</strong> ${String(selectedQrData.status)}</p>
               <p><strong>Generated:</strong> ${new Date(selectedQrData.timestamp).toLocaleString()}</p>
             </div>
           </div>
@@ -313,21 +625,22 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
 
   // Generate QR code data and show dialog
   const generateBoardingPassQR = (row) => {
-    const qrData = {
-      checkId: row.checkId,
-      passengerName: row.passengerName,
-      passportNumber: row.passportNumber,
-      nationality: row.nationality,
-      flightNumber: row.flightNumber,
-      seatNumber: row.seatNumber,
-      status: row.status,
-      profilePhoto: row.profilePhoto,
+    // Ensure all data is converted to strings
+    const safeRow = {
+      checkId: String(row.checkId || ''),
+      passengerName: String(row.passengerName || ''),
+      passportNumber: String(row.passportNumber || ''),
+      nationality: String(row.nationality || ''),
+      flightNumber: String(row.flightNumber || ''),
+      seatNumber: String(row.seatNumber || ''),
+      status: String(row.status || ''),
+      profilePhoto: row.profilePhoto || '',
       timestamp: new Date().toISOString(),
       airline: "AIRGO Airlines",
       type: "BoardingPass"
     };
 
-    setSelectedQrData(qrData);
+    setSelectedQrData(safeRow);
     setQrDialogOpen(true);
   };
 
@@ -367,13 +680,13 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
                     />
                     <Box>
                       <Typography variant="h6" fontWeight="bold">
-                        {row.passengerName}
+                        {String(row.passengerName || 'N/A')}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        ID: {row.checkId}
+                        ID: {String(row.checkId || 'N/A')}
                       </Typography>
                       <Chip 
-                        label={row.status} 
+                        label={String(row.status || 'N/A')} 
                         color={getStatusColor(row.status)}
                         size="small"
                         sx={{ mt: 0.5 }}
@@ -388,23 +701,23 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <BadgeIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="body2">
-                        <strong>Passport:</strong> {row.passportNumber}
+                        <strong>Passport:</strong> {String(row.passportNumber || 'N/A')}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <FlightIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="body2">
-                        <strong>Flight:</strong> {row.flightNumber}
+                        <strong>Flight:</strong> {String(row.flightNumber || 'N/A')}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <SeatIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
                       <Typography variant="body2">
-                        <strong>Seat:</strong> {row.seatNumber}
+                        <strong>Seat:</strong> {String(row.seatNumber || 'N/A')}
                       </Typography>
                     </Box>
                     <Typography variant="body2">
-                      <strong>Nationality:</strong> {row.nationality}
+                      <strong>Nationality:</strong> {String(row.nationality || 'N/A')}
                     </Typography>
                   </Box>
 
@@ -444,6 +757,24 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
                       sx={{ background: 'linear-gradient(45deg, #00c853, #64dd17)' }}
                     >
                       Boarding Pass QR
+                    </Button>
+                    {/* NEW: Direct QR Download Button */}
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      startIcon={<DownloadIcon />}
+                      onClick={() => downloadBoardingPassQR(row)}
+                      size="small"
+                      sx={{ 
+                        borderColor: '#005a9c', 
+                        color: '#005a9c',
+                        '&:hover': {
+                          backgroundColor: '#005a9c',
+                          color: 'white'
+                        }
+                      }}
+                    >
+                      Download QR Pass
                     </Button>
                   </Box>
                 </CardContent>
@@ -500,13 +831,13 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
                 />
                 <Box>
                   <Typography variant="h5" fontWeight="bold">
-                    {selectedQrData.passengerName}
+                    {String(selectedQrData.passengerName)}
                   </Typography>
                   <Typography variant="h6" color="primary.main">
-                    Flight: {selectedQrData.flightNumber} | Seat: {selectedQrData.seatNumber}
+                    Flight: {String(selectedQrData.flightNumber)} | Seat: {String(selectedQrData.seatNumber)}
                   </Typography>
                   <Chip 
-                    label={selectedQrData.status} 
+                    label={String(selectedQrData.status)} 
                     color={getStatusColor(selectedQrData.status)}
                     sx={{ mt: 1 }}
                   />
@@ -554,15 +885,20 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
                           </Box>
                         )}
                         
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {/* Action Buttons - Matching your design */}
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap', mb: 2 }}>
                           <Button
                             variant="contained"
                             startIcon={<DownloadIcon />}
                             onClick={downloadQRCode}
                             disabled={!qrCodeImage}
                             size="small"
+                            sx={{ 
+                              background: 'linear-gradient(45deg, #005a9c, #0288d1)',
+                              minWidth: '140px'
+                            }}
                           >
-                            Download QR
+                            DOWNLOAD QR
                           </Button>
                           <Button
                             variant="outlined"
@@ -570,23 +906,54 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
                             onClick={printQRCode}
                             disabled={!qrCodeImage}
                             size="small"
+                            sx={{ 
+                              borderColor: '#005a9c', 
+                              color: '#005a9c',
+                              minWidth: '100px'
+                            }}
                           >
-                            Print
+                            PRINT
                           </Button>
                           <Button
                             variant="outlined"
                             startIcon={<ShareIcon />}
                             onClick={() => navigator.share?.({
-                              title: `Boarding Pass - ${selectedQrData.passengerName}`,
-                              text: `AIRGO Airlines Boarding Pass for ${selectedQrData.passengerName}`,
+                              title: `Boarding Pass - ${String(selectedQrData.passengerName)}`,
+                              text: `AIRGO Airlines Boarding Pass for ${String(selectedQrData.passengerName)}`,
                               url: qrCodeImage
                             })}
                             disabled={!qrCodeImage || !navigator.share}
                             size="small"
+                            sx={{ 
+                              borderColor: '#005a9c', 
+                              color: '#005a9c',
+                              minWidth: '100px'
+                            }}
                           >
-                            Share
+                            SHARE
                           </Button>
                         </Box>
+
+                        {/* Enhanced Download Button */}
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          startIcon={<DownloadIcon />}
+                          onClick={() => downloadBoardingPassQR(selectedQrData)}
+                          disabled={!qrCodeImage}
+                          size="medium"
+                          sx={{ 
+                            background: 'linear-gradient(45deg, #00c853, #64dd17)',
+                            mb: 2,
+                            minWidth: '200px'
+                          }}
+                        >
+                          Download Full Boarding Pass
+                        </Button>
+
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                          Scan this QR code at the boarding gate or download for offline use
+                        </Typography>
                       </>
                     )}
                     <canvas ref={qrCanvasRef} style={{ display: "none" }} />
@@ -594,19 +961,32 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                  <Card sx={{ bgcolor: 'grey.50' }}>
+                  <Card sx={{ bgcolor: 'grey.50', height: '100%' }}>
                     <CardContent>
                       <Typography variant="h6" gutterBottom sx={{ textAlign: 'center', color: 'primary.main' }}>
                         Passenger Details
                       </Typography>
                       
                       <Box sx={{ mb: 2 }}>
-                        <Typography><strong>Name:</strong> {selectedQrData.passengerName}</Typography>
-                        <Typography><strong>Passport:</strong> {selectedQrData.passportNumber}</Typography>
-                        <Typography><strong>Nationality:</strong> {selectedQrData.nationality}</Typography>
-                        <Typography><strong>Flight:</strong> {selectedQrData.flightNumber}</Typography>
-                        <Typography><strong>Seat:</strong> {selectedQrData.seatNumber}</Typography>
-                        <Typography><strong>Class:</strong> {selectedQrData.status}</Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <BadgeIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
+                          <Typography><strong>Name:</strong> {String(selectedQrData.passengerName)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <BadgeIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
+                          <Typography><strong>Passport:</strong> {String(selectedQrData.passportNumber)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <FlightIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
+                          <Typography><strong>Flight:</strong> {String(selectedQrData.flightNumber)}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <SeatIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
+                          <Typography><strong>Seat:</strong> {String(selectedQrData.seatNumber)}</Typography>
+                        </Box>
+                        <Typography><strong>Nationality:</strong> {String(selectedQrData.nationality)}</Typography>
+                        <Typography><strong>Class:</strong> {String(selectedQrData.status)}</Typography>
+                        <Typography><strong>Check-in ID:</strong> {String(selectedQrData.checkId)}</Typography>
                       </Box>
 
                       <Divider sx={{ my: 2 }} />
@@ -631,6 +1011,7 @@ const ChecksTable = ({ rows = [], users = [], selectedCheck, deleteCheck }) => {
           <Button 
             onClick={() => setQrDialogOpen(false)}
             variant="outlined"
+            sx={{ borderColor: '#005a9c', color: '#005a9c' }}
           >
             Close
           </Button>

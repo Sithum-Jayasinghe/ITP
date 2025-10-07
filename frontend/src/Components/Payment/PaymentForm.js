@@ -984,13 +984,22 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           placeholder="Enter NIC (e.g. 123456789V or 200012345678)"
                           value={id}
                           onChange={(e) => {
-                            const val = e.target.value.toUpperCase(); // auto uppercase V/X
+                            let val = e.target.value.toUpperCase();
+
+                            // 🔹 Allow only digits and optional last V/X
+                            val = val.replace(/[^0-9VX]/gi, ""); // remove invalid chars
+
+                            // 🔹 Restrict max length to 12
+                            if (val.length > 12) val = val.slice(0, 12);
+
+                            // Update state
                             setId(val);
 
-                            // ✅ Regex patterns for NIC
-                            const oldNIC = /^[0-9]{9}[VX]$/;   // 9 digits + V/X
-                            const newNIC = /^[0-9]{12}$/;      // 12 digits only
+                            // 🔹 Regex patterns
+                            const oldNIC = /^[0-9]{9}[VX]$/; // 9 digits + V/X
+                            const newNIC = /^[0-9]{12}$/;    // 12 digits only
 
+                            // 🔹 Validation messages
                             if (!val) {
                               setFormErrors((prev) => ({
                                 ...prev,
@@ -999,7 +1008,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                             } else if (!(oldNIC.test(val) || newNIC.test(val))) {
                               setFormErrors((prev) => ({
                                 ...prev,
-                                id: "❌ Invalid NIC format. Use 9 digits + V/X OR 12 digits (e.g. 123456789V / 200012345678)",
+                                id: "❌ Invalid NIC format (use 123456789V or 200012345678)",
                               }));
                             } else {
                               setFormErrors((prev) => ({ ...prev, id: "" }));
@@ -1010,6 +1019,10 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           required
                           error={!!formErrors.id}
                           helperText={formErrors.id}
+                          inputProps={{
+                            maxLength: 12, // prevents typing beyond 12 characters
+                            inputMode: "numeric", // mobile keyboard numeric
+                          }}
                           InputProps={{
                             startAdornment: (
                               <InputAdornment position="start">
@@ -1024,6 +1037,7 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           }}
                         />
                       </Grid>
+
 
 
 
@@ -1135,24 +1149,37 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                       <Grid item xs={12} sm={6}>
                         <TextField
                           label="Phone Number"
-                          placeholder="e.g. +94 71 234 5678"
+                          placeholder="e.g. 0712345678"
                           value={phone}
                           onChange={(e) => {
-                            const val = e.target.value;
+                            let val = e.target.value;
 
-                            // ✅ Allow only digits, spaces, +, -
-                            if (/^[0-9+\s-]*$/.test(val)) {
-                              setPhone(val);
+                            // 🔹 Allow only digits
+                            val = val.replace(/[^0-9]/g, "");
 
-                              // ✅ Validation for Sri Lankan numbers (+94XXXXXXXXX or 0XXXXXXXXX)
-                              if (!/^(?:\+94|0)[1-9][0-9]{8}$/.test(val.replace(/\s|-/g, ""))) {
-                                setFormErrors((prev) => ({
-                                  ...prev,
-                                  phone: "❌ Enter a valid Sri Lankan phone number (10 digits)",
-                                }));
-                              } else {
-                                setFormErrors((prev) => ({ ...prev, phone: "" }));
-                              }
+                            // 🔹 Restrict to exactly 10 digits
+                            if (val.length > 10) val = val.slice(0, 10);
+
+                            setPhone(val);
+
+                            // 🔹 Validate length (must be 10 digits)
+                            if (!val) {
+                              setFormErrors((prev) => ({
+                                ...prev,
+                                phone: "❌ Phone number is required",
+                              }));
+                            } else if (val.length !== 10) {
+                              setFormErrors((prev) => ({
+                                ...prev,
+                                phone: "❌ Must contain exactly 10 digits",
+                              }));
+                            } else if (!/^0[1-9][0-9]{8}$/.test(val)) {
+                              setFormErrors((prev) => ({
+                                ...prev,
+                                phone: "❌ Invalid Sri Lankan number format (e.g. 0712345678)",
+                              }));
+                            } else {
+                              setFormErrors((prev) => ({ ...prev, phone: "" }));
                             }
                           }}
                           fullWidth
@@ -1160,13 +1187,17 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           disabled={processing}
                           error={!!formErrors.phone}
                           helperText={formErrors.phone}
+                          inputProps={{
+                            maxLength: 10,
+                            inputMode: "numeric",
+                            pattern: "[0-9]*",
+                          }}
                           InputProps={{
                             startAdornment: (
                               <InputAdornment position="start">
                                 <Phone color="primary" />
                               </InputAdornment>
                             ),
-                            inputMode: "tel",
                           }}
                           sx={{
                             "& .MuiOutlinedInput-root": {
@@ -1175,6 +1206,8 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           }}
                         />
                       </Grid>
+
+
 
 
                       {/* Status */}
@@ -1247,29 +1280,59 @@ const PaymentForm = ({ addPayment, updatePayment, submitted, data, isEdit }) => 
                           <Grid item xs={12}>
                             <TextField
                               label="Card Number"
-                              placeholder="16-digit card number"
+                              placeholder="Enter 16-digit card number"
                               value={card}
-                              onChange={(e) => setCard(e.target.value)}
+                              onChange={(e) => {
+                                let val = e.target.value;
+
+                                // 🔹 Allow only numbers
+                                val = val.replace(/[^0-9]/g, "");
+
+                                // 🔹 Restrict max length to 16 digits
+                                if (val.length > 16) val = val.slice(0, 16);
+
+                                setCard(val);
+
+                                // 🔹 Validation
+                                if (!val) {
+                                  setFormErrors((prev) => ({
+                                    ...prev,
+                                    card: "❌ Card number is required",
+                                  }));
+                                } else if (val.length !== 16) {
+                                  setFormErrors((prev) => ({
+                                    ...prev,
+                                    card: "❌ Must contain exactly 16 digits",
+                                  }));
+                                } else {
+                                  setFormErrors((prev) => ({ ...prev, card: "" }));
+                                }
+                              }}
                               fullWidth
                               required
                               disabled={processing}
                               error={!!formErrors.card}
                               helperText={formErrors.card}
+                              inputProps={{
+                                maxLength: 16, // cannot exceed 16 digits
+                                inputMode: "numeric",
+                                pattern: "[0-9]*", // mobile numeric keypad
+                              }}
                               InputProps={{
                                 startAdornment: (
                                   <InputAdornment position="start">
                                     <CreditCard color="primary" />
                                   </InputAdornment>
                                 ),
-                                inputMode: "numeric",
                               }}
                               sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: '12px'
-                                }
+                                "& .MuiOutlinedInput-root": {
+                                  borderRadius: "12px",
+                                },
                               }}
                             />
                           </Grid>
+
 
                           {/* Expiry Date */}
                           <Grid item xs={12} sm={6}>

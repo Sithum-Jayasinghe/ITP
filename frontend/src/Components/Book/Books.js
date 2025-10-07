@@ -320,36 +320,169 @@ const Books = () => {
     ]);
   };
 
+  // ✅ Voice generation function (same as before)
+  const speakText = (text) => {
+    if ("speechSynthesis" in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // ✅ Intelligent AI Assistant
   const sendChatMessage = (message) => {
     const newMessage = {
       id: Date.now(),
       text: message,
       sender: "user",
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
-    setChatMessages(prev => [...prev, newMessage]);
+    setChatMessages((prev) => [...prev, newMessage]);
 
     setTimeout(() => {
-      const responses = [
-        "I can help you with that! What specific information do you need?",
-        "Great choice! That route is very popular this time of year.",
-        `Current best price for Colombo to Mumbai: ${formatLKR(convertToLKR(526))}`,
-        "I'll check the availability for you right away.",
-        "Based on your preferences, I recommend considering these options...",
-        `There's a special promotion running! Prices start from ${formatLKR(convertToLKR(450))}`
-      ];
+      const lower = message.toLowerCase().trim();
+      let aiReply = "";
+
+      // ✈️ Bookings-related
+      if (
+        lower.includes("book") ||
+        lower.includes("booking") ||
+        lower.includes("reserve") ||
+        lower.includes("ticket")
+      ) {
+        aiReply =
+          "You can easily create or update your bookings in the 'Bookings' tab. Would you like me to guide you there?";
+      }
+
+      // 💸 Price / discount queries
+      else if (
+        lower.includes("price") ||
+        lower.includes("cost") ||
+        lower.includes("fare") ||
+        lower.includes("discount") ||
+        lower.includes("offer") ||
+        lower.includes("promotion")
+      ) {
+        aiReply =
+          "Right now, Colombo to Mumbai is priced around " +
+          formatLKR(convertToLKR(526)) +
+          ". We also have discounts up to 15% for early bookings!";
+      }
+
+      // 🕒 Flight status or schedule
+      else if (
+        lower.includes("status") ||
+        lower.includes("delay") ||
+        lower.includes("on time") ||
+        lower.includes("depart") ||
+        lower.includes("arrival") ||
+        lower.includes("gate") ||
+        lower.includes("flight")
+      ) {
+        aiReply =
+          "Your flights are mostly on time today ✈️. The next departures from Colombo are at 10:15 AM and 4:20 PM.";
+      }
+
+      // 🌦️ Weather
+      else if (lower.includes("weather") || lower.includes("temperature")) {
+        aiReply =
+          "The weather in Colombo is sunny ☀️, about 30°C. Perfect for flying!";
+      }
+
+      // 🧳 Baggage or check-in
+      else if (
+        lower.includes("bag") ||
+        lower.includes("check") ||
+        lower.includes("weight") ||
+        lower.includes("allowance")
+      ) {
+        aiReply =
+          "You can carry 30 kg of checked baggage and 7 kg as hand luggage. Don’t forget to check in online 24 hours before departure!";
+      }
+
+      // 🕰️ Time-related questions
+      else if (lower.includes("time") || lower.includes("when")) {
+        aiReply =
+          "Most flights leave Colombo between 8:00 AM and 10:00 PM daily. Which route would you like to check?";
+      }
+
+      // 🛫 Route-related
+      else if (
+        lower.includes("colombo") ||
+        lower.includes("dubai") ||
+        lower.includes("mumbai") ||
+        lower.includes("singapore")
+      ) {
+        aiReply =
+          "Flights between Colombo and your destination operate daily. The average price is around " +
+          formatLKR(convertToLKR(650)) +
+          ".";
+      }
+
+      // 🌍 General greetings or help
+      else if (
+        lower.includes("hi") ||
+        lower.includes("hello") ||
+        lower.includes("hey") ||
+        lower.includes("help")
+      ) {
+        aiReply =
+          "Hi there 👋! I’m your AI travel assistant. You can ask about bookings, prices, baggage, or flight status.";
+      }
+
+      // 💳 Payment or refund
+      else if (
+        lower.includes("pay") ||
+        lower.includes("payment") ||
+        lower.includes("refund") ||
+        lower.includes("cancel")
+      ) {
+        aiReply =
+          "You can pay using Visa, MasterCard, or online banking. Refunds are processed within 3–5 business days after cancellation.";
+      }
+
+      // 💡 Travel advice
+      else if (
+        lower.includes("tip") ||
+        lower.includes("advice") ||
+        lower.includes("suggest") ||
+        lower.includes("recommend")
+      ) {
+        aiReply =
+          "Travel Tip 🌍: Booking 6–8 weeks early usually gives you the lowest fare. Also, Tuesdays and Wednesdays tend to have cheaper flights!";
+      }
+
+      // ❤️ Fallback
+      else {
+        const fallbacks = [
+          "I didn’t quite catch that — could you please rephrase?",
+          "I can help with flight bookings, prices, or travel updates. What would you like to know?",
+          "Let’s see — could you specify which route or topic you mean?",
+          "I’m here to assist you with your travel plans. Ask me about flights, bookings, or deals!",
+        ];
+        aiReply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+      }
 
       const aiMessage = {
         id: Date.now() + 1,
-        text: responses[Math.floor(Math.random() * responses.length)],
+        text: aiReply,
         sender: "ai",
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
-      setChatMessages(prev => [...prev, aiMessage]);
+      setChatMessages((prev) => [...prev, aiMessage]);
+
+      // 🔊 Speak it aloud
+      speakText(aiReply);
     }, 1000);
   };
+
+
+
 
   return (
     <Box
@@ -637,30 +770,33 @@ const Books = () => {
         )}
 
         {/* AI Chat */}
+        {/* 🧠 AI Chat Dialog */}
         <Dialog open={openChat} onClose={() => setOpenChat(false)} maxWidth="sm" fullWidth>
           <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Avatar sx={{ bgcolor: 'primary.main' }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Avatar sx={{ bgcolor: "primary.main" }}>
                 <ChatIcon />
               </Avatar>
-              <Typography variant="h6">AI Travel Assistant</Typography>
+              <Typography variant="h6">AI Travel Assistant (Voice Enabled)</Typography>
             </Box>
           </DialogTitle>
-          <DialogContent sx={{ height: '300px', overflow: 'auto' }}>
+
+          <DialogContent sx={{ height: "320px", overflowY: "auto", p: 2 }}>
             <List>
               {chatMessages.map((msg) => (
-                <ListItem key={msg.id}>
+                <ListItem key={msg.id} disablePadding sx={{ mb: 1 }}>
                   <Card
                     sx={{
-                      bgcolor: msg.sender === 'ai' ? 'primary.light' : 'grey.100',
-                      color: msg.sender === 'ai' ? 'white' : 'text.primary',
-                      ml: msg.sender === 'user' ? 'auto' : 0,
-                      maxWidth: '80%'
+                      bgcolor: msg.sender === "ai" ? "primary.main" : "grey.200",
+                      color: msg.sender === "ai" ? "#fff" : "#000",
+                      ml: msg.sender === "user" ? "auto" : 0,
+                      maxWidth: "80%",
+                      borderRadius: 2,
                     }}
                   >
-                    <CardContent sx={{ py: 1 }}>
+                    <CardContent sx={{ py: 1, px: 2 }}>
                       <Typography variant="body2">{msg.text}</Typography>
-                      <Typography variant="caption" display="block" sx={{ mt: 1, opacity: 0.7 }}>
+                      <Typography variant="caption" sx={{ opacity: 0.7 }}>
                         {new Date(msg.timestamp).toLocaleTimeString()}
                       </Typography>
                     </CardContent>
@@ -669,19 +805,26 @@ const Books = () => {
               ))}
             </List>
           </DialogContent>
+
           <DialogActions>
             <TextField
               placeholder="Ask about flights, prices, or recommendations..."
               fullWidth
               onKeyPress={(e) => {
-                if (e.key === 'Enter' && e.target.value.trim()) {
+                if (e.key === "Enter" && e.target.value.trim()) {
                   sendChatMessage(e.target.value.trim());
-                  e.target.value = '';
+                  e.target.value = "";
                 }
               }}
             />
+            <Tooltip title="Close chat">
+              <IconButton color="error" onClick={() => setOpenChat(false)}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
           </DialogActions>
         </Dialog>
+
       </Box>
     </Box>
   );
