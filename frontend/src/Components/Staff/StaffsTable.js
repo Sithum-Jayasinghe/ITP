@@ -23,13 +23,20 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import PersonIcon from "@mui/icons-material/Person";
-import Logo from '../Images/logo.png';
+import Logo from "../Images/logo.png";
 
-// ✅ Status chip colors
+// ✅ Status chip colors (UI)
 const statusColors = {
   Active: "#4caf50",
   Inactive: "#9e9e9e",
   "On Leave": "#ff9800",
+};
+
+// ✅ Status colors for PDF (RGB)
+const statusColorsRGB = {
+  Active: [76, 175, 80],
+  Inactive: [158, 158, 158],
+  "On Leave": [255, 152, 0],
 };
 
 const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
@@ -49,88 +56,156 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
 
   // Sanitize text for PDF
   const sanitizeText = (text) => {
-    if (!text) return "N/A";
-    return text.toString().replace(/[^\x20-\x7E]/g, '');
+    if (text === undefined || text === null || text === "") return "N/A";
+    return text.toString().replace(/[^\x20-\x7E]/g, "").trim() || "N/A";
   };
 
+<<<<<<< HEAD
   // ✅ Generate Comprehensive Professional PDF with All Staff Details
   const generateRowPDF = (staff) => {
+=======
+  // Load image as Data URL (works with CRA/Vite)
+  const loadImageAsDataURL = async (src) => {
+>>>>>>> c1627f29a16feb7fb20cb61811f551ade539c227
     try {
-      const doc = new jsPDF();
+      if (!src) return null;
+      const res = await fetch(src);
+      const blob = await res.blob();
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  // ✅ Generate Modern Professional PDF with all details and safe layout
+  const generateRowPDF = async (staff) => {
+    try {
+      const doc = new jsPDF("p", "mm", "a4");
       const pageWidth = doc.internal.pageSize.getWidth();
       const pageHeight = doc.internal.pageSize.getHeight();
 
-      // Set default font
-      doc.setFont("helvetica");
+      const primary = [0, 90, 156];
+      const lightGray = [245, 245, 245];
 
-      // Premium Header with modern gradient
-      doc.setFillColor(0, 90, 156);
-      doc.rect(0, 0, pageWidth, 80, 'F');
-      
-      // Add AIRGO logo - with better error handling
-      try {
-        if (Logo) {
-          doc.addImage(Logo, 'PNG', 20, 20, 35, 35);
+      doc.setFont("helvetica", "normal");
+
+      // Load logo safely
+      const logoDataUrl = await loadImageAsDataURL(Logo);
+
+      // Header/Footer
+      const header = () => {
+        doc.setFillColor(primary[0], primary[1], primary[2]);
+        doc.rect(0, 0, pageWidth, 36, "F");
+
+        if (logoDataUrl) {
+          doc.addImage(logoDataUrl, "PNG", 10, 6, 22, 22);
         } else {
-          throw new Error('Logo not available');
+          doc.setTextColor(255, 255, 255);
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(16);
+          doc.text("✈ AIRGO", 16, 20);
         }
-      } catch (error) {
-        console.log('Using text fallback for logo');
-        doc.setFontSize(24);
+
         doc.setTextColor(255, 255, 255);
         doc.setFont("helvetica", "bold");
-        doc.text("✈ AIRGO", 35, 40);
-      }
-      
-      // Company header
-      doc.setFontSize(28);
-      doc.setTextColor(255, 255, 255);
+        doc.setFontSize(16);
+        doc.text("AIRGO AIRLINES", pageWidth / 2, 13, { align: "center" });
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        doc.text("Staff Management System", pageWidth / 2, 19, { align: "center" });
+
+        doc.setFontSize(8);
+        doc.text("Confidential Staff Document", pageWidth / 2, 25, { align: "center" });
+
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.3);
+        doc.line(10, 31, pageWidth - 10, 31);
+      };
+
+      const footer = (data) => {
+        const pageNumberText = `Page ${data.pageNumber}`;
+        const securityCode = `STAFF-${sanitizeText(staff.id)}-${new Date()
+          .getTime()
+          .toString()
+          .slice(-6)}`;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(130, 130, 130);
+        doc.text(`Document ID: ${securityCode}`, pageWidth / 2, pageHeight - 14, {
+          align: "center",
+        });
+
+        doc.setFillColor(primary[0], primary[1], primary[2]);
+        doc.rect(0, pageHeight - 12, pageWidth, 12, "F");
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.text("AIRGO Airlines - Human Resources Department", 10, pageHeight - 7.5);
+        doc.text(
+          "Confidential - For Internal Use Only | hr@airgo.com | +1 (800) AIRGO-HR",
+          pageWidth / 2,
+          pageHeight - 3.5,
+          { align: "center" }
+        );
+        doc.text(pageNumberText, pageWidth - 10, pageHeight - 7.5, { align: "right" });
+      };
+
+      // Draw header for the first page before any content
+      header();
+
+      // MARGINS
+      const marginTop = 40;
+      const marginBottom = 16;
+
+      // TITLE CARD (fixed height, Generated date INSIDE the box)
+      const titleTop = marginTop - 2; // 38
+      const titleHeight = 18; // taller than before
+
+      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+      doc.roundedRect(10, titleTop, pageWidth - 20, titleHeight, 2, 2, "F");
+      doc.setDrawColor(primary[0], primary[1], primary[2]);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(10, titleTop, pageWidth - 20, titleHeight, 2, 2, "S");
+
+      // Title
+      doc.setTextColor(primary[0], primary[1], primary[2]);
       doc.setFont("helvetica", "bold");
-      doc.text("AIRGO AIRLINES", pageWidth / 2, 35, { align: "center" });
-      
       doc.setFontSize(12);
-      doc.setTextColor(255, 255, 255, 0.9);
+      doc.text(
+        `STAFF PROFILE: ${sanitizeText(staff.name).toUpperCase()}`,
+        pageWidth / 2,
+        titleTop + 7, // inside the box
+        { align: "center" }
+      );
+
+      // Generated date inside the box (no clipping)
       doc.setFont("helvetica", "normal");
-      doc.text("Staff Management System", pageWidth / 2, 48, { align: "center" });
-      
-      doc.setFontSize(10);
-      doc.setTextColor(255, 255, 255, 0.8);
-      doc.text("Confidential Staff Document", pageWidth / 2, 58, { align: "center" });
-
-      // Staff ID section with modern card design
-      doc.setFillColor(245, 245, 245);
-      doc.roundedRect(15, 90, pageWidth - 30, 25, 8, 8, 'F');
-      doc.setDrawColor(0, 90, 156);
-      doc.setLineWidth(0.8);
-      doc.roundedRect(15, 90, pageWidth - 30, 25, 8, 8, 'S');
-      
-      doc.setFontSize(16);
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text(`STAFF PROFILE: ${sanitizeText(staff.name).toUpperCase()}`, pageWidth / 2, 102, { align: "center" });
-      
-      doc.setFontSize(9);
       doc.setTextColor(100, 100, 100);
-      doc.text(`Generated for HR Use: ${new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })}`, pageWidth / 2, 110, { align: "center" });
+      doc.setFontSize(8);
+      doc.text(
+        `Generated: ${new Date().toLocaleString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`,
+        pageWidth / 2,
+        titleTop + 13, // inside the box
+        { align: "center" }
+      );
 
-      // Personal Information section
-      const personalY = 130;
-      doc.setFontSize(18);
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text("PERSONAL INFORMATION", 20, personalY);
-      
-      // Modern divider
-      doc.setDrawColor(0, 90, 156);
-      doc.setLineWidth(1);
-      doc.line(20, personalY + 3, 100, personalY + 3);
+      // Start content AFTER the title box with some gap
+      let y = titleTop + titleHeight + 6;
 
+<<<<<<< HEAD
       // Personal info cards - First Row
       const cardY = personalY + 15;
       
@@ -376,39 +451,184 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
         `✓ Current status: ${sanitizeText(staff.status)} - Following ${staff.schedule || 'regular'} schedule`,
         `✓ Contact: ${sanitizeText(staff.num)} | ${sanitizeText(staff.email)}`,
         `✓ Performance Rating: ${performanceRating} | Security Clearance: ${securityClearance}`
+=======
+      // Helpers
+      const sectionHeader = (label) => [
+        {
+          content: label,
+          colSpan: 2,
+          styles: {
+            fillColor: [240, 248, 255],
+            textColor: primary,
+            fontStyle: "bold",
+          },
+        },
+>>>>>>> c1627f29a16feb7fb20cb61811f551ade539c227
       ];
 
-      staffSummary.forEach((info, index) => {
-        doc.text(info, 30, summaryY + 20 + (index * 8));
+      // PERSONAL INFORMATION
+      autoTable(doc, {
+        startY: y,
+        margin: { top: marginTop, bottom: marginBottom, left: 10, right: 10 },
+        didDrawPage: (data) => {
+          header();
+          footer(data);
+        },
+        styles: {
+          font: "helvetica",
+          fontSize: 10,
+          cellPadding: 3,
+          lineColor: [220, 220, 220],
+          lineWidth: 0.2,
+          halign: "left",
+          valign: "middle",
+        },
+        columnStyles: {
+          0: { cellWidth: 52, fontStyle: "bold", textColor: primary },
+          1: { cellWidth: "auto" },
+        },
+        theme: "grid",
+        body: [
+          sectionHeader("PERSONAL INFORMATION"),
+          ["Staff ID", sanitizeText(staff.id)],
+          ["Name", sanitizeText(staff.name)],
+          ["Role", sanitizeText(staff.role)],
+        ],
       });
 
-      // Footer with modern design
-      doc.setFillColor(0, 90, 156);
-      doc.rect(0, pageHeight - 20, pageWidth, 20, 'F');
-      
-      doc.setFontSize(7);
-      doc.setTextColor(255, 255, 255);
-      doc.text("AIRGO Airlines - Human Resources Department", pageWidth / 2, pageHeight - 14, { align: "center" });
-      doc.text("Confidential Document - For Internal Use Only | hr@airgo.com | +1 (800) AIRGO-HR", pageWidth / 2, pageHeight - 8, { align: "center" });
+      y = doc.lastAutoTable.finalY + 6;
 
-      // Security features
-      doc.setFontSize(6);
-      doc.setTextColor(150, 150, 150);
-      const securityCode = `STAFF-${staff.id}-${new Date().getTime().toString().slice(-6)}`;
-      doc.text(`Document ID: ${securityCode}`, pageWidth / 2, pageHeight - 25, { align: "center" });
+      // CONTACT DETAILS
+      autoTable(doc, {
+        startY: y,
+        margin: { top: marginTop, bottom: marginBottom, left: 10, right: 10 },
+        didDrawPage: (data) => {
+          header();
+          footer(data);
+        },
+        styles: {
+          font: "helvetica",
+          fontSize: 10,
+          cellPadding: 3,
+          lineColor: [220, 220, 220],
+          lineWidth: 0.2,
+        },
+        columnStyles: {
+          0: { cellWidth: 52, fontStyle: "bold", textColor: primary },
+          1: { cellWidth: "auto" },
+        },
+        theme: "grid",
+        body: [
+          sectionHeader("CONTACT DETAILS"),
+          ["Contact Number", sanitizeText(staff.num)],
+          ["Email Address", sanitizeText(staff.email)],
+        ],
+      });
 
-      // Modern page border
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.3);
-      doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
+      y = doc.lastAutoTable.finalY + 6;
 
-      // Save with professional filename
-      const fileName = `AIRGO_Staff_${sanitizeText(staff.name).replace(/[^a-zA-Z0-9]/g, '_')}_${staff.id}.pdf`;
+      // PROFESSIONAL DETAILS
+      const status = sanitizeText(staff.status);
+      const statusRGB = statusColorsRGB[status] || primary;
+
+      autoTable(doc, {
+        startY: y,
+        margin: { top: marginTop, bottom: marginBottom, left: 10, right: 10 },
+        didDrawPage: (data) => {
+          header();
+          footer(data);
+        },
+        styles: {
+          font: "helvetica",
+          fontSize: 10,
+          cellPadding: 3,
+          lineColor: [220, 220, 220],
+          lineWidth: 0.2,
+        },
+        columnStyles: {
+          0: { cellWidth: 52, fontStyle: "bold", textColor: primary },
+          1: { cellWidth: "auto" },
+        },
+        theme: "grid",
+        didParseCell: (data) => {
+          if (
+            data.section === "body" &&
+            Array.isArray(data.row.raw) &&
+            data.row.raw[0] === "Employment Status" &&
+            data.column.index === 1
+          ) {
+            data.cell.styles.textColor = statusRGB;
+            data.cell.styles.fontStyle = "bold";
+          }
+        },
+        body: [
+          sectionHeader("PROFESSIONAL DETAILS"),
+          ["Certification", sanitizeText(staff.certificate)],
+          ["Work Schedule", sanitizeText(staff.schedule)],
+          [
+            "Shift Start",
+            `${sanitizeText(staff.shiftStartDate)} ${sanitizeText(staff.shiftStartTime)}`,
+          ],
+          [
+            "Shift End",
+            `${sanitizeText(staff.shiftEndDate)} ${sanitizeText(staff.shiftEndTime)}`,
+          ],
+          ["Employment Status", status],
+        ],
+      });
+
+      y = doc.lastAutoTable.finalY + 6;
+
+      // STAFF SUMMARY
+      const summaryBullets = [
+        `✓ ${sanitizeText(staff.name)} is a ${sanitizeText(staff.role)} at AIRGO Airlines`,
+        `✓ Certified in ${sanitizeText(staff.certificate)}`,
+        `✓ Current status: ${status} - ${sanitizeText(staff.schedule)}`,
+      ];
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const splitLines = summaryBullets.flatMap((line) =>
+        doc.splitTextToSize(line, pageWidth - 24)
+      );
+      const lineHeight = 5;
+      const boxHeight = 10 + splitLines.length * lineHeight;
+
+      if (y + boxHeight + marginBottom > pageHeight) {
+        doc.addPage();
+        header();
+        y = marginTop;
+      }
+
+      doc.setTextColor(primary[0], primary[1], primary[2]);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      doc.text("STAFF SUMMARY", 10, y);
+      doc.setDrawColor(primary[0], primary[1], primary[2]);
+      doc.setLineWidth(0.5);
+      doc.line(10, y + 2.5, 70, y + 2.5);
+
+      const boxY = y + 6;
+      doc.setFillColor(255, 248, 225);
+      doc.setDrawColor(255, 193, 7);
+      doc.roundedRect(10, boxY, pageWidth - 20, boxHeight, 2, 2, "FD");
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(102, 102, 102);
+      let textY = boxY + 7;
+      splitLines.forEach((l) => {
+        doc.text(l, 12, textY);
+        textY += lineHeight;
+      });
+
+      const fileName = `AIRGO_Staff_${sanitizeText(staff.name).replace(
+        /[^a-zA-Z0-9]/g,
+        "_"
+      )}_${sanitizeText(staff.id)}.pdf`;
       doc.save(fileName);
-      
     } catch (error) {
-      console.error('Staff PDF generation error:', error);
-      alert('Error generating staff PDF. Please try again.');
+      console.error("Staff PDF generation error:", error);
+      alert("Error generating staff PDF. Please try again.");
     }
   };
 
@@ -416,19 +636,21 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
     <>
       <TableContainer
         component={Paper}
-        sx={{ 
-          mt: 2, 
-          borderRadius: 3, 
-          overflow: "hidden", 
+        sx={{
+          mt: 2,
+          borderRadius: 3,
+          overflow: "hidden",
           boxShadow: 3,
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
+          background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
         }}
       >
         <Table>
-          <TableHead sx={{ 
-            backgroundColor: '#005a9c',
-            background: 'linear-gradient(45deg, #005a9c, #0288d1)'
-          }}>
+          <TableHead
+            sx={{
+              backgroundColor: "#005a9c",
+              background: "linear-gradient(45deg, #005a9c, #0288d1)",
+            }}
+          >
             <TableRow>
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>ID</TableCell>
               <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Name</TableCell>
@@ -449,21 +671,21 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
           <TableBody>
             {rows.length > 0 ? (
               rows.map((row) => (
-                <TableRow 
-                  key={row.id} 
-                  hover 
-                  sx={{ 
-                    '&:nth-of-type(even)': { 
-                      backgroundColor: 'rgba(0, 90, 156, 0.02)' 
+                <TableRow
+                  key={row.id}
+                  hover
+                  sx={{
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "rgba(0, 90, 156, 0.02)",
                     },
-                    '&:hover': {
-                      backgroundColor: 'rgba(0, 90, 156, 0.05)'
-                    }
+                    "&:hover": {
+                      backgroundColor: "rgba(0, 90, 156, 0.05)",
+                    },
                   }}
                 >
                   <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <PersonIcon fontSize="small" sx={{ mr: 1, color: '#005a9c' }} />
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <PersonIcon fontSize="small" sx={{ mr: 1, color: "#005a9c" }} />
                       <Typography fontWeight="bold" fontFamily="monospace">
                         {row.id}
                       </Typography>
@@ -475,15 +697,15 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
                       label={row.role}
                       size="small"
                       sx={{
-                        backgroundColor: '#e3f2fd',
-                        color: '#005a9c',
+                        backgroundColor: "#e3f2fd",
+                        color: "#005a9c",
                         fontWeight: "bold",
                       }}
                     />
                   </TableCell>
                   <TableCell>{row.num}</TableCell>
                   <TableCell>
-                    <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                    <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
                       {row.email}
                     </Typography>
                   </TableCell>
@@ -501,20 +723,20 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
                         backgroundColor: statusColors[row.status],
                         color: "#fff",
                         fontWeight: "bold",
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                       }}
                     />
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <Box sx={{ display: "flex", gap: 0.5 }}>
                       <Tooltip title="Edit Staff">
-                        <IconButton 
-                          size="small" 
-                          color="primary" 
+                        <IconButton
+                          size="small"
+                          color="primary"
                           onClick={() => selectedStaff(row)}
-                          sx={{ 
-                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                            '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.2)' }
+                          sx={{
+                            backgroundColor: "rgba(25, 118, 210, 0.1)",
+                            "&:hover": { backgroundColor: "rgba(25, 118, 210, 0.2)" },
                           }}
                         >
                           <EditIcon fontSize="small" />
@@ -522,13 +744,13 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
                       </Tooltip>
 
                       <Tooltip title="Delete Staff">
-                        <IconButton 
-                          size="small" 
-                          color="error" 
+                        <IconButton
+                          size="small"
+                          color="error"
                           onClick={() => handleDeleteClick(row)}
-                          sx={{ 
-                            backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                            '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.2)' }
+                          sx={{
+                            backgroundColor: "rgba(211, 47, 47, 0.1)",
+                            "&:hover": { backgroundColor: "rgba(211, 47, 47, 0.2)" },
                           }}
                         >
                           <DeleteIcon fontSize="small" />
@@ -536,13 +758,13 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
                       </Tooltip>
 
                       <Tooltip title="Generate Staff PDF">
-                        <IconButton 
-                          size="small" 
-                          sx={{ 
+                        <IconButton
+                          size="small"
+                          sx={{
                             color: "#d32f2f",
-                            backgroundColor: 'rgba(211, 47, 47, 0.1)',
-                            '&:hover': { backgroundColor: 'rgba(211, 47, 47, 0.2)' }
-                          }} 
+                            backgroundColor: "rgba(211, 47, 47, 0.1)",
+                            "&:hover": { backgroundColor: "rgba(211, 47, 47, 0.2)" },
+                          }}
                           onClick={() => generateRowPDF(row)}
                         >
                           <PictureAsPdfIcon fontSize="small" />
@@ -566,43 +788,37 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
       </TableContainer>
 
       {/* Confirm Delete Dialog */}
-      <Dialog 
-        open={openDialog} 
+      <Dialog
+        open={openDialog}
         onClose={() => setOpenDialog(false)}
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: { borderRadius: 3 },
         }}
       >
-        <DialogTitle sx={{ 
-          backgroundColor: '#005a9c', 
-          color: 'white',
-          borderTopLeftRadius: 12,
-          borderTopRightRadius: 12
-        }}>
+        <DialogTitle
+          sx={{
+            backgroundColor: "#005a9c",
+            color: "white",
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+          }}
+        >
           Confirm Staff Deletion
         </DialogTitle>
         <Box sx={{ p: 3 }}>
           <Typography>
-            Are you sure you want to delete <strong>{staffToDelete?.name}</strong> (ID: {staffToDelete?.id})?
+            Are you sure you want to delete <strong>{staffToDelete?.name}</strong> (ID:{" "}
+            {staffToDelete?.id})?
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
             This action cannot be undone.
           </Typography>
         </Box>
         <DialogActions sx={{ p: 2 }}>
-          <Button 
-            onClick={() => setOpenDialog(false)}
-            variant="outlined"
-            sx={{ borderRadius: 2 }}
-          >
+          <Button onClick={() => setOpenDialog(false)} variant="outlined" sx={{ borderRadius: 2 }}>
             Cancel
           </Button>
-          <Button 
-            color="error" 
-            onClick={confirmDelete}
-            variant="contained"
-            sx={{ borderRadius: 2 }}
-          >
+          <Button color="error" onClick={confirmDelete} variant="contained" sx={{ borderRadius: 2 }}>
             Delete Staff
           </Button>
         </DialogActions>
