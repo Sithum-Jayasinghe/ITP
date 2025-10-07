@@ -15,6 +15,7 @@ import {
   IconButton,
   Box,
   Typography,
+  InputAdornment,
 } from "@mui/material";
 import { useState } from "react";
 import { jsPDF } from "jspdf";
@@ -60,13 +61,8 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
     return text.toString().replace(/[^\x20-\x7E]/g, "").trim() || "N/A";
   };
 
-<<<<<<< HEAD
-  // ✅ Generate Comprehensive Professional PDF with All Staff Details
-  const generateRowPDF = (staff) => {
-=======
   // Load image as Data URL (works with CRA/Vite)
   const loadImageAsDataURL = async (src) => {
->>>>>>> c1627f29a16feb7fb20cb61811f551ade539c227
     try {
       if (!src) return null;
       const res = await fetch(src);
@@ -157,302 +153,13 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
         doc.text(pageNumberText, pageWidth - 10, pageHeight - 7.5, { align: "right" });
       };
 
-      // Draw header for the first page before any content
       header();
 
-      // MARGINS
+      // Layout setup
       const marginTop = 40;
       const marginBottom = 16;
 
-      // TITLE CARD (fixed height, Generated date INSIDE the box)
-      const titleTop = marginTop - 2; // 38
-      const titleHeight = 18; // taller than before
-
-      doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
-      doc.roundedRect(10, titleTop, pageWidth - 20, titleHeight, 2, 2, "F");
-      doc.setDrawColor(primary[0], primary[1], primary[2]);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(10, titleTop, pageWidth - 20, titleHeight, 2, 2, "S");
-
-      // Title
-      doc.setTextColor(primary[0], primary[1], primary[2]);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text(
-        `STAFF PROFILE: ${sanitizeText(staff.name).toUpperCase()}`,
-        pageWidth / 2,
-        titleTop + 7, // inside the box
-        { align: "center" }
-      );
-
-      // Generated date inside the box (no clipping)
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 100, 100);
-      doc.setFontSize(8);
-      doc.text(
-        `Generated: ${new Date().toLocaleString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}`,
-        pageWidth / 2,
-        titleTop + 13, // inside the box
-        { align: "center" }
-      );
-
-      // Start content AFTER the title box with some gap
-      let y = titleTop + titleHeight + 6;
-
-<<<<<<< HEAD
-      // Personal info cards - First Row
-      const cardY = personalY + 15;
-      
-      // Staff ID Card
-      doc.setFillColor(240, 248, 255);
-      doc.roundedRect(25, cardY, 50, 35, 6, 6, 'F');
-      doc.setDrawColor(0, 90, 156);
-      doc.setLineWidth(0.5);
-      doc.roundedRect(25, cardY, 50, 35, 6, 6, 'S');
-      
-      doc.setTextColor(0, 90, 156);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text("STAFF ID", 50, cardY + 10, { align: "center" });
-      doc.setFontSize(14);
-      doc.setTextColor(51, 51, 51);
-      doc.text(sanitizeText(staff.id.toString()), 50, cardY + 25, { align: "center" });
-      
-      // Role Card
-      doc.setFillColor(240, 248, 255);
-      doc.roundedRect(85, cardY, 50, 35, 6, 6, 'F');
-      doc.setDrawColor(0, 90, 156);
-      doc.roundedRect(85, cardY, 50, 35, 6, 6, 'S');
-      
-      doc.setTextColor(0, 90, 156);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text("ROLE", 110, cardY + 10, { align: "center" });
-      doc.setFontSize(11);
-      doc.setTextColor(51, 51, 51);
-      const roleText = sanitizeText(staff.role);
-      doc.text(roleText.length > 15 ? roleText.substring(0, 15) + '...' : roleText, 110, cardY + 25, { align: "center" });
-
-      // Status Card
-      doc.setFillColor(240, 248, 255);
-      doc.roundedRect(145, cardY, 50, 35, 6, 6, 'F');
-      doc.setDrawColor(0, 90, 156);
-      doc.roundedRect(145, cardY, 50, 35, 6, 6, 'S');
-      
-      doc.setTextColor(0, 90, 156);
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text("STATUS", 170, cardY + 10, { align: "center" });
-      
-      const status = sanitizeText(staff.status);
-      let statusColor = [0, 90, 156]; // Default blue
-      if (status === "Active") statusColor = [76, 175, 80]; // Green
-      else if (status === "Inactive") statusColor = [158, 158, 158]; // Gray
-      else if (status === "On Leave") statusColor = [255, 152, 0]; // Orange
-      
-      doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-      doc.setFontSize(11);
-      doc.text(status, 170, cardY + 25, { align: "center" });
-
-      // Contact Details section
-      const contactY = cardY + 50;
-      doc.setFontSize(18);
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text("CONTACT DETAILS", 20, contactY);
-      doc.line(20, contactY + 3, 85, contactY + 3);
-
-      // Contact table
-      doc.setFillColor(250, 250, 250);
-      doc.roundedRect(25, contactY + 10, pageWidth - 50, 40, 8, 8, 'F');
-      doc.setDrawColor(220, 220, 220);
-      doc.roundedRect(25, contactY + 10, pageWidth - 50, 40, 8, 8, 'S');
-
-      const contactStartY = contactY + 22;
-      
-      // Contact Number
-      doc.setFontSize(11);
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text("CONTACT NUMBER:", 35, contactStartY);
-      doc.setFontSize(14);
-      doc.setTextColor(51, 51, 51);
-      doc.setFont("helvetica", "normal");
-      doc.text(sanitizeText(staff.num), 85, contactStartY);
-      
-      // Email
-      doc.setTextColor(0, 90, 156);
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.text("EMAIL ADDRESS:", 35, contactStartY + 15);
-      doc.setFontSize(12);
-      doc.setTextColor(51, 51, 51);
-      doc.setFont("helvetica", "normal");
-      const email = sanitizeText(staff.email);
-      doc.text(email.length > 35 ? email.substring(0, 35) + '...' : email, 85, contactStartY + 15);
-
-      // Professional Details section
-      const professionalY = contactY + 65;
-      doc.setFontSize(18);
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text("PROFESSIONAL DETAILS", 20, professionalY);
-      doc.line(20, professionalY + 3, 110, professionalY + 3);
-
-      // Professional table
-      doc.setFillColor(250, 250, 250);
-      doc.roundedRect(25, professionalY + 10, pageWidth - 50, 70, 8, 8, 'F');
-      doc.setDrawColor(220, 220, 220);
-      doc.roundedRect(25, professionalY + 10, pageWidth - 50, 70, 8, 8, 'S');
-
-      const professionalStartY = professionalY + 22;
-      doc.setFontSize(10);
-      
-      // Left column - Professional Information
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text("CERTIFICATION:", 35, professionalStartY);
-      doc.text("WORK SCHEDULE:", 35, professionalStartY + 10);
-      doc.text("SHIFT START DATE:", 35, professionalStartY + 20);
-      doc.text("SHIFT START TIME:", 35, professionalStartY + 30);
-      doc.text("SHIFT END DATE:", 35, professionalStartY + 40);
-      doc.text("SHIFT END TIME:", 35, professionalStartY + 50);
-
-      doc.setTextColor(51, 51, 51);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.text(sanitizeText(staff.certificate), 85, professionalStartY);
-      doc.text(sanitizeText(staff.schedule), 85, professionalStartY + 10);
-      doc.text(sanitizeText(staff.shiftStartDate), 85, professionalStartY + 20);
-      doc.text(sanitizeText(staff.shiftStartTime), 85, professionalStartY + 30);
-      doc.text(sanitizeText(staff.shiftEndDate), 85, professionalStartY + 40);
-      doc.text(sanitizeText(staff.shiftEndTime), 85, professionalStartY + 50);
-
-      // Right column - Additional Details
-      const rightColumnX = 120;
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
-      doc.text("DEPARTMENT:", rightColumnX, professionalStartY);
-      doc.text("EMPLOYMENT TYPE:", rightColumnX, professionalStartY + 10);
-      doc.text("SECURITY CLEARANCE:", rightColumnX, professionalStartY + 20);
-      doc.text("TRAINING COMPLETED:", rightColumnX, professionalStartY + 30);
-      doc.text("PERFORMANCE RATING:", rightColumnX, professionalStartY + 40);
-      doc.text("YEARS OF SERVICE:", rightColumnX, professionalStartY + 50);
-
-      doc.setTextColor(51, 51, 51);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      
-      // Default values for additional fields (you can customize these)
-      const department = staff.department || "Flight Operations";
-      const employmentType = staff.employmentType || "Full-time";
-      const securityClearance = staff.securityClearance || "Level 3";
-      const trainingCompleted = staff.trainingCompleted || "Advanced Safety Training";
-      const performanceRating = staff.performanceRating || "4.8/5.0";
-      const yearsOfService = staff.yearsOfService || "3.5 years";
-      
-      doc.text(department, rightColumnX + 50, professionalStartY);
-      doc.text(employmentType, rightColumnX + 50, professionalStartY + 10);
-      doc.text(securityClearance, rightColumnX + 50, professionalStartY + 20);
-      doc.text(trainingCompleted, rightColumnX + 50, professionalStartY + 30);
-      doc.text(performanceRating, rightColumnX + 50, professionalStartY + 40);
-      doc.text(yearsOfService, rightColumnX + 50, professionalStartY + 50);
-
-      // Work Schedule Details section
-      const scheduleY = professionalY + 95;
-      doc.setFontSize(18);
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text("WORK SCHEDULE DETAILS", 20, scheduleY);
-      doc.line(20, scheduleY + 3, 115, scheduleY + 3);
-
-      // Schedule table
-      doc.setFillColor(250, 250, 250);
-      doc.roundedRect(25, scheduleY + 10, pageWidth - 50, 40, 8, 8, 'F');
-      doc.setDrawColor(220, 220, 220);
-      doc.roundedRect(25, scheduleY + 10, pageWidth - 50, 40, 8, 8, 'S');
-
-      const scheduleStartY = scheduleY + 22;
-      doc.setFontSize(10);
-      
-      // Schedule headers
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text("SCHEDULE TYPE", 35, scheduleStartY);
-      doc.text("SHIFT START", 90, scheduleStartY);
-      doc.text("SHIFT END", 140, scheduleStartY);
-      doc.text("TOTAL HOURS", 170, scheduleStartY);
-
-      // Schedule data
-      doc.setTextColor(51, 51, 51);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(11);
-      doc.text(sanitizeText(staff.schedule), 35, scheduleStartY + 15);
-      doc.text(`${sanitizeText(staff.shiftStartDate)} ${sanitizeText(staff.shiftStartTime)}`, 90, scheduleStartY + 15);
-      doc.text(`${sanitizeText(staff.shiftEndDate)} ${sanitizeText(staff.shiftEndTime)}`, 140, scheduleStartY + 15);
-      
-      // Calculate total hours (example calculation)
-      const totalHours = staff.totalHours || "40 hrs/week";
-      doc.text(totalHours, 170, scheduleStartY + 15);
-
-      // Emergency Contact Section (if available)
-      const emergencyY = scheduleY + 65;
-      if (staff.emergencyContact || staff.emergencyPhone) {
-        doc.setFontSize(18);
-        doc.setTextColor(0, 90, 156);
-        doc.setFont("helvetica", "bold");
-        doc.text("EMERGENCY CONTACT", 20, emergencyY);
-        doc.line(20, emergencyY + 3, 105, emergencyY + 3);
-
-        doc.setFillColor(255, 245, 245);
-        doc.roundedRect(25, emergencyY + 10, pageWidth - 50, 25, 8, 8, 'F');
-        doc.setDrawColor(220, 100, 100);
-        doc.roundedRect(25, emergencyY + 10, pageWidth - 50, 25, 8, 8, 'S');
-
-        const emergencyStartY = emergencyY + 22;
-        doc.setFontSize(11);
-        doc.setTextColor(0, 90, 156);
-        doc.setFont("helvetica", "bold");
-        doc.text("CONTACT PERSON:", 35, emergencyStartY);
-        doc.text("EMERGENCY PHONE:", 120, emergencyStartY);
-
-        doc.setTextColor(51, 51, 51);
-        doc.setFont("helvetica", "normal");
-        doc.text(staff.emergencyContact || "Not Provided", 75, emergencyStartY);
-        doc.text(staff.emergencyPhone || "Not Provided", 160, emergencyStartY);
-      }
-
-      // Staff Summary section
-      const summaryY = emergencyY + (staff.emergencyContact ? 50 : 20);
-      doc.setFontSize(18);
-      doc.setTextColor(0, 90, 156);
-      doc.setFont("helvetica", "bold");
-      doc.text("STAFF SUMMARY", 20, summaryY);
-      doc.line(20, summaryY + 3, 85, summaryY + 3);
-
-      // Summary box
-      doc.setFillColor(255, 248, 225);
-      doc.roundedRect(25, summaryY + 10, pageWidth - 50, 45, 6, 6, 'F');
-      doc.setDrawColor(255, 193, 7);
-      doc.roundedRect(25, summaryY + 10, pageWidth - 50, 45, 6, 6, 'S');
-
-      doc.setFontSize(9);
-      doc.setTextColor(102, 102, 102);
-      const staffSummary = [
-        `✓ ${sanitizeText(staff.name)} serves as a ${sanitizeText(staff.role)} at AIRGO Airlines`,
-        `✓ Certified in ${sanitizeText(staff.certificate)} with ${yearsOfService} of service`,
-        `✓ Current status: ${sanitizeText(staff.status)} - Following ${staff.schedule || 'regular'} schedule`,
-        `✓ Contact: ${sanitizeText(staff.num)} | ${sanitizeText(staff.email)}`,
-        `✓ Performance Rating: ${performanceRating} | Security Clearance: ${securityClearance}`
-=======
-      // Helpers
+      // Section helper
       const sectionHeader = (label) => [
         {
           content: label,
@@ -463,8 +170,9 @@ const StaffsTable = ({ rows, selectedStaff, deleteStaff }) => {
             fontStyle: "bold",
           },
         },
->>>>>>> c1627f29a16feb7fb20cb61811f551ade539c227
       ];
+
+      let y = marginTop;
 
       // PERSONAL INFORMATION
       autoTable(doc, {
